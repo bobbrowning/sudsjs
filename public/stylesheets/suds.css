@@ -1,0 +1,253 @@
+.suds {
+  margin-left : 50px;
+  margin-top  : 50px;
+  margin-right: 50px;
+}
+
+H1 {
+  font-size    : 18pt;
+  font-weight  : bold;
+  margin-bottom: 30px;
+}
+
+H2 {
+  font-size    : 16pt;
+  font-weight  : bold;
+  margin-bottom: 30px;
+}
+
+H3 {
+  font-size  : 14pt;
+  font-weight: bold;
+}
+
+hr {
+  border    : none;
+  border-top: 3px double #333;
+
+}
+
+A {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+
+a:active {
+  text-decoration: none;
+}
+
+P {}
+
+table .table-striped .table-bordered {
+  width: 900px;
+}
+
+
+
+TD {
+  vertical-align: top;
+  padding-right : 40px;
+
+}
+
+TH {
+  vertical-align: top;
+  padding-right : 40px;
+}
+
+form {
+  padding top   : 20px;
+  padding-bottom: 20px;
+}
+
+.sudserror {
+  color      : red;
+  margin-left: 20px;
+}
+
+.sudsSearch  {
+  width: 150px;
+}
+
+
+.sudsPageHeading {
+  padding-bottom: 20px;
+}
+
+.sudsHomeSection {
+  width                : 270px;
+  height               : 270px;
+  margin-bottom        : 40px;
+  margin-right         : 40px;
+  border-color         : lightgray;
+  padding              : 10px;
+  float                : left;
+  -webkit-border-radius: 5px;
+  -moz-border-radius   : 5px;
+  border-radius        : 5px;
+  -webkit-box-shadow   : 0 20px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow      : 0 20px 10px rgba(0, 0, 0, 0.2);
+  box-shadow           : 10px 20px 10px rgba(0, 0, 0, 0.2);
+
+}
+
+.sudsHomeSearch {
+  width : 150px;
+  height: 30px;
+}
+
+.sudsHomeSectionHead {
+  font-weight: bold;
+}
+
+.homeSectionImg {
+  float       : left;
+  margin-right: 10px
+}
+
+ul.homeSectionList {
+  list-style-type: none;
+}
+
+.breakline {
+  margin-top : 20px;
+  font-weight: bold;
+}
+
+.sudsListTableLinks {
+  margin-top: 20px;
+}
+
+.sudschilddata {
+  margin-top: 30px;
+}
+
+.sudschilddata>H1 {
+  font-size  : medium;
+  font-weight: normal;
+}
+
+.sudstabs {
+  margin-bottom: 20px;
+}
+
+.sudsEditLink>* {
+  color: black;
+}
+
+.sudsAddChild {
+  width: 100px;
+}
+
+.sudsFormTab {
+  font-size   : medium;
+  margin-right: 20px;
+
+}
+
+.sudsFormTabSelected {
+  font-size  : medium;
+  font-weight: bold;
+}
+
+.sudsParentData {
+  margin-bottom        : 10px;
+  border               : 1px solid #ccc;
+  -webkit-border-radius: 5px;
+  -moz-border-radius   : 5px;
+  border-radius        : 5px;
+  -webkit-box-shadow   : 0 5px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow      : 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow           : 0 5px 10px rgba(0, 0, 0, 0.2);
+
+}
+
+.sudsForm {}
+
+.sudsFormGroup {
+  width  : 900px;
+  padding: 5px;
+}
+
+.sudsListRow {
+  margin-top   : 30px;
+  margin-bottom: 30px;
+}
+
+
+.sudsReport {
+  width: 80%;
+}
+
+
+.sudsReportTable {
+  margin-bottom: 40px;
+}
+
+
+#sudsReportTables>* {}
+
+th {
+  border-bottom: 2px solid rgb(194, 194, 194);
+}
+
+td {
+  border: 1px solid rgb(214, 212, 212);
+}
+
+;
+
+.form-control-layout {
+  min-width: 0;
+  width    : auto;
+  display  : inline;
+}
+
+
+.ui-autocomplete {
+  cursor               : default;
+  padding              : 0;
+  margin-top           : 2px;
+  list-style           : none;
+  background-color     : #ffffff;
+  border               : 1px solid #ccc;
+  -webkit-border-radius: 5px;
+  -moz-border-radius   : 5px;
+  border-radius        : 5px;
+  -webkit-box-shadow   : 0 5px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow      : 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow           : 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.ui-autocomplete>li {
+  padding: 3px 20px;
+}
+
+.ui-autocomplete>li.ui-state-focus {
+  background-color: #DDD;
+}
+
+.ui-helper-hidden-accessible {
+  display: none;
+}
+
+.courier {
+  font-family: 'Courier New', monospace;
+}
+
+@media screen {
+  .sudsreporthr {
+    border-top: 1px dashed;
+  }
+}
+
+@media print {
+  .sudsreporthr {
+    border          : 0px;
+    page-break-after: always;
+  }
+}
