@@ -1,7 +1,8 @@
 FROM node:14
-COPY package*.json ./
-
-RUN npm install
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 COPY . .
+COPY package*.json ./
+RUN npm install
 EXPOSE 3000
-CMD ["./bin.www"]
+CMD node ./bin/www

@@ -976,7 +976,7 @@ module.exports = async function (
   //       parentLink1 = `&prepopulate=${suds tables[parent].associations[table].link}&prepopvalue=${parentKey}`;
   //     }
   //   }
-  let link = `${suds.mainPage}?table=${table}&mode=new&from=listtable`;
+  let link = `${suds.mainPage}?table=${table}&mode=new`;
   output += `
          <p>`;
   if (!parent) {

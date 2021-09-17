@@ -23,10 +23,8 @@
 let suds = require('../../../config/suds');
 let trace = require('track-n-trace');
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
-let mergeAttributes = require('../merge-attributes');
 let tableDataFunction = require('../table-data');
-let db=require('./db');
+let db=require('../db');
 
 //let getRow = require('../get-row');
 //let getRows = require('../get-rows');
@@ -43,31 +41,7 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
     let display = '';
     trace.log(linkedTable);
 
-    if (!linkedTable) {
-      results = `
-        <script>
-          const datasrc=${attributes.isIn};
-          $("#${fieldName}").autocomplete({
-            source:dataSrc
-          });
-        </script>
-        ${attributes.friendlyName}<br />
-        <input id="${fieldName}" 
-           name="${fieldName}"  
-           class="form-control"  
-           style="
-            width: ${width};
-            border: 1px solid #ccc;
-            height: 40px;
-            -webkit-border-radius: 5px;
-            -moz-border-radius   : 5px;
-            border-radius        : 5px;
-            "  
-           id="${inputs.fieldName}" 
-           value="${fieldValue}"> ${inputs.errorMsg}`;
-      return exits.success(results);
-    }
-    // searching linked tble (the normal case)
+     // searching linked tble (the normal case)
     let tableData = tableDataFunction(linkedTable);
     let displayFunction = false;
     if (tableData.rowTitle) {
@@ -140,10 +114,7 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
     if (attributes.input.onchange) {
       onchange = attributes.input.onchange;
     }
-    // because this is jquery there are conflicts with Bootstrap. 
-    // I tried to fix the field appearance, but can't change the 
-    // behaviour when you click on the box. The outline goes to black 
-    // rather than blue...
+ 
     results = `
       <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
       <script>\
@@ -180,7 +151,12 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
           border-radius        : 5px;"  
           placeholder="${placeholder}" > 
         <span id="msg_${fieldName}"></span>
-        <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
+        <span id="err_${fieldName}" class="sudserror">
+         ${errorMsg}
+         <a href="#" 
+         onclick="document.forms['mainform']['${fieldName}'].value='0'; document.forms['mainform']['${fieldName}disp'].value='';""
+         >${lang.deleteIcon}</a>
+         </span>
       </div>
     `;
 

@@ -5,7 +5,8 @@
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
  */
 
-const { default: knex } = require("knex");
+let db = require('../bin/suds/db');
+ 
 
 module.exports = {
   description: `A record should be created for all contacts with prospects, customers 
@@ -53,12 +54,10 @@ module.exports = {
      user - i.e. a new row called from a parent.  The routine fills in   
      the user from the parent record. It also closes the previous contact `,
     preForm: async function (record, mode) {
-      let updateRow = require('../bin/suds/update-row');
-      let getRow = require('../bin/suds/get-row');
       if (record.isFollowUp && !record.user) {
-        let following = await getRow('contacts', record.isFollowUp);
+        let following = await db.getRow('contacts', record.isFollowUp);
         record.user = following.user;
-        await updateRow('contacts', { id: record.isFollowUp, closed: true })
+        await db.updateRow('contacts', { id: record.isFollowUp, closed: true })
       }
       return;
     },
@@ -67,9 +66,8 @@ module.exports = {
     postProcessDescription: `This function is run immediately after the record is updated.   
     It sets the last contact and next action in the user's record.`,
     postProcess: async function (record, operation) {
-      let updateRow = require('../bin/suds/update-row');
       if (operation == 'addNew') {
-        await updateRow('user', {
+        await db.updateRow('user', {
           id: record.user,
           lastContact: record.id,
           nextActionDate: record.nextActionDate,

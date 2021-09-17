@@ -1,3 +1,6 @@
+const { checkRequiredTime } = require("tarn/dist/utils")
+
+dotenv=require('dotenv').config();
 
 module.exports = {
   /* ****************************************************
@@ -88,6 +91,31 @@ module.exports = {
     digits: 2,
   },
 
+  viewEngine: 'ejs',
+  views: [
+    'admin',  /* REQUIRED */
+    'pages',
+  ],
+
+
+  /**
+   * 
+   * Content Management
+   * 
+   */
+
+  homePage: 'index',     /* slug of the home page */
+   pageFile: {
+    table: 'webpages',
+    /* Columns in the page File */
+    id: 'pageno',
+    title: 'title',
+    status:'status',
+    embargo:'embargo',
+    expires:'expires',
+    slug:'slug',
+  
+   },
 
   /* ****************************************************
   *
@@ -115,7 +143,7 @@ module.exports = {
     allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox'],
     /* These input types always have a simple input text field in the search      */
     /* whatever the input type on forms                                           */
-    allwaysText: ['text', 'autocomplete', 'textarea', 'summernote'],
+    allwaysText: ['text', 'autocomplete', 'textarea', 'summernote','unique'],
   },
 
 
@@ -170,12 +198,13 @@ module.exports = {
   ***************************************************** */
   superuser: 'admin@admin.com',                //  This person is always superuser.
 
-  forgottenPasswordExpire: 2,
+  forgottenPasswordExpire: 20,
 
   permissionSets: {
     /*   all: 'Built-in permission meaning everyone',  */
     /*  none: 'Buit-in permission meaning no-one',  */
     admin: 'General Manager.',
+    support: 'Customer support',
     sales: 'Sales department',
     purchasing: 'Purchasing department',
     web: 'Web developers',
@@ -216,7 +245,8 @@ module.exports = {
     admin: '../bin/suds/admin',
     changepw: '../bin/suds/change-password',
     resetpw: '../bin/suds/reset-password',
-    auto: '../bin/suds/autocomplete',
+    auto: '../bin/suds/api/autocomplete',
+    unique: '../bin/suds/api/unique',
     validateConfig: '../bin/suds/validateconfig',
     configReport: '../bin/suds/configreport',
     createTable: '../bin/suds/create-table',

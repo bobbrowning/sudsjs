@@ -786,7 +786,7 @@ module.exports = async function (req, res) {
   output += `
     </div> <!-- sudsReport -->`;
 
-  let result = sendView(res, output);
+  let result = sendView(res, 'admin',output);
   return result;
 
 }

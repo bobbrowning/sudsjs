@@ -17,7 +17,7 @@ module.exports = async function (req, res) {
     req.session.userId = false;
     res.clearCookie('user');
     output += '<p>You have logged out - <a href="/admin">Admin page</a></p?';
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 

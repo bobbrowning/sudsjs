@@ -22,7 +22,7 @@ module.exports = async function (req, res) {
     trace.log(userRec);
     if (userRec.err) {
         output += `<p>I can't find your record</p>`
-        let result = await sendView(res, output);
+        let result = await sendView(res, 'admin',output);
         trace.log(result);
         return;
     }
@@ -57,7 +57,7 @@ module.exports = async function (req, res) {
 
    if (!OK) {
     output += `<p>${err} - <a href="${suds.mainPage}">Admin page</a></p>`;
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 
@@ -72,7 +72,7 @@ module.exports = async function (req, res) {
     trace.log(newData);
     await db.updateRow('user', newData);
     output += `<p>Password changed - <a href="${suds.mainPage}">Admin page</a></p>`;
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 

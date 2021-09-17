@@ -145,19 +145,19 @@ module.exports = {
       type: 'string',
       //      required: true,
       description: 'Securely hashed representation of the user\'s login password.',
-      permission: '#superuser#',
+      permission: {all: ['#superuser#']},
       example: '2$28a8eabna301089103-13948134nad'
     },
     salt: {
       type: 'string',
-      permission: '#superuser#',
+      permission: {all: ['#superuser#']},
     },
     forgottenPasswordToken: {
-      permission: '#superuser#',
+      permission: {all: ['#superuser#']},
       type: 'string',
     },
     forgottenPasswordExpire: {
-      permission: '#superuser#',
+      permission: {all: ['#superuser#']},
       type: 'number',
       display: { type: 'datetime',truncateForTableList: 16 },
       database: { type: 'biginteger' },
@@ -165,10 +165,12 @@ module.exports = {
     },
   isSuperAdmin: {
       type: 'boolean',
+      permission: {view: ['all'], edit: ['admin']},
       description: 'Whether this user is a "super admin" with extra permissions, etc.',
     },
     lastSeenAt: {
       type: 'number',
+      permission: {view: ['all']},
       description: 'A JS timestamp (epoch ms) representing the moment at which this user most recently interacted with the backend while logged in (or 0 if they have not interacted with the backend at all yet).',
       example: 1502844074211,
       input: {type: 'date', },
@@ -201,6 +203,7 @@ module.exports = {
 
     permission: {
       friendlyName: 'Permission set',
+      permission: {view: ['all'], edit: ['admin']},
       type: 'string',
       description: 'Permission set.',
       extendedDescription:

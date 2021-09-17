@@ -1,75 +1,68 @@
 
-let suds = require('../../config/suds');
-let trace = require('track-n-trace');
-let mergeAttributes = require('./merge-attributes');
-let tableDataFunction = require('./table-data');
-let classes = require('../../config/classes');
-let lang = require('../../config/language')['EN'];
-let db=require('./db');
-//let getRow = require('./get-row');
-//let updateRow = require('./update-row');
-//let createRow = require('./create-row');
-let listRow = require('./list-row');
-let createField = require('./create-field');
-let displayField = require('./display-field');
 
 
 /* Identification division  (for COBOL people)
  * Update form
- *  http://mint/nodejs/admin/update/?table=notes&id=2
- * 
- *  Creates update form  from the model and processes submitted form 
- * 
- * @description :: generic update form.
+ *  http://localhost:3000/admin?table=notes&mode=populate&id=2
  * 
  */
+
+let friendlyName = 'Update';
+let description = 'Creates update form  from the model and processes submitted form . ';
 
 /* Environment division 
  * 
  *     Tested on 
- *        Mint v 20  Cinnamon
+ *        zorin 16
  *        Node.js  v 12.18
  */
 
-
-
-module.exports = async function (permission, table, id, mode, record, loggedInUser,open,openGroup) {
-
-  // Data Division 
-  /*
-    friendlyName: 'Update form',
-    description: 'Create form based on the model, and update the database from submit.',
-    inputs: {
-      permission: {
-        type: 'string',
-        description: 'The permission set of the logged-in user',
-      },
-      table: {
-        type: 'string',
-        description: 'The table being listed',
-      },
-      id: {
-        type: 'number',
-        description: 'The key of the row being listed',
-      },
-      mode: {
-        type: 'string',
-        description: 'Typ[e of operation (new, populate, update',
-      },
-      record: {
-        type: 'ref',
-        description: 'All of the input parameters. For mode new or populate will be missing',
-      },
-      loggedInUser: { type: 'string' }
+// Data Division 
+/*
+  inputs: {
+    permission: {
+      type: 'string',
+      description: 'The permission set of the logged-in user',
     },
-  
-    */
+    table: {
+      type: 'string',
+      description: 'The table being listed',
+    },
+    id: {
+      type: 'number',
+      description: 'The key of the row being listed',
+    },
+    mode: {
+      type: 'string',
+      description: 'Typ[e of operation (new, populate, update',
+    },
+    record: {
+      type: 'ref',
+      description: 'All of the input parameters. For mode new or populate will be missing',
+    },
+    loggedInUser: { type: 'string' }
+  },
+ 
+  */
 
+let suds = require('../../config/suds');                 // Primary configuration file
+let trace = require('track-n-trace');                    // Debug tool
+let mergeAttributes = require('./merge-attributes');     // Standardises attributes for a table, filling in any missing values with defaults
+let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
+let classes = require('../../config/classes');           // Links class codes to actual classes
+let lang = require('../../config/language')['EN'];       // Object with language data
+let db = require('./db');                                // Database routines
+let listRow = require('./list-row');                     // List one row of the table plus a limited number of child roecords
+let createField = require('./create-field');             // Creates an input field
+let displayField = require('./display-field');           // displays a column value
+
+
+module.exports = async function (permission, table, id, mode, record, loggedInUser, open, openGroup) {
+  if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
 
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
 
-
-  /* ************************************************
+  /** ************************************************
   *
   *   set up the data
   *
@@ -77,8 +70,12 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   let mainPage = suds.mainPage;
   if (!mainPage) { mainPage = '/'; }
   let tableData = tableDataFunction(table, permission);
-  let tableName = tableData.friendlyName;
-  const attributes = await mergeAttributes(table, permission);  // attributes and extraattributes merged
+
+  let tableName = table;                    // clear nameof table
+  if (tableData.friendlyName) { tableName = tableData.friendlyName; }
+
+  const attributes = mergeAttributes(table, permission);  // attributes and extraattributes merged plus permissions
+
   if (id && typeof id == 'string') { id = Number(id); }
   trace.log({
     text: 'Control information',
@@ -89,7 +86,10 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
   /* *******************************************************
   * 
-  *  set defaults
+  * Set defaults for blanck form.  
+  * There may be some pre-populated values in the record.
+  * Othewise there may be values such as #today, #today+5
+  * or #loggedInUser
   * 
   ****************************************************** */
   if (mode == 'new') {
@@ -133,6 +133,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     }
   }
   trace.log(record);
+
   /* *******************************************************
    * 
    *  Populate data to update record or display
@@ -159,21 +160,24 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     */
   }
 
+
+  /** *******************************************************
+   * 
+   * Validate / process data  from input  if we are 
+   * coming from submitted form  
+   * 
+   ****************************************************** */
   let errors = {};
   let errCount = 0;
   trace.log(record);
 
-
-  /* *******************************************************
-   * 
-   *  process data  from input
-   * 
-   ****************************************************** */
-  if (mode == 'update') {     // if we are coming from submitted form 
+  if (mode == 'update') {
     for (let key of Object.keys(attributes)) {
       if (!attributes[key].canEdit) { continue; }  // can't process if not editable
       if (attributes[key].collection) { continue; }  // not intersted in collections
-      if (key == 'createdAt' || key == 'updatedAt') { continue; }  // can't process auto updated fields
+      if (attributes[key].process && attributes[key].process.createdAt) { continue; }  // can't validate auto updated fields
+      if (attributes[key].process && attributes[key].process.updatedAt) { continue; }  // can't validate auto updated fields
+      if (attributes[key].process && attributes[key].process.updatedBy) { continue; }  // can't validate auto updated fields
 
       /* Bug in Summernote - intermittently doubles up the input!   */
       /* You might look for an alternative for serious production  */
@@ -181,7 +185,16 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         console.log(`warning - summernote has produced two copies of input field ${key}.  The first copy is being used. `);
         record[key] = record[key[0]]
       }
-      if (key == 'updatedBy') { record[key] = loggedInUser; }
+
+      if (Array.isArray(record[key]) && attributes[key].type == 'string') {
+        let value = '';
+        for (let i = 0; i < record[key].length; i++) {
+          value += record[key][i] + ',';
+        }
+        record[key] = value;
+      }
+
+      if (attributes[key].process && attributes[key].process.updatedBy) { record[key] = loggedInUser; }
       if (attributes[key].input.type == 'file') {
         // doesn't work
         trace.log();
@@ -192,49 +205,27 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       if (attributes[key].type == 'boolean') {
         if (record[key]) { record[key] = true; } else { record[key] = false; }
       }
+
       if (attributes[key].input.type == 'date'
         && attributes[key].type == 'number'
       ) {
-        let value = record[key];
-        trace.log(value);
-        value = Number(value);
-        trace.log(value);
-        if (isNaN(value)) {
-          trace.log(value);
-          record[key] = new Date(record[key]).getTime();
-          trace.log(record[key]);
+        record[key] = Date.parse(record[key]);
+        trace.log(record[key]);
+        if (isNaN(record[key])) {
+          record[key] = 0;
         }
       }
+
+
       if (attributes[key].type == 'number')      // Note mergeattributes makes type:number for link fields
       {
         if (record[key]) {
           record[key] = Number(record[key]);
         }
         else {
-          record[key] = null;
+          record[key] = 0;
         }
       }
-      if (Array.isArray(record[key]) && attributes[key].type == 'string') {
-        let value = '';
-        for (let i = 0; i < record[key].length; i++) {
-          value += record[key][i] + ',';
-        }
-        record[key] = value;
-      }
-
-      /*
-              if (
-                attributes[key].type == 'number'
-                || (attributes[key].input
-                  && (
-                    attributes[key].input.isNumber || attributes[key].input.isInteger
-                  )
-                )
-              ) {
-                if (!attributes.required && !record[key]) { record[key] = 0 }  // Has to be a number of some sort
-              }
-      */
-
 
       if (attributes[key].input && attributes[key].input.server_side) {
         let err = attributes[key].input.server_side(record);
@@ -244,9 +235,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         }
 
       }
-
     }
-
   }
 
 
@@ -263,13 +252,15 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   });
 
 
-  /* *******************************************************
+  /** *******************************************************
    * 
    *  Update database
    * 
-   *  Update file if the controller is called with mode = 'update';
-   *  if we have an id it means that record is on the database 
-   *  and should be updated
+   *  Update file if the controller is called with mode = 'update'
+   *  and the validation checks have been passed. 
+   * 
+   *  If we have an id it means that record is on the database 
+   *  and should be updated. Otherwise add a new row.
    * 
    ****************************************************** */
   let operation = '';
@@ -280,14 +271,32 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     var message = '';
     let operation;
     let rec = {};
-    /* If the record is on the database       */
+    /** 
+     * 
+     * If the record is on the database       
+     * 
+     * */
     if (id) {
       operation = 'update';
       trace.log({ Updating: id, table: table });
-      await db.updateRow(table, record);                                         // ref record from database
-      message = lang.rowUpdated + tableName;
+      for (let key of Object.keys(attributes)) {
+        if (attributes[key].process.updatedAt) { record[key] = Date.now() }
+        if (attributes[key].process.updatedBy) { record[key] = loggedInUser }
+      }
+      try {
+        await db.updateRow(table, record);                                         // ref record from database
+        message = lang.rowUpdated + tableName;
+      }
+      catch (err) {
+        console.log(`Database error updating record ${id} on ${table}`, err);
+        return `<h1>Database error updating record ${id} on ${table}<h1><p>${err}</p>`;
+      }
 
-      /*      No id so we need to add record   */
+      /**  
+       * 
+       * No id so we need to add record  
+       * 
+       *  */
     } else {
       operation = 'addNew';
       for (let key of Object.keys(attributes)) {
@@ -311,13 +320,17 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
       }
       catch (err) {
-        console.log('Database error creating recod on' + table, err);
-        return exits.success('<h1>Unexpected error 3/h1>');
+        console.log(`Database error creating record on ${table}`, err);
+        return `<h1>Database error creating record on ${table}<h1><p>${err}</p>`;
       }
       message = `${lang.rowAdded} ${id}`;
     }
 
-    /* Post process processing and switch to list the record */
+    /** 
+     * 
+     * Post process processing and switch to list the record 
+     * 
+     * */
     trace.log('postprocess', record, operation);
     if (tableData.edit.postProcess) { await tableData.edit.postProcess(record, operation) }
     trace.log('switching to list record');
@@ -332,23 +345,24 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
   }
 
-  if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
-
-
   trace.log({
     mode: mode,
     columns: Object.keys(attributes),
     record: record,
   });
+
   /* *******************************************************
     * 
     *  Create the form, in a local variable and spurt it
     * out at the end....
     * 
-    * First make a list of fields that will be in the form
+    * First make a list of fields that will be in the form.
+    * All thebcolumns excluding automatically updated columns
+    * and collections.
     * 
     ****************************************************** */
 
+  if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
 
   let form = '';
 
@@ -483,34 +497,14 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   let fieldNo = 0;  //  create array of clear names and form elements
   let formData = {};
   for (const key of formList) {
-    trace.log({
-      key: key,
-      type: attributes[key].type,
-      data: record[key],
-      typeof: typeof record[key],
-      permission: attributes[key].permission,
-    });
-    let linkedTable = null;
+    let linkedTable = '';
     let fieldValue = '';
     formField = '';
-
     if (typeof record[key] != 'undefined') { fieldValue = record[key] };
+    if (attributes[key].model) { linkedTable = attributes[key].model; }
+    let errorMsg = '';
+    if (errors[key]) { errorMsg = ` ${errors[key]}`; }
 
-    trace.log('field Value', fieldValue, typeof fieldValue);
-
-
-    // don't need this with new version because attributes are passed...
-    if (typeof attributes[key].model == 'string') { linkedTable = attributes[key].model; }
-
-
-
-
-
-    /* *******************************************************
-    * 
-    *  Create form elements
-    * 
-    ****************************************************** */
     trace.log({
       element: key,
       type: attributes[key].input.type,
@@ -519,11 +513,9 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       value: fieldValue,
       titlefield: attributes[key].titlefield,
       group: columnGroup[key],
+      errorMsg: errorMsg,
     });
-    let errorMsg = '';
-    if (errors[key]) {
-      errorMsg += ` ${errors[key]}`;
-    }
+
     if (fieldValue == null) {              // can;'t pass null as a value
       if (attributes[key].type == 'number') {
         fieldValue = 0;
@@ -532,12 +524,56 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         fieldValue = '';
       }
     }
-    if (attributes[key].input.type== 'hidden') {
-      formField = `
+    /**
+     * 
+     *   If a field requires server-side processing
+     * 
+     */
+    if (attributes[key].input.validations.api) {
+      formField += `
+        <script>
+          function apiWait_${key}() {
+            console.log(apiWait_${key});
+            document.getElementById('err_${key}').innerHTML='${lang.apiWait}';
+          }
+          function apiCheck_${key}() {
+            let value=document.getElementById('mainform').elements['${key}'].value;
+            let url='${attributes[key].input.validations.api.route}?table=${table}&id=${id}&field=${key}&value='+value;
+            let result=[];
+            document.getElementById('err_${key}').innerHTML='${lang.apiCheck}';
+            console.log(url);
+            fetch(url).then(function (response) {
+              // The API call was successful!
+              return response.json();
+            }).then(function (data) {
+              // This is the JSON from our response
+              result=data;
+              console.log(result);
+              if (result[0]=='validationError'){
+                document.getElementById('err_${key}').innerHTML=result[1];
+              } 
+              else {
+                document.getElementById('err_${key}').innerHTML='';
+     
+              }
+             }).catch(function (err) {
+              // There was an error
+              console.warn('Something went wrong.', err);
+            }); 
+          }
+            </script>
+        `;
+
+
+
+    }
+
+    if (attributes[key].input.type == 'hidden') {
+      formField += `
         <input type="hidden" name="${key}" value="${fieldValue}">`;
     }
     else {
-      formField = await createField(key, fieldValue, attributes, errorMsg,'update',record);
+      formField += await createField(key, fieldValue, attributes, errorMsg, 'update', record);
       let format = suds.input.default;
       if (attributes[key].input.format) { format = attributes[key].input.format }
       let groupClass;
@@ -580,11 +616,13 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   form += `
     <script>
       function validateForm() {
-        console.log('validateForm');
+        console.log(614, '*******validateForm******');
         let errCount=0;
         let value='';
-        let columnError;`;
-  for (let key of Object.keys(attributes)) {
+        let columnError;
+        let mainform=document.getElementById('mainform');
+        `;
+  for (const key of formList) {
     if (attributes[key].collection) { continue; }  // not intersted in collections
     if (!attributes[key].canEdit) { continue; }  // can't validate if not editable
     if (attributes[key].input.hidden) { continue; }
@@ -596,19 +634,28 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       // ********** Start of validation for ${attributes[key].friendlyName}  ***************
  
       columnError=false;`;
+    //  Has an api left an error message
+    if (attributes[key].input.validations.api) {
+      form += `
+      if (document.getElementById('err_${key}').innerHTML) {
+        columnError=true;
+        errCount++;
+      }
+      else {
+        document.getElementById("err_${key}").innerHTML='';
+      }`;
+    }
+
     trace.log(key, record[key], attributes[key]);
     let vals = 0;
     if (attributes[key].type == 'number') {
       form += `
-        value=Number(document.forms['mainform']['${key}'].value);`;
+      value=Number(mainform.${key}.value);`;
     }
     else {
       form += `
-        value=document.forms['mainform']['${key}'].value;`;
+        value=mainform.${key}.value;`;
     }
-    form += `
-       document.getElementById("err_${key}").innerHTML='';`;
-    trace.log(attributes[key].required, attributes[key].input.required);
     if (attributes[key].required || attributes[key].input.required) {       // Required
       form += `
         if (true) {          // Start of validation for ${key} `;
@@ -618,6 +665,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         if (value) {                    // ${key} is not mandatory so validation only needed
                                         // if there is something in the field`;
     }
+
+
     // Start of generating code for the validations for this field
     if (attributes[key].required || attributes[key].input.required) {
       vals++;
@@ -722,7 +771,9 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
     }
     form += `
-  
+       if (!columnError) {
+            document.getElementById("err_${key}").innerHTML="";
+      }
           }       // end of validation for ${key}`;
   }
 
@@ -757,14 +808,15 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     <h2>${operation} ${lang.forTable}: ${tableName}</h2>`;
 
   //       enctype="multipart/form-data" 
-  
- let query=`table=${table}&mode=update`;
- if (open) {query+=`&open=${open}`}
- if (openGroup) {query+=`&opengroup=${openGroup}`}
+
+  let query = `table=${table}&mode=update&id=${id}`;
+  if (open) { query += `&open=${open}` }
+  if (openGroup) { query += `&opengroup=${openGroup}` }
 
   form += `
     <form 
         action="${mainPage}?${query}"
+        id="mainform"
         method="post" 
         name="mainform" 
         class="${classes.input.form}"
@@ -777,7 +829,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   //      <input type="hidden" name="#from#" value="${from}" >`;
   if (id) {
     form += `
-      <input type="hidden" name="id" value="${id}">`;
+      <input type="hidden" name="${tableData.primaryKey}" value="${id}">`;
   }
   //form += `
   //   <input type="hidden" name="mode" value="update">
@@ -891,7 +943,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
   form += `
       <!-- --- --- end of form groups-- - --- -->
-      <div class="${classes.input.buttons}">
+    <br clear="all">  
+    <div class="${classes.input.buttons}">
    
           <button type="submit" class="btn btn-primary">
             ${lang.submit}
@@ -924,7 +977,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   }
   else { footnote = ''; }
   trace.log(form);
-  return ({ html: form, footnote: footnote });
+  return ({ output: form, footnote: footnote });
   //  return exits.success(form);
 
 

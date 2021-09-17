@@ -28,7 +28,7 @@ module.exports = {
     groupTab: 'col-sm-2',               // Each of the group names on the line allowing users to switch
     errors: 'error',                    // see suds.less
     form: 'sudsForm',
-    buttons: '',
+    buttons: 'sudsbuttons',
   },
   output: {
     search: {
@@ -49,8 +49,7 @@ module.exports = {
         field: 'col-sm-2',
         comp: 'col-sm-2',
         value: 'col-sm-4',
-        valueClass: 'form-control form-control-sm '
-
+        valueClass: 'form-control form-control-sm ',
 
       },
       message: {
@@ -79,6 +78,8 @@ module.exports = {
       envelope: 'col-sm-12',
       spacing: 'sudsFormTab',
     },
+    buttons: 'sudsbuttons',
+
   },
   delete: {
     spacing: 'sudsListTableLinks',
@@ -90,7 +91,19 @@ module.exports = {
     footer: 'modal-footer',
     button: 'btn btn-default btn-sm',
     delete: 'btn btn-danger btn-ok',
+  },
+  navbar: {
+    top: 'menu',                   /* UL tag at the top of the list */
+    topitem: 'topitem',                /* LI tag for non-dropdown items on the main menu */
+    topitemdrop: 'topitem dropdown',       /* LI tag for non-dropdown items on the main menu */
+    link: '',                       /* A tag for a main menu non-dropdown item */
+    droplink: 'dropbtn',                 /* A tag for a dropdown item on the main menu */
+    sub: 'dropdown-content',         /* DIV tag for the dropdown block */
+    subnavlink: '',                        /* not currently used */
+    subitem: '',
+    subitemdrop: '',
+    sublink: '',                         /* A tag in the dropdown block */
+    active: '',                         /* A tag for the current page */
   }
-
 
 }

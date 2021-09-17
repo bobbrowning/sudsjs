@@ -1,29 +1,25 @@
 
-/*
-inputs: {
-  res: { type: 'ref' },
-  output: { type: 'ref' },
-},
-*/
-module.exports = async function (res,output) {
-    trace = require('track-n-trace');
-    trace.log('sending output', typeof output);
-    let html;
-    if (typeof output == 'string') {
-      html=output;
-      footnote='';
-    }
-    else
-    {
-      html=output.html;
-      footnote=output.footnote;
-    }
 
-   // res.send(output);
-    res.render('index',{output:html, footnote: footnote});
-    return ('OK');
+trace = require('track-n-trace');
+let db = require('./db');
 
+
+
+module.exports = async function (res, view, output) {
+  trace.log('sending output', typeof output);
+  trace.log({ output: output, level: 'verbose' });
+  let viewData = {};
+  if (typeof output == 'string' && output) {
+    viewData.output = output;
+    viewData.footnote='';
   }
+  else {
+    viewData = output;
+  }
+   res.render(view, viewData);
+  return ('OK');
+
+}
 
 
 

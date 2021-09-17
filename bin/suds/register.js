@@ -30,7 +30,7 @@ module.exports = async function (req, res) {
 </form>
 `;
 
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 

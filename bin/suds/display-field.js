@@ -1,8 +1,8 @@
 
 let suds = require('../../config/suds');
 let classes = require('../../config/classes');
-let lang = require('../../config/language')['EN'];
 let tableDataFunction = require('./table-data');
+let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
 let trace = require('track-n-trace');
 let db=require('./db');
@@ -21,9 +21,12 @@ module.exports =
 
   async function (attributes, value, children, permission) {
     trace.log(arguments);
-    if (!value) return ('');
     let display = value;  // default do nothing
-    if (attributes.collection) {
+    if (!value) display='';
+    if (attributes.type == 'boolean'){
+      if (value) {display=lang.true} else {display=lang.false}
+    }
+     if (attributes.collection) {
       let num = children;
       if (num == 0) { num = lang.no; }
       if (children == 1) {
@@ -34,9 +37,10 @@ module.exports =
       }
       return (display);
     }
-
+ 
     let helper;
-
+    trace.log(value,attributes.type, attributes.display.type );
+ 
     if (attributes.input.type) {
       try {
         helper = require('./display/' + attributes.input.type);
@@ -46,7 +50,7 @@ module.exports =
         return (helperName(attributes, value))
       }
     }
-
+    trace.log(value,attributes.type, attributes.display.type );
     if (attributes.display.type == 'date') {
       if (value) {
         let date = new Date(value);
@@ -66,7 +70,7 @@ module.exports =
         display = '';
       }
     }
-
+ 
     trace.log(value);
     if (attributes.display && attributes.display.JSON1) {
       let data = JSON.parse(value);
@@ -90,7 +94,7 @@ module.exports =
     if (attributes.display && attributes.display.asterisks) {
       display = '*********************';
     }
-    if (attributes.model) {
+     if (attributes.model) {
       value = Number(value);
       if (value && value != 'NaN') {
         let tableData = tableDataFunction(attributes.model);

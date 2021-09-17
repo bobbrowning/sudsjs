@@ -14,6 +14,8 @@ let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 const knex = require('knex')(suds.database);
+let lang = require('../../config/language')['EN'];
+
 
 /** ******************************************
  * 
@@ -337,10 +339,12 @@ async function  deleteRow(permission,table,id) {
     if (!limit && spec.limit) {limit=spec.limit}
     let rows = {};
     let tableData = tableDataFunction(table);
+    if (!sortKey && spec.sort ) {sortKey=spec.sort[0];}
     if (!sortKey) {sortKey=tableData.primaryKey;}
-    if (!direction) {direction-'DESC';}
+    if (!direction && spec.sort) {direction=spec.sort[1];}
+   if (!direction) {direction='DESC';}
     trace.log(spec); 
-    if (spec && spec.searches.length) {
+    if (spec && spec.searches && spec.searches.length) {
       if (!spec.instruction) {
         spec.instruction = getInstruction(table, spec);
       }

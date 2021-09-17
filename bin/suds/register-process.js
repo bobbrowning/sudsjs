@@ -39,7 +39,7 @@ module.exports = async function (req, res) {
         }
         else {
             output += `<p>Email address ${allParms.emailAddress} is already registered</p>`
-            let result = await sendView(res, output);
+            let result = await sendView(res, 'admin',output);
             trace.log(result);
             return;
         }
@@ -48,7 +48,7 @@ module.exports = async function (req, res) {
     }
 
     output += '<p>Regstration complete - <a href="/login">Log in</a></p?';
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 

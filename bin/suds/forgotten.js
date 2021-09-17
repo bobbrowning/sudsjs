@@ -4,7 +4,7 @@ let sendView = require('./send-view');
 //let updateRow = require('./update-row');
 let db=require('./db');
 
-let createRow = require('./create-row');
+//let createRow = require('./create-row');
 let crypto = require('crypto');
 let suds = require('../../config/suds');
 var nodemailer = require('nodemailer');
@@ -24,7 +24,7 @@ module.exports = async function (req, res) {
     trace.log(userRec);
     if (userRec.err) {
         output += `<p>Email address ${allParms.emailAddress} is not registered</p>`
-        let result = await sendView(res, output);
+        let result = await sendView(res, 'admin',output);
         trace.log(result);
         return;
     }
@@ -42,7 +42,7 @@ module.exports = async function (req, res) {
     text = text.replace('{{user}}', userRec.id);
     text = text.replace('{{token}}', token);
 
-
+    
     var transporter = nodemailer.createTransport(suds.emailTransport);
     var mailOptions = {
         from: 'sudsexpress21@gmail.com',
@@ -61,7 +61,7 @@ module.exports = async function (req, res) {
     await db.updateRow('user', { id: userRec.id, forgottenPasswordToken: token, forgottenPasswordExpire: expire });
 
     output += '<p>An email has been sent to your email address.</p>';
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
 

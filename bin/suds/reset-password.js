@@ -36,7 +36,7 @@ module.exports = async function (req, res) {
  </script>
 `;
 
-    let result = await sendView(res, output);
+    let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;
  

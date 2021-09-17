@@ -3,7 +3,11 @@
   margin-top  : 50px;
   margin-right: 50px;
 }
-
+.pages {
+  margin-left : 50px;
+  margin-top  : 50px;
+  width: 750px;
+}
 H1 {
   font-size    : 18pt;
   font-weight  : bold;
@@ -165,6 +169,8 @@ ul.homeSectionList {
   box-shadow           : 0 5px 10px rgba(0, 0, 0, 0.2);
 
 }
+
+.sudsbuttons {margin-bottom: 50px}
 
 .sudsForm {}
 

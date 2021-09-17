@@ -9,20 +9,20 @@
 
 module.exports = {
     description: 'Web Pages',
-    permission: { all: ['admin', 'web'] },
+    permission: { all: ['admin', 'web'], read: ['#guest#'] },
     list: {
-        columns: ['pageno', 'slug', 'title', 'author', 'status'],
+        columns: ['pageno', 'slug', 'title', 'author', 'status', 'parent', 'onMenu'],
     },
     groups: {
         basic: {
             static: true,
-            columns: ['title', 'headline', 'status', 'author'],
+            columns: ['title', 'status', 'author', 'slug'],
         },
         content: {
-            columns: ['pageContent'],
+            columns: ['headline', 'pageContent'],
         },
         placement: {
-            columns: ['slug', 'onMenu', 'parent', 'tags',],
+            columns: ['onMenu', 'parent', 'tags', 'expires', 'embargo'],
         },
     },
     rowTitle: function (record) {
@@ -55,13 +55,25 @@ module.exports = {
         updatedBy: {
             friendlyName: 'Last updated by',
             description: `The person who last updated the row.`,
-                  type: 'number',
+            type: 'number',
             model: 'user',
             process: { updatedBy: true }
         },
 
         title: { type: 'string' },
-        slug: { type: 'string', },
+        slug: {
+            type: 'string',
+            input: {
+                required: true,
+                type: 'text',
+                validations: {
+                    api: {
+                        route: '/unique',
+                    }
+                }
+
+            },
+        },
         status: {
             type: 'string',
             input: {
@@ -69,7 +81,7 @@ module.exports = {
                 values: {
                     'D': 'Draft',
                     'P': 'Published',
-                    'X': 'Expired',
+                    'H': 'On hold',
 
                 }
             }
@@ -97,8 +109,14 @@ module.exports = {
                 idPrefix: 'Parent Page: ',
             },
         },
-        onMenu: { type: 'boolean' },
-        headline: { type: 'string' },
+        onMenu: {
+            friendlyName: 'Menu order (omit if off menu)',
+            type: 'number'
+        },
+        headline: { 
+            type: 'string',  
+            input: {required: true},
+        },
         tags: { type: 'string' },
         author: {
             model: 'user',
@@ -123,6 +141,16 @@ module.exports = {
             },
             display: { truncateForTableList: 50 },
         },
+        view: {
+            type: 'string',
+            input: {
+                type: 'select',
+                values: function () {
+                    return require('../config/suds').views;
+                }
+            }
+        }
+
     }
 };
 

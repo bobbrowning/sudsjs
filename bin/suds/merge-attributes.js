@@ -56,9 +56,9 @@ module.exports = function (table, permission) {
 
     if (merged[key].model) { merged[key].type = 'number'; }
 
-    if (!merged[key].input) {
-      merged[key].input = {}              // guarantee that there is an input object.
-    }
+    if (!merged[key].input) {merged[key].input = {}}        // guarantee that there is an input object.
+    if (!merged[key].input.validations) {merged[key].input.validations = {} }   // guarantee that there is an validations object.
+  
     if (!merged[key].input.class) {
       merged[key].input.class=suds.input.class;   // Default class for input fields.
     }
@@ -79,9 +79,6 @@ module.exports = function (table, permission) {
       merged[key].input.type = 'text';   // default input type but...
       if (merged[key].type == 'boolean') {
         merged[key].input.type = 'checkbox';
-      }
-      if (merged[key].validations && merged[key].validations.isIn) {
-        merged[key].input.type = 'select';
       }
     }
     trace.log({ key: key, type: merged[key].input.type, level: 'verbose' })
@@ -104,7 +101,7 @@ module.exports = function (table, permission) {
     trace.log({ key: key, group: groupLookup[key], permission: permission }, {level: 'verbose'});
     merged[key].canEdit = true;                              // assume all permissions OK
     merged[key].canView = true;
-    if (permission == '#superuser#') { continue; }
+    if (permission == '#superuser#') { continue; }   
 
     //  If there is no  field-level permission object, default to the group permission
     if (!merged[key].permission) {

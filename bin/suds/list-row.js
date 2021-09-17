@@ -495,13 +495,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
   *   Links
   *
   ************************************************ */
-
+   output+=`<div class="${classes.output.buttons}">`;
   /* ************************************************
   *
   *   Edit
   *
   ************************************************ */
-
+  
   let hasPermission = await hasPermissionFunction(permission, table, 'edit');
   trace.log({ hasPermission: hasPermission });
   if (hasPermission) {
@@ -572,7 +572,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
   output += `
       <button class="${classes.output.links.button}" onclick="window.location='${mainPage}?table=${table}&mode=list${openLink}'">${lang.tableList}</button>
       <button class="${classes.output.links.button}" onclick="window.location='${mainPage}'">${lang.backToTables}</button>
-   
+   </div> <!-- buttons -->
 `;
 
 
@@ -668,7 +668,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
   let created = new Date(record['createdAt']).toDateString();
   let updated = new Date(record['updatedAt']).toDateString();
   let footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}`;
-  return ({ html: output, footnote: footnote });
+  return ({ output: output, footnote: footnote });
 
 }
 

@@ -4,12 +4,12 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var crypto = require('crypto');
-
+let suds=require('../config/suds');
 
 var indexRouter = require('../bin/routes');
 //var adminRouter = require('./routes/admin');
 var csrf = require('csurf')
-// var bodyParser = require('body-parser');
+var bodyParser = require('body-parser');
 
 console.log('in app.js');
 var session = require('express-session')
@@ -25,7 +25,9 @@ app.use(function(req, res, next) {
   trace.init(req, './');
   next();
 });
-app.use(express.urlencoded({extended:false})); //Parse URL-encoded bodies
+
+
+app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
 
 app.use(session({
   secret: 'head shoe',
@@ -46,7 +48,7 @@ homeDir=homeDir.replace('/bin','');
 
 
 app.set('views', path.join(homeDir, 'views'));
-app.set('view engine', 'ejs');
+app.set('view engine', suds.viewEngine);
 
 app.use(logger('dev'));
 app.use(express.json());
