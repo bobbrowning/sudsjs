@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <!--
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+    -->
+
+    <link rel="stylesheet" href="./stylesheets/suds.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+
+    <script src="./javascripts/suds.js"></script>
+
+
+
+
+
+
+
+
+    <title>SUDS Admin</title>
+</head>
+
+<body>
+    <div class="nav">
+        <a href='/'>
+            <image src="/images/suds/tinylogo.png" style="float: left;   background-color: #f0f0f0;  "></image><a>
+                <span class='sudsHeading'> Database administration </span>
+
+    </div>
+
+    <div class="suds">
+
+        <script>
+            function validateForm() {
+                console.log(614, '*******validateForm******');
+                let errCount = 0;
+                let value = '';
+                let columnError;
+                let mainform = document.getElementById('mainform');
+
+                // ********** Start of validation for Mainproduct  ***************
+
+                columnError = false;
+                value = Number(mainform.mainproduct.value);
+                if (value) {                    // mainproduct is not mandatory so validation only needed
+                    // if there is something in the field
+                    if (value == 'NaN') {
+                        document.getElementById("err_mainproduct").innerHTML = "Error: this field must be a number";
+                        columnError = true;
+                        errCount++;
+                    }
+                    if (value.length < 2) {
+                        document.getElementById("err_mainproduct").innerHTML = "Error: The minimum number of characters allowed is  2";
+                        columnError = true;
+                        errCount++;
+                    }
+                    if (!columnError) {
+                        document.getElementById("err_mainproduct").innerHTML = "";
+                    }
+                }       // end of validation for mainproduct
+                // ********** Start of validation for Subproduct  ***************
+
+                columnError = false;
+                value = Number(mainform.subproduct.value);
+                if (value) {                    // subproduct is not mandatory so validation only needed
+                    // if there is something in the field
+                    if (value == 'NaN') {
+                        document.getElementById("err_subproduct").innerHTML = "Error: this field must be a number";
+                        columnError = true;
+                        errCount++;
+                    }
+                    if (value.length < 2) {
+                        document.getElementById("err_subproduct").innerHTML = "Error: The minimum number of characters allowed is  2";
+                        columnError = true;
+                        errCount++;
+                    }
+                    if (!columnError) {
+                        document.getElementById("err_subproduct").innerHTML = "";
+                    }
+                }       // end of validation for subproduct
+                if (errCount > 0) { return false; } else { return true; }
+            }
+        </script>
+
+        <h2>New for table: Productjoin</h2>
+        <form action="/admin?table=productjoin&mode=update&id=0" id="mainform" method="post" name="mainform"
+            class="sudsForm" onsubmit="return validateForm()" autocomplete="off" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" value="" id="csrf" />
+            <!-- --- --- --- --- --- --- Form group for mainproduct --- --- --- --- --- ---  -->
+
+            <div class="form-group sudsFormGroup row">
+                <!-- Form group for Mainproduct start -->
+                <div class="col-sm-3" style="">
+                    <!--  Names column start -->
+                    <label class="col-form-label" for="mainproduct" title="Mainproduct" id="label_mainproduct">
+                        Mainproduct b                    </label>
+                </div> <!-- Names column end -->
+                <div class="col-sm-9">
+                    <!-- Fields column start -->
+
+                    <div style="position: absolute">
+                        <!--  autcomplete container -->
+                        <input id="autoid_mainproduct" name="mainproduct" value="" type="hidden">
+                        <input class="form-control" style="width: 80%; float: left;" id="auto_mainproduct"
+                            name="mainproductdisp" value="" placeholder="Number or type name (case sensitive)"
+                            aria-describedby="Mainproduct"
+                            oninput="auto('mainproduct','products','','5','&andor=and&searchfield_1=name&compare_1=contains&value_1=%23input')">
+                        <span id="msg_mainproduct"></span>
+                        <span id="err_mainproduct" class="sudserror">
+
+                            <a href="#"
+                                onclick="document.forms['mainform']['mainproduct'].value='0'; document.forms['mainform']['mainproductdisp'].value='';"">
+           <svg xmlns=" http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                                <path
+                                    d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </a>
+                        </span>
+                        <div id="mainproduct-autocomplete-list" class="autocomplete-items">
+                            <div class="autocomplete-item"> 777 </div>
+                            <div class="autocomplete-item"> 888 </div>
+                        </div>
+                    </div> <!--  autcomplete container end -->
+
+                </div> <!-- Fields column end -->
+            </div> <!--  Form group for Mainproduct end -->
+
+            <!-- --- --- --- --- --- --- Form group for subproduct --- --- --- --- --- ---  -->
+
+            <div class="form-group sudsFormGroup row">
+                <!-- Form group for Subproduct start -->
+                <div class="col-sm-3">
+                    <!--  Names column start -->
+                    <label class="col-form-label" for="subproduct" title="Subproduct" id="label_subproduct">
+                        Subproduct
+                    </label>
+                </div> <!-- Names column end -->
+                <div class="col-sm-9">
+                    <!-- Fields column start -->
+
+                    <div>
+                        <!--  autcomplete container -->
+                        <input id="autoid_subproduct" name="subproduct" value="" type="hidden">
+                        <input class="form-control" style="width: 80%; float: left;" id="auto_subproduct"
+                            name="subproductdisp" value="" placeholder="Number or type name (case sensitive)"
+                            aria-describedby="Subproduct"
+                            oninput="auto('subproduct','products','','5','&andor=or&searchfield_1=name&compare_1=contains&value_1=%23input')">
+                        <span id="msg_subproduct"></span>
+                        <span id="err_subproduct" class="sudserror">
+
+                            <a href="#"
+                                onclick="document.forms['mainform']['subproduct'].value='0'; document.forms['mainform']['subproductdisp'].value='';"">
+           <svg xmlns=" http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z" />
+                                <path
+                                    d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </a>
+                        </span>
+                        <div id="subproduct-autocomplete-list" class="autocomplete-items">
+                            <div class="autocomplete-item"> 777 </div>
+                            <div class="autocomplete-item"> 888 </div>
+                        </div>
+                    </div> <!--  autcomplete container end -->
+
+                </div> <!-- Fields column end -->
+            </div> <!--  Form group for Subproduct end -->
+
+            <!-- --- --- end of form groups-- - --- -->
+            <br clear="all">
+            <div class="sudsbuttons">
+
+                <button type="submit" class="btn btn-primary">
+                    Submit
+                </button>
+                <span style="margin-right: 10px; margin-left: 10px;">
+                    <a class="btn btn-primary" href="/admin?table=productjoin&mode=list">List table data</a>
+                </span>
+                <a class="btn btn-primary" href="/admin"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                            d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z" />
+                        <path fill-rule="evenodd"
+                            d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z" />
+                    </svg> Admin home page</a>
+            </div>
+        </form>
+
+
+
+    </div>
+    <div style="
+   position: fixed;   
+   bottom: 0;   
+   width: 100%; 
+   height: 30px; 
+   font-size: .9em;
+   font-style: italic;
+   background-color: #f2f2f2 ;
+   text-align: center;
+   padding: 5px;
+   ">
+
+    </div>
+
+
+
+
+
+
+
+
+</body>
+
+</html>

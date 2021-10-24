@@ -4,7 +4,7 @@ let generic = require('./input/generic');
 
 
 
-module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record) {
+module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record,tableData) {
 
   trace = require('track-n-trace');
   trace.log({ inputs: arguments, maxdepth: 2 });
@@ -22,7 +22,8 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
      * treat as 'text'
      * 
      ******************************************************  */
-
+  let formField='';
+  let headerTags='';
   let fieldType = 'text';                        // default
   if (attributes[key].input.type == 'boolean') {
     fieldType = 'checkbox';                 // but defaults to checkbox if this is a boolean
@@ -87,14 +88,22 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
     else {
       if (helperName) {
         trace.log('calling helper', helperName);
-        formField = await helper(fieldType, passedName, passedValue, attributes[key], errorMsg,record);
+        let result = await helper(fieldType, passedName, passedValue, attributes[key], errorMsg,record,tableData);
+        if (Array.isArray(result)) {
+          formField=result[0];
+          headerTags=result[1];
+        }
+        else {
+          formField=result;
+        }
+
       }
     }
   }
 
   trace.log({ field: formField });
 
-  return (formField);
+  return ([formField,headerTags]);
 
 }
 

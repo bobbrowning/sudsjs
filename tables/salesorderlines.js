@@ -3,6 +3,7 @@
  *
   */
 
+ let db = require('../bin/suds/db');
 
 
 module.exports = {
@@ -13,26 +14,36 @@ module.exports = {
     view: ['purchasing'],
   },
   list: {
-    columns: ['updatedAt', 'id', 'orderNo', 'product', 'total'],
+    columns: ['updatedAt', 'id', 'orderNo','customer', 'product', 'total'],
   },
   edit: {
     preProcess: function (record) {
       record.total = record.units * record.price;
       return record;
     },
+    preForm: async function (record, mode) {
+      if (record.orderNo) {
+        console.log(record);
+        let so = await db.getRow('salesorders', record.orderNo,);
+        record.customer = so.customer;
+      }
+      return;
+    },
 
+    /** Add up the 'total' field in each sales order line in thie order and update the parent sales order */
     postProcess: async function (record, operation) {
-      let totalRows= require('../bin/suds/total-rows')
-      let updateRow= require('../bin/suds/update-row')
-      let total = await totalRows('salesorderlines',{searches: [['orderNo','eq',record.orderNo]]},'total')
-      await updateRow('salesorders', {id: record.orderNo, total: total });
+      let total = await db.totalRows(
+        'salesorderlines',
+        {searches: [['orderNo','eq',record.orderNo]]},
+        'total');
+      await db.updateRow('salesorders', {id: record.orderNo, totalValue: total });
       return;
     },
 
   },
   attributes: {
     id: {
-      friendlyName: 'User No',                            // Visible name 
+      friendlyName: 'Line No',                            // Visible name 
       type: 'number',
       primaryKey: true,
       autoincrement: true,
@@ -99,13 +110,14 @@ module.exports = {
       description: 'Number of units ordered',
        friendlyName: 'Number of units',
       input: {
-        type: 'text',
-        isInteger: true,
-        //     min: 2,
+        type: 'number',
+        step: 1,
+  
         max: 100,
        },
  },
     price: {
+      friendlyName: 'Unit price',
       type: 'number',
       input: { step: .01, },
       display: { currency: true },
@@ -114,6 +126,12 @@ module.exports = {
       type: 'number',
       input: { hidden: true },
       display: { currency: true },
+ },
+ customer: {
+   model: 'user',
+   type: 'number',
+   input: {type: 'hidden'}
+   
  }
 
   },

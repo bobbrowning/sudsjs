@@ -1,8 +1,8 @@
 
-  let friendlyName= 'Autocomplete input.';
+let suds = require('../../../config/suds');
 
-
-  let description= `Generates autocomplete field. This can be based in a fixed set of items which are in the model (isIn), 
+let friendlyName = 'Autocomplete input.';
+let description = `Generates autocomplete field. This can be based in a fixed set of items which are in the model (isIn), 
   or more normally based on a linked table. In this case the field must be a key to some other table. 
   The user either enters the key of the linked file, or starts typing the 
   value in the linked table that is specified (e.g.someone's name). 
@@ -20,39 +20,59 @@
 
 },*/
 
-let suds = require('../../../config/suds');
+
 let trace = require('track-n-trace');
 let lang = require('../../../config/language')['EN'];
 let tableDataFunction = require('../table-data');
-let db=require('../db');
+let db = require('../db');
+let classes = require('../../../config/classes').input;           // Links class codes to actual classes
+
 
 //let getRow = require('../get-row');
 //let getRows = require('../get-rows');
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,thisrecord) {
-  if (arguments[0] == 'documentation') { return ({ friendlyName:friendlyName, description: description }) }
+module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, thisrecord) {
+  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace.log(arguments);
 
   let results = '';
-  
-  linkedTable = attributes.model;
-    if (attributes.input.linkedTable) { linkedTable = attributes.input.linkedTable; }
-    let display = '';
-    trace.log(linkedTable);
+  let display = '';
+  let title = '';   // starting value to put in filter
 
-     // searching linked tble (the normal case)
-    let tableData = tableDataFunction(linkedTable);
+  let source;
+  let values;
+  if (typeof attributes.values == 'string') {
+    source = attributes.values;
+    if (fieldValue) {
+      values = require(`../../../config/${attributes.values}`)
+      title = values[fieldValue];
+    }
+  }
+
+
+
+  let route = 'lookup';
+  if (attributes.model) { route = 'auto'; }
+  if (attributes.input.route) { route = attributes.input.route };
+
+
+  trace.log(source);
+
+  if (attributes.model) {
+    source = attributes.model;
+    trace.log({model: source});
+    // searching linked tble (the normal case)
+    let tableData = tableDataFunction(source);
     let displayFunction = false;
     if (tableData.rowTitle) {
       displayFunction = tableData.rowTitle;
     }
-    fieldValue=parseInt(fieldValue);   //Must be a number
- 
+
     let record = [];
-    let title = '';   // starting value to put in filter
     if (fieldValue) {
-      record = await db.getRow(linkedTable, fieldValue);     // populate record from database
+      fieldValue = parseInt(fieldValue);   //Must be a number
+      record = await db.getRow(source, fieldValue);     // populate record from database
       if (record.err) {
         title = `<span class="text-danger">${record.errmsg}</span>`;
       }
@@ -67,29 +87,34 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
         }
       }
     }
-    minLength = 2;
-    if (attributes.input.minLength) { minLength = attributes.input.minLength };
-      if (attributes.input.limit) { limit = attributes.input.limit }
-    let placeholder = '';
-    if (lang.type) { placeholder = lang.type }
-    if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
-
-    limit = 5;
-    if (attributes.input.limit) { limit = attributes.input.limit }
-    let size = 50;
-    let width = suds.defaultInputFieldWidth;
-    if (attributes.input.width) {
-      width = attributes.input.width;
-    }
+  }
 
 
+  minLength = 2;
+  if (attributes.input.minLength) { minLength = attributes.input.minLength };
+  if (attributes.input.limit) { limit = attributes.input.limit }
+  let placeholder = '';
+  if (lang.type) { placeholder = lang.type }
+  if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
+
+  limit = 5;
+  if (attributes.input.limit) { limit = attributes.input.limit }
+  let size = 50;
+  let width = suds.defaultInputFieldWidth;
+  if (attributes.input.width) {
+    width = attributes.input.width;
+  }
+
+  let searchparm = '';
+
+  if (attributes.model) {
     idPrefix = 'ID: ';
     if (attributes.input.idPrefix) { idPrefix = attributes.input.idPrefix }
     if (!attributes.input.search) {
-      return exits.error(`Field ${inputs.fieldName} in table being edited requires search  in config file`);
+      console.log( `Field ${fieldName} in table being edited requires search  in config file`);
+      return `Field ${fieldName} in table being edited requires search  in config file`;
     }
 
-    searchparm = '';
     if (typeof attributes.input.search == 'string') {
       searchparm = `&andor=and&searchfield_1=${attributes.input.search}&compare_1=contains&value_1=%23input`;
     }
@@ -103,67 +128,55 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
           let value = attributes.input.search.searches[i][2];
           if (value == '#input') { value = '%23input' }
           if (value.substr(0, 1) == '$') { value = thisrecord[value.substr(1)] }
-          if (!value) {break;}
+          if (!value) { break; }
           searchparm += `&searchfield_${j}=${attributes.input.search.searches[i][0]}`;
           searchparm += `&compare_${j}=${attributes.input.search.searches[i][1]}`;
           searchparm += `&value_${j}=${value}`;
         }
       }
     }
-    let onchange = '';
-    if (attributes.input.onchange) {
-      onchange = attributes.input.onchange;
-    }
- 
-    results = `
-      <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-      <script>\
-        $( function() {
-          var split=[];
-          $( "#auto_${fieldName}" ).autocomplete({
-            source: "auto?linkedtable=${linkedTable}&display=${display}&limit=${limit}${searchparm}",
-            minLength: ${minLength},
-            select: function( event, ui) {
-            split=ui.item.label.split(':',1);
-            document.getElementById("autoid_${fieldName}").value=split[0];
-            document.getElementById("msg_${fieldName}").innerHTML='(${idPrefix}'+split[0]+')';
-            ${onchange}
-            }
-          });
-        } );
-      </script>
-      <div class="ui-widget" >
-         <input 
-          id="autoid_${fieldName}" 
-          name="${fieldName}"  
-          value="${fieldValue}"
-          type="hidden">
-        <input  
-          id="auto_${fieldName}" 
-          name="${fieldName}disp" 
-          value="${title}"
-          style="
-          width: ${width};
-          border: 1px solid #ccc;
-          height: 40px;
-          -webkit-border-radius: 5px;
-          -moz-border-radius   : 5px;
-          border-radius        : 5px;"  
-          placeholder="${placeholder}" > 
-        <span id="msg_${fieldName}"></span>
-        <span id="err_${fieldName}" class="sudserror">
-         ${errorMsg}
-         <a href="#" 
-         onclick="document.forms['mainform']['${fieldName}'].value='0'; document.forms['mainform']['${fieldName}disp'].value='';""
-         >${lang.deleteIcon}</a>
-         </span>
-      </div>
-    `;
-
-    return results;
-
-
   }
+
+  let onchange = '';
+  if (attributes.input.onchange) {
+    onchange = attributes.input.onchange;
+  }
+
+  results = `
+    <div class="${classes.autocompleteContainer}"> <!--  autcomplete container --> 
+    <input 
+      id="autoid_${fieldName}" 
+      name="${fieldName}"  
+      value="${fieldValue}"
+      type="hidden">
+        <input 
+          class="form-control" 
+          style="width: ${attributes.input.width}; float: left;" 
+          id="auto_${fieldName}" 
+          name="${fieldName}disp"
+          value="${title}"
+          placeholder="${placeholder}" 
+          aria-describedby="${attributes.description}"
+          oninput="auto('${route}','${fieldName}','${source}','${display}','${limit}','${searchparm}')"
+          >
+          <span id="msg_${fieldName}"></span>
+          <span id="err_${fieldName}" class="sudserror">
+            ${errorMsg}
+          </span>
+          <span 
+          class="${classes.autoRemove}"
+          onclick="document.forms['mainform']['${fieldName}'].value=''; document.forms['mainform']['${fieldName}disp'].value='';"
+          >
+            ${lang.deleteIcon} Remove
+          </span>
+
+    </div>  <!--  autcomplete container end -->
+  `;
+
+  return results;
+
+
+}
 
 
 

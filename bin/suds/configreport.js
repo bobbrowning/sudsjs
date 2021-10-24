@@ -72,7 +72,7 @@ module.exports = async function (req, res) {
   if (suds.description) { description = suds.description }
   let superwarning = '';
   output = `
-       <div class="sudsReport">
+      <div class="sudsReport">
       <div style="margin-bottom: 60px;">   <!--  header page -->
         <h1>SUDS Database Report</h1>
         <h2>${title}</h1>
@@ -144,7 +144,10 @@ module.exports = async function (req, res) {
     </thead>
     <tbody>
     <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
-    <tr><td>Route to the configuration validate program</td><td>${suds.validate.page}</td></tr>
+    <tr><td>Route to the login</td><td>${suds.validate.page}</td></tr>
+    <tr><td>Route to the configuration validate program</td><td>${suds.login.page}</td></tr>
+    <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
+    <tr><td>Route to the register pawssword program</td><td>${suds.register.page}</td></tr>
     <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
     <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
     <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
@@ -265,7 +268,8 @@ module.exports = async function (req, res) {
     *
     **************************************** */
   output += `
-    <a name="it"></a><h3>Input types</h3>
+  <br />  
+  <a name="it"></a><h3>Input types</h3>
       <p>
         The following input types are handled as a standard input tag with no special handling. 
       </p>

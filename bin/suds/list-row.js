@@ -5,7 +5,7 @@ let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db=require('./db');
+let db = require('./db');
 
 let createField = require('./create-field');
 //let countRows = require('./count-rows');
@@ -59,14 +59,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
   let tableData = tableDataFunction(table, permission);
   let message = '';
   let attributes = await mergeAttributes(table, permission);  // Merve field attributes in model with config.suds tables
-  trace.log({attributes: attributes, level: 'verbose'})
+  trace.log({ attributes: attributes, level: 'verbose' })
   let record = await db.getRow(table, id);     // populate record from database
   if (record.err) {
     return (`<h1>Unexpected error ${record.errmsg}/h1>`);
   }
   let output = '';
-  let tableName = table;          // default table name to database name, but prefer entry in config.suds
-  if (tableData.friendlyName) { tableName = tableData.friendlyName; }
+  tableName = tableData.friendlyName;
   let rowTitle = `Row: ${id}`;              //  Row title defailts to Row: x  
   if (tableData.rowTitle) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
     rowTitle = tableData.rowTitle(record);
@@ -160,6 +159,19 @@ module.exports = async function (permission, table, id, open, openGroup) {
       * 
       ****************************************************** */
 
+  let omit = [];
+  if (tableData.recordTypeColumn) {
+    trace.log({
+      recordTypeColumn: tableData.recordTypes,
+      recordType: record[tableData.recordTypeColumn],
+      recordtypedata: tableData.recordTypes[record[tableData.recordTypeColumn]],
+      omit: tableData.recordTypes[record[tableData.recordTypeColumn]].omit,
+    });
+    if (tableData.recordTypes[record[tableData.recordTypeColumn]].omit) {
+      omit = tableData.recordTypes[record[tableData.recordTypeColumn]].omit;
+    }
+  }
+  trace.log(omit);
   let groupList = ['other'];
   let openTab = '';
   let staticList = [];  // list of groups with static first
@@ -180,7 +192,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
       trace.log({ group: group, cols: tableData.groups[group].columns })
       if (group == 'other') { continue }                          // deal with this later - will be the last tab
       if (!tableData.groups[group].columns) { continue; }    // If there are no columns then will not be shown
-
+      if (omit.includes(group)) { continue }
       let count = 0;                                         // how many viewable columns?
       for (const key of tableData.groups[group].columns) {
         if (attributes[key] && attributes[key].canView) {
@@ -228,7 +240,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
     trace.log({ tabs: tabs, static: staticList, groups: tableData.groups })
 
-/*  Figure out which child list should be open for each group */
+    /*  Figure out which child list should be open for each group */
     let first = true;
     let openList = '{';
     for (let group of groupList) {
@@ -247,7 +259,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
         }
       }
     }
-   if (openGroup) {openTab=openGroup}
+    if (openGroup) { openTab = openGroup }
 
 
     openList += '}';
@@ -280,7 +292,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
     staticList = ['other'];
     if (!tableData.groups.other.columns) { tableData.groups.other.columns = [] }
     for (let key of fieldList) {
-      if (key == tableData.primaryKey || key == 'createdAt' || key == 'updatedAt') { continue; }
+      //    if (key == tableData.primaryKey || key == 'createdAt' || key == 'updatedAt') { continue; }
       tableData.groups.other.columns.push(key);
     }
 
@@ -324,7 +336,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
     groupRows[group] = '';
     if (tableData.groups[group].columns) {
       for (const key of tableData.groups[group].columns) {
-        trace.log(group, key, attributes[key].canView);
+        trace.log(group, key, attributes[key].canView, children[key]);
         if (!attributes[key]) {
           console.log(`column ${key} in group ${group} does not exist.`);
           continue
@@ -495,13 +507,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
   *   Links
   *
   ************************************************ */
-   output+=`<div class="${classes.output.buttons}">`;
+  output += `<div class="${classes.output.buttons}">`;
   /* ************************************************
   *
   *   Edit
   *
   ************************************************ */
-  
+
   let hasPermission = await hasPermissionFunction(permission, table, 'edit');
   trace.log({ hasPermission: hasPermission });
   if (hasPermission) {
@@ -642,7 +654,32 @@ module.exports = async function (permission, table, id, open, openGroup) {
       if (attributes[child].collectionList.columns) { reportData.columns = attributes[child].collectionList.columns }
       if (attributes[child].collectionList.hideEdit) { reportData.hideEdit = true; }
       if (attributes[child].collectionList.hideDetails) { reportData.hideDetails = true; }
+
+
+      if (attributes[child].collectionList.derive) {
+        reportData.headingText = '';
+        let total = {};
+        for (let key of Object.keys(attributes[child].collectionList.derive)) {
+          let spec = attributes[child].collectionList.derive[key];
+          if (spec.type == 'count') { total[key] = children[child]; }
+          if (spec.type == 'total') { total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column); }
+          if (spec.type == 'average') {
+            total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column);
+            total[key] /= children[child];
+          }
+          if (spec.type == 'composite') {
+            if (spec.divide) { total[key] = total[spec.divide[0]] / total[spec.divide[1]] }
+            if (spec.add) { total[key] = total[spec.divide[0]] + total[spec.divide[1]] }
+            if (spec.subtract) { total[key] = total[spec.divide[0]] - total[spec.divide[1]] }
+          }
+          let display = total[key];
+          if (spec.display) { display = await displayField(spec, display) }
+          reportData.headingText += ` ${spec.friendlyName}: ${display}`;
+
+        }
+      }
     }
+
 
     trace.log(reportData);
 

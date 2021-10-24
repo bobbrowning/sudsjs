@@ -1,21 +1,16 @@
 module.exports = {
   EN: {
     addCondition: 'Add condition',                             // Search function
-    addIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
-    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-  </svg>`,
+    addIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>`,
     addRow: `New`,                                                  // List Table
     addRowTip: 'Click here to add a new record to ',                                                  // List Table
     and: 'And',
+    alltrue: 'All true',                                       // Home page search checkbox
     apiCheck: '<div class="spinner-border text-success" role="status"><span class="sr-only"></span></div><span > Checking...</span>',
-   apiWait: `<span  style="color: green"><small><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg> This will be checked when you click on another field</small></span>`,
+    apiWait: `<span  style="color: green"><small><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg> This will be checked when you click on another field</small></span>`,
     asc: 'ascending',
     back: 'Back',                                                       // List Table
-    backToTables: ` <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
-    <path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/>
-    <path fill-rule="evenodd" d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z"/>
-  </svg> Admin home page`,
+    backToTables: ` <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/><path fill-rule="evenodd" d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z"/></svg> Admin home page`,
     backUp: 'delete last ',                                   // List Table, List Row, Edit/New Row 
     childdata: 'Related data..',                                        // List Row
     contains: 'contains',
@@ -31,8 +26,8 @@ module.exports = {
     <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
     <path d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
   </svg> Edit`,                                                       // List Row
-  eq: 'equals',  
-  false: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+    eq: 'equals',
+    false: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
   <path d="M1.293 1.293a1 1 0 0 1 1.414 0L8 6.586l5.293-5.293a1 1 0 1 1 1.414 1.414L9.414 8l5.293 5.293a1 1 0 0 1-1.414 1.414L8 9.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L6.586 8 1.293 2.707a1 1 0 0 1 0-1.414z"/>
 </svg>`,                                                     // List Table, List Row
     field: 'Field',                                                     // header of List Row
@@ -49,12 +44,12 @@ module.exports = {
     forgottenPasswordEmail: `A request was made for a new password for your account. 
     If this was not you please ignore this email. 
     To set up a new password, go to {{url}}?user={{user}}.
-    Enter this code {{token}} plus your new password.`,                                      
+    Enter this code {{token}} plus your new password.`,
     formGroup: 'Click for further data: ',
     forTable: 'for table',
-    ge: 'greater than or equals' ,                                             
+    ge: 'greater than or equals',
     gt: 'greater than',
-    homeHeading: 'Database administration page',                        // Home page heading 
+    homeHeading: 'Database administration',                        // Home page heading 
     le: 'less than or equals',
     linkTo: 'Up to',                                                    // Used in the button on the row detail page to link tp parent
     listTable: ``,                                            // Used in heading of table list
@@ -85,17 +80,19 @@ module.exports = {
     min: 'Error: This must be greater that ',                           //     "    "
     minLength: 'Error: The minimum number of characters allowed is ',   //     "    "
     more: 'more ...',                                                   // link to row detail page on table listing
-    nan: 'Error: this field must be a number',   
+    nan: 'Error: this field must be a number',
     ne: 'not equal to',                       // Error message                                               
     next: 'Next page >',                                                // Table list pagination
     no: 'no',
     No: 'No',                                                        // Used in YesNoRadio
+    noChildren: '<i>No associated data</i>',
     notInt: 'Error: this field must be a whole number with no decimal point',   // Error message 
     notEmail: 'Error: This must be a valid email,address',              // Error message
     notSpecified: '<i>Not specified</i>',                               // On listing if value is null
     or: 'Or',
     prev: '< Previous page',                                            // Table list pagination
     //  returnToParent: 'Return',  // not used any more                                          
+    recordCount: 'Record count',
     row: 'record',
     rows: 'records',
     rowAdded: 'Row added to table - No:',
@@ -117,6 +114,7 @@ module.exports = {
     <path d="M13.485 1.431a1.473 1.473 0 0 1 2.104 2.062l-7.84 9.801a1.473 1.473 0 0 1-2.12.04L.431 8.138a1.473 1.473 0 0 1 2.084-2.083l4.111 4.112 6.82-8.69a.486.486 0 0 1 .04-.045z"/>
   </svg>`,
     type: 'Start typing...',
+    uploaded: 'Will replace file currently uploaded: ',
     update: 'Update',
     updatedAt: 'Last updated',
     yes: 'Yes',

@@ -45,7 +45,8 @@ module.exports = function (table, permission) {
   }
   trace.log({ primaryKey: tableData.primaryKey, level: 'verbose' });
 
-  if (!merged.friendyName) { merged.friendlyName = humanise(table); }
+  if (!merged.friendlyName) { merged.friendlyName = humanise(table); }
+  trace.log(merged.friendlyName);
 
   if (!merged.description) { merged.description = table; }
   if (!merged.edit) { merged.edit = {}; }

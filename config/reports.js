@@ -198,6 +198,19 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'permission', 'isSuperAdmin'],        // Columns on the table listing. All columns are in the detail page
   },
 
+   auditTrail: {
+     table: 'audit',
+     title: 'List audit trail',
+     sort: ['createdAt','DESC'],
+     search: {
+      andor: 'and',
+      searches: [
+        ['tableName', 'eq', '#table'],
+        ['udatedBy', 'eq', '#users'],
+      ]                                           
+    },
+
+   }
 
 }
 

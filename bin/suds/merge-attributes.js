@@ -1,29 +1,29 @@
 
- let trace = require('track-n-trace');
- let invertGroups=require ('./invert-groups')
- let suds = require('../../config/suds');
+let trace = require('track-n-trace');
+let invertGroups = require('./invert-groups')
+let suds = require('../../config/suds');
 
 
 module.exports = function (table, permission) {
   // merge extra attributes with attributes 
-   trace.log({ inputs: arguments, });
- 
-   tableData=require('../../tables/'+table);
-   humaniseFieldname=require('./humanise-fieldname');
-   trace.log({tableData: tableData, level: 'verbose'});
-   if (!tableData) {
-    console.log(`********************* Table ${table} not found IN project file ****************`);
+  trace.log({ inputs: arguments, });
+
+  tableData = require('../../tables/' + table);
+  humaniseFieldname = require('./humanise-fieldname');
+  trace.log({ tableData: tableData, level: 'verbose' });
+  if (!tableData) {
+    console.log(`********************* Table ${table} not found  ****************`);
     return;
   }
 
 
-   const attributes = tableData.attributes;
+  const attributes = tableData.attributes;
   trace.log({ table: table, attributes: attributes, level: 'verbose' });
 
-   let groupLookup = invertGroups(tableData, attributes);
+  let groupLookup = invertGroups(tableData, attributes);
 
 
-  trace.log(groupLookup, {level: 'verbose'});
+  trace.log(groupLookup, { level: 'verbose' });
 
   let merged = {};
   for (const key of Object.keys(attributes)) {
@@ -33,17 +33,41 @@ module.exports = function (table, permission) {
     // loop through fields (columns) in the table
 
 
-    trace.log({ key: key }, {level: 'verbose'});
-  
-  
-    merged[key] =attributes[key]
-  
-    if (!merged[key].friendlyName) {
-      merged[key].friendlyName = humaniseFieldname(key);
-    }
+    trace.log({ key: key }, { level: 'verbose' });
 
-    if (!merged[key].database) {merged[key].database={};}
-    if (!merged[key].process) {merged[key].process={};}
+
+    merged[key] = attributes[key]
+
+    /** 
+     * 
+     * Guarantee that certain sub-object/values are there with default values 
+     * 
+     * */
+    if (!merged[key].input) { merged[key].input = {} }
+    if (!merged[key].database) { merged[key].database = {}; }
+    if (!merged[key].process) { merged[key].process = {}; }
+    if (!merged[key].display) { merged[key].display = {}; }
+
+    if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
+
+    /** field type */
+    if (!merged[key].type) { merged[key].type = 'string'; }
+    if (merged[key].model) { merged[key].type = 'number'; }
+
+    /** Input and input type */
+    if (merged[key].type == 'boolean' && !merged[key].input.type) { merged[key].input.type = 'checkbox'; }
+
+    if (merged[key].type == 'number' && !merged[key].input.type) {
+      merged[key].input.type = 'number';
+    }
+    /** Anything else is text! */
+    if (!merged[key].input.type) { merged[key].input.type = 'text' }
+
+    if (!merged[key].input.validations) { merged[key].input.validations = {} }   // guarantee that there is an validations object.
+    if (!merged[key].input.class) { merged[key].input.class = suds.input.class; }  // Default class for input fields.
+
+
+    /** Description  */
 
     if (!merged[key].description) {
       if (merged[key].collection) {
@@ -53,42 +77,40 @@ module.exports = function (table, permission) {
         merged[key].description = merged[key].friendlyName;
       }
     }
+    if (merged[key].description.includes('"')) { merged[key].description = merged[key].description.replace(/"/g, '&quot;') }
+    if (merged[key].description.includes('`')) { merged[key].description = merged[key].description.replace(/`/g, '&quot;') }
 
-    if (merged[key].model) { merged[key].type = 'number'; }
+    /** Help text */
+    merged[key].helpText = '';
+    let intype = merged[key].input.type;
+    if (suds.inputTypes[intype] && suds.inputTypes[intype].helpText) { merged[key].helpText = suds.inputTypes[intype].helpText }
 
-    if (!merged[key].input) {merged[key].input = {}}        // guarantee that there is an input object.
-    if (!merged[key].input.validations) {merged[key].input.validations = {} }   // guarantee that there is an validations object.
-  
-    if (!merged[key].input.class) {
-      merged[key].input.class=suds.input.class;   // Default class for input fields.
+
+    /** Record type and record type column = e.g. Customer type or product type. Special functiopns for this  */
+    merged[key].recordTypeColumn = false;
+    merged[key].recordTypes = {};
+    if (key == tableData.recordTypeColumn) {
+      merged[key].recordTypeColumn = true;
+      merged[key].recordTypes = tableData.recordTypes;
     }
 
-    if (!merged[key].display) {
-      merged[key].display = {}              // guarantee that there is an display object.
-    }
 
-    if (attributes[key].model) {          // Not in the model but it helps to 
-      merged[key].type = 'number';        // make it explicit for the merged attributes 
-    }
 
-    if (merged[key].type == 'number' && !merged[key].input.type) {
-      merged[key].input.type = 'number';
-    }
+
+
+
+
+
+
+
+
+
     trace.log({ key: key, type: merged[key], level: 'verbose' })
-    if (!merged[key].input.type) {
-      merged[key].input.type = 'text';   // default input type but...
-      if (merged[key].type == 'boolean') {
-        merged[key].input.type = 'checkbox';
-      }
-    }
     trace.log({ key: key, type: merged[key].input.type, level: 'verbose' })
 
 
 
-    if (merged[key].description) {
-      if (merged[key].description.includes('"')) { merged[key].description = merged[key].description.replace(/"/g, '&quot;') }
-      if (merged[key].description.includes('`')) { merged[key].description = merged[key].description.replace(/`/g, '&quot;') }
-    }
+
 
 
     /* ************************************************
@@ -98,10 +120,10 @@ module.exports = function (table, permission) {
     *   for each field.
     *
     ************************************************ */
-    trace.log({ key: key, group: groupLookup[key], permission: permission }, {level: 'verbose'});
+    trace.log({ key: key, group: groupLookup[key], permission: permission }, { level: 'verbose' });
     merged[key].canEdit = true;                              // assume all permissions OK
     merged[key].canView = true;
-    if (permission == '#superuser#') { continue; }   
+    if (permission == '#superuser#') { continue; }
 
     //  If there is no  field-level permission object, default to the group permission
     if (!merged[key].permission) {
@@ -113,7 +135,7 @@ module.exports = function (table, permission) {
 
 
 
-    trace.log(table, key, permission, merged[key].permission, {level: 'verbose'});
+    trace.log(table, key, permission, merged[key].permission, { level: 'verbose' });
     trace.log(table, key, permission, merged[key].permission, { level: key });
 
     /* if this field has a permission set then the default no longer applies */

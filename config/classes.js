@@ -1,4 +1,15 @@
 
+ /** **********************************************
+  * 
+  *                    Classes 
+  *                    -------
+  * 
+  * The software refers to classes in this file rather
+  * than having them hard-coded in.  This should make it 
+  * easier to change the look of the screens.
+  *   
+  * 
+  * ********************************************** */
 
 module.exports = {
   /*  New / Amend form */
@@ -29,6 +40,10 @@ module.exports = {
     errors: 'error',                    // see suds.less
     form: 'sudsForm',
     buttons: 'sudsbuttons',
+    autocompleteContainer: 'autocomplete-container',
+    autoRemove: 'autocomplete-remove',
+    pretext: 'sudspretext',
+    posttext: 'sudsposttext',
   },
   output: {
     search: {

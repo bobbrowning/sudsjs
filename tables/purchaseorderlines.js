@@ -3,10 +3,12 @@
  *
   */
 
+ let db = require('../bin/suds/db');
+
 module.exports = {
   description: 'Purchase Order lines',
   friendlyName: 'Purchase Order Lines',
-  permission: { all: ['purchasing', 'admin'] },
+  permission: { all: ['purchasing', 'admin'], view: ['sales'] },
 
   edit: {
 
@@ -15,8 +17,7 @@ module.exports = {
     preForm: async function (record, mode) {
       if (record.purchaseorder) {
         console.log(record);
-        let getRow = require('../bin/suds/get-row')
-        let po = await getRow('purchaseorders', record.purchaseorder, 'id');
+        let po = await db.getRow('purchaseorders', record.purchaseorder,);
         record.supplier = po.supplier;
       }
       return;
@@ -31,14 +32,12 @@ module.exports = {
     /*  After the database has been updated, update the purchase order with the     */
     /*  total of the order lines                                                    */
     postProcess: async function (record, operation) {
-      let totalRows = require('../bin/suds/total-rows')
-      let updateRow = require('../bin/suds/update-row')
-      let total = await totalRows(
+      let total = await db.totalRows(
         'purchaseorderlines',
         { searches: [['purchaseorder', 'eq', record.purchaseorder]] },
         'total',
       );
-      await updateRow('purchaseorders', { id: record.purchaseorder, total: total });
+      await db.updateRow('purchaseorders', { id: record.purchaseorder, total: total });
       return;
     },
   },

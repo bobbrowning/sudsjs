@@ -8,21 +8,28 @@
 
 
 module.exports = {
-    description: 'Web Pages',
+    friendlyName: 'Web pages',
+    description: 'Web pages for the basic content management system',
     permission: { all: ['admin', 'web'], read: ['#guest#'] },
     list: {
-        columns: ['pageno', 'slug', 'title', 'author', 'status', 'parent', 'onMenu'],
+        columns: ['pageno', 'title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
     },
     groups: {
         basic: {
             static: true,
-            columns: ['title', 'status', 'author', 'slug'],
+            columns: ['title', 'pagetype', 'slug', 'status', 'author'],
+        },
+        settings: {
+            friendlyName: 'Settings',
+            columns: ['onMenu', 'parent', 'tags', 'expires', 'embargo', 'view'],
         },
         content: {
-            columns: ['headline', 'pageContent'],
+            friendlyName: 'Page Content',
+            columns: ['headline', 'pageContent',],
         },
-        placement: {
-            columns: ['onMenu', 'parent', 'tags', 'expires', 'embargo'],
+        files: {
+            friendlyName: 'Images/Files',
+            columns: ['image1', 'image2', 'image3', 'image4', 'image5'],
         },
     },
     rowTitle: function (record) {
@@ -61,6 +68,16 @@ module.exports = {
         },
 
         title: { type: 'string' },
+        pagetype: {
+            type: 'text',
+            values: {
+                H: 'Plain old HTML',
+            },
+            input: {
+                required: true,
+                type: 'select',
+            }
+        },
         slug: {
             type: 'string',
             input: {
@@ -73,18 +90,6 @@ module.exports = {
                 }
 
             },
-        },
-        status: {
-            type: 'string',
-            input: {
-                type: 'radio',
-                values: {
-                    'D': 'Draft',
-                    'P': 'Published',
-                    'H': 'On hold',
-
-                }
-            }
         },
         embargo: {
             type: 'string',
@@ -107,50 +112,90 @@ module.exports = {
                 search: 'title',
                 placeholder: 'Start typing page title (case sensitive)',
                 idPrefix: 'Parent Page: ',
+                width: '80%',
             },
         },
         onMenu: {
             friendlyName: 'Menu order (omit if off menu)',
-            type: 'number'
+            type: 'number',
+            display: { tableHeading: 'Menu Order' },
         },
-        headline: { 
-            type: 'string',  
-            input: {required: true},
+        status: {
+            type: 'string',
+            values: {
+                'D': 'Draft',
+                'P': 'Published',
+                'H': 'On hold',
+
+            },
+            input: {
+                required: true,
+                type: 'radio',
+            }
         },
+        headline: { type: 'string', },
         tags: { type: 'string' },
         author: {
             model: 'user',
             description: 'The Author or maintainer of this page.',
-            friendlyName: 'Original author of the page',
+            friendlyName: 'Original author',
             input: {
-
+                width: '80%',
                 type: 'autocomplete',
                 search: 'fullName',
                 placeholder: 'Number or type name (case sensitive)',
                 default: '#loggedInUser',
             },
         },
-
         pageContent: {
             type: 'string',
+            description: `This is the main content of the page. `,
             input: {
                 format: 'col',
-                type: 'summernote',
+                type: 'ckeditor4',
                 height: 300,
-                placeholder: 'Please enter page content'
+                placeholder: 'Please enter page content',
             },
             display: { truncateForTableList: 50 },
         },
+
+
+
+
         view: {
             type: 'string',
+            values: function () {
+                return require('../config/suds').views;
+            },
             input: {
                 type: 'select',
-                values: function () {
-                    return require('../config/suds').views;
-                }
             }
-        }
+        },
+        /** upload file. The uploaded file will be given a unique name unless keepFileName is true  */
+        image1: {
+            type: 'text',
+            input: { type: 'uploadFile', keepFileName: true },
+        },
 
-    }
+        image2: {
+            type: 'text',
+            input: { type: 'uploadFile', keepFileName: true },
+        },
+
+        image3: {
+            type: 'text',
+            input: { type: 'uploadFile', keepFileName: true },
+        },
+        image4: {
+            type: 'text',
+            input: { type: 'uploadFile', keepFileName: true },
+        },
+        image5: {
+            type: 'text',
+            input: { type: 'uploadFile', keepFileName: true },
+        },
+    },
+
+
 };
 

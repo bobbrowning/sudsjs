@@ -19,6 +19,7 @@ trace = require('track-n-trace');
 const suds = require('../../config/suds');
 var mergeAttributes = require('./merge-attributes');
 var hasPermission = require('./has-permission');
+let db = require('./db');
 
 module.exports = async function (req, permission) {
   trace.log('SUDS Home page', { break: '#', level: 'min' });  // Distinctive break on trace
@@ -42,19 +43,19 @@ module.exports = async function (req, permission) {
 
   // Main Heading
   output = `
-              <H1>${lang.homeHeading}</H1>`;
+              <H1></H1>`;
 
   // loop through sections
   for (let section of Object.keys(home)) {
-    trace.log({ section: section });
+    trace.log({ section: section, permission: permission });
     let canSee = false;
     if (permission == '#superuser#') { canSee = true; }
     if (home[section].permission.includes(permission)) { canSee = true; }
     if (home[section].permission.includes('all') && permission != '#guest#') { canSee = true; }
 
-   if (!canSee) {continue}
+    if (!canSee) { continue }
 
-   
+
     //  Section heading
     let title = section;
     if (home[section].title) { title = home[section].title }
@@ -68,7 +69,14 @@ module.exports = async function (req, permission) {
               <p><span class="sudsHomeSectionHead">${title}</span>`;
     let description = '&nbsp;';
     if (home[section].description) {
-      description = home[section].description;
+      if (home[section].description == '#username#') {
+        let record = await db.getRow('user', req.session.userId);
+        trace.log(record);
+        description = record.fullName
+
+      } else {
+        description = home[section].description;
+      }
     }
     output += `
                 <br />
@@ -172,10 +180,12 @@ module.exports = async function (req, permission) {
        * URL link - link to url
        * 
        */
+      let target='';
+      if (linkData.target) {target=` target="${linkData.target}"`}
       if (type == 'www') {
         output += `
                 <li>
-                  <A HREF="${linkData.www}">${title}</a>
+                  <A HREF="${linkData.www}"${target}>${title}</a>
                 </li>`;
       }
 
@@ -193,9 +203,9 @@ module.exports = async function (req, permission) {
                    <input type="hidden" name="report" value="${report}">
                    <input type="hidden" name="mode" value="list">
                     <input type="hidden" name="source" value="home">`;
+                    let icount=-1;
           for (key of Object.keys(linkData.input)) {
-
-
+            if (key == 'button') {continue}
             output += `
                     <input 
                       type="text" 
@@ -203,8 +213,25 @@ module.exports = async function (req, permission) {
                       name="${key}"
                       placeholder="${linkData.input[key].placeholder}"
                       >
-                </form>`;
+                      `;
+                      icount++;
+                
           }
+          if (icount){
+            let button=`Filter ${link}`;
+            if (linkData.input.button) {button=linkData.input.button};
+            output+=`
+            <input type="radio" name="andor" value="and" checked>&nbsp;and&nbsp;   <input type="radio" name="andor" value="or">&nbsp;or<br /> 
+            <button type="submit" class="btn btn-secondary btn-sm">${button}</button>`;
+          }
+          else
+          {
+            if (linkData.input.button) {
+              output+=`
+              <button type="submit" class="btn btn-secondary btn-sm">${linkData.input.button}</button>`;              
+            }
+          }
+          output+=`</form>`;
         }
         else {
           output += `
@@ -220,19 +247,19 @@ module.exports = async function (req, permission) {
        * 
        */
       if (type == 'user') {
-        trace.log({ user: req.session.userId })
+        trace.log({ user: req.session.userId });
         if (link == 'login') {
           if (req.session.userId) { continue }
           output += `
           <li>
-            <a href="/login">${title}</a>
+            <a href="${suds.login.page}">${title}</a>
           </li>`;
         }
         if (link == 'register') {
           if (req.session.userId) { continue }
           output += `
         <li>
-          <a href="/register">${title}</a>
+          <a href="${suds.register.page}">${title}</a>
         </li>`;
         }
         if (link == 'forgotten') {
@@ -240,7 +267,7 @@ module.exports = async function (req, permission) {
           output += `
       <li>
         Forgotten password
-        <form action="/forgotten">
+        <form action="${suds.forgotten.page}">
           <input name="emailAddress" 
             type="text"  
             class="form-control sudsHomeSearch"
@@ -252,7 +279,7 @@ module.exports = async function (req, permission) {
           if (!req.session.userId) { continue }
           output += `
     <li>
-      <a href="/changepw">${title}</a>
+      <a href="${suds.changepw.page}">${title}</a>
     </li>`;
 
         }
@@ -261,7 +288,7 @@ module.exports = async function (req, permission) {
           if (!req.session.userId) { continue }
           output += `
           <li>
-            <a href="/logout">${title}</a>
+            <a href="${suds.logout.page}">${title}</a>
           </li>`;
 
         }
@@ -278,7 +305,7 @@ module.exports = async function (req, permission) {
   `;
   } // end of section
   trace.log({ output: output });
-  return (output);
+  return ({ output: output, footnote: lang.footnoteText, heading: lang.homeHeading });
 }
 
 

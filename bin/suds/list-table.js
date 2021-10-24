@@ -17,7 +17,7 @@ let humaniseFieldname = require('./humanise-fieldname');
 let suds = require('../../config/suds');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db=require('./db');
+let db = require('./db');
 
 module.exports = async function (
   permission /*
@@ -95,26 +95,34 @@ module.exports = async function (
   else {
     heading = `${lang.listTable} ${tableData.friendlyName}`;
   }
-  trace.log({ open: open, openGroup: openGroup, heading: heading });
+  let headingText = '';
+  if (reportData.headingText) {
+    headingText = reportData.headingText;
+  }
+  trace.log({ open: open, openGroup: openGroup, heading: heading, headingText: headingText });
 
 
 
 
   /* clone search spec */
   if (reportData.search) {
+    trace.log(reportData.search)
     searchSpec.andor = reportData.search.andor;
     searchSpec.searches = [];
     for (let i = 0; i < reportData.search.searches.length; i++) {
       trace.log(reportData.search.searches[i]);
       searchSpec.searches[i] = reportData.search.searches[i];  // normal case
+/*
       if (typeof reportData.search.searches[i][2] == 'string'
         && reportData.search.searches[i][2].substring(0, 1) == '#') {
         term = reportData.search.searches[i][2].substring(1);
         if (term == 'loggedInUser' || term.substring(0, 5) == 'today') { continue }
         trace.log(term);
-        searchSpec.searches[i][2] = inputs.reportData.enteredSearch[term];
+        searchSpec.searches[i][2] = reportData.search[term];
       }
+*/
     }
+    trace.log(searchSpec)
   }
 
   trace.log(searchSpec);
@@ -230,7 +238,7 @@ module.exports = async function (
 
   /* ************************************************
   *
-  *  If a search is in progress, product a line
+  *  If a search is in progress, produce a line
   *  confirming the search
   *
   ************************************************ */
@@ -269,13 +277,12 @@ module.exports = async function (
     if (i == 0) {
 
       searchText += `
-           ${lang.filterBy}:`;
+           ${lang.filterBy}:&nbsp;`;
     }
     else {
-      searchText += `<br />${andor}&nbsp;`;
+      searchText += `${andor}&nbsp;`;
     }
-    searchText += `
-       ${friendlyName} ${displayCompare} ${displayValue}`;
+    searchText += `${friendlyName} ${displayCompare} ${displayValue}`;
 
     if (andor == 'and' && compare == 'eq') {
       /* can't have a=2 AND a=3  but we will treat as OR just for that varable                   */
@@ -296,7 +303,13 @@ module.exports = async function (
     let dir = lang.asc;
     if (direction == 'DESC') { dir = lang.desc }
     trace.log(sortKey, attributes[sortKey]);
-    searchText += `${lang.sortedBy} ${attributes[sortKey].friendlyName} - ${dir}.`;
+    searchText += `
+          ${lang.sortedBy} ${attributes[sortKey].friendlyName} - ${dir}.`;
+  }
+
+  if (headingText) {
+    searchText += `<br />
+           ${headingText}`
   }
 
   trace.log({ search: searchSpec, searchText: searchText });
@@ -311,8 +324,12 @@ module.exports = async function (
   trace.log({ count: count, heading: heading });
 
   output = `
-        <h1>${heading}</h1>
-      <p>${searchText}</p>`;
+        <h1>${heading}</h1>`;
+  if (searchText) {
+    output += `
+    <!-- search text -->
+    <p>${searchText}</p>`;
+  }
 
 
 
@@ -419,6 +436,13 @@ module.exports = async function (
           </select>`;
       }
 
+      if (attributes[key].process && attributes[key].process.JSON) {
+        comp = `
+          <select name="{{compare}}" class="${classes.output.search.select}" >
+            <option value="includes">Includes</option>
+           </select>`;
+      }
+
 
       if (attributes[key].input.type == 'date') {
         comp = `
@@ -452,7 +476,13 @@ module.exports = async function (
       if (suds.search.allwaysEquals.includes(attributes[key].input.type)) {
         comp = `<input type="hidden" name="{{compare}}" value="eq">is`;
       }
-      let field = await createField(key, '', attributes, '', 'search');
+
+      if (attributes[key].process && attributes[key].process.JSON) {
+        comp = `<input type="hidden" name="{{compare}}" value="includes">includes`;
+        attributes[key].input.type = 'select';
+
+      }
+      let [field, headerTags] = await createField(key, '', attributes, '', 'search', {}, tableData);
       trace.log({ key: key, changed: attributes[key].input, level: 'verbose' });
 
       /* restore the attributes we have changed */
@@ -556,7 +586,7 @@ module.exports = async function (
 
     function anyDataCheck () {
       let errmsg;
-      console.log("value_"+num);
+      console.log("value_"+num,);
       let currentIndex=document.getElementById("searchfield_"+num).selectedIndex;
       let currentValue='';
       if(document.getElementById("value_"+num)) {
@@ -774,8 +804,10 @@ module.exports = async function (
           output += `        
                 <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${key}&direction=${thisdirection}">`;
         }
+        let tableHeading = attributes[key].friendlyName;
+        if (attributes[key].display.tableHeading) { tableHeading = attributes[key].display.tableHeading }
         output += `
-                 ${attributes[key].friendlyName}`;
+                 ${tableHeading}`;
 
         if (!parent) {
           output += `
@@ -869,7 +901,7 @@ module.exports = async function (
           else {
             width = '';
           }
-          trace.log(key, attributes[key].display.type,  attributes[key].display.truncateForTableList);
+          trace.log(key, attributes[key].display.type, attributes[key].display.truncateForTableList);
           if (attributes[key].display.truncateForTableList
             && display.length > attributes[key].display.truncateForTableList) {
             // remove embedded images

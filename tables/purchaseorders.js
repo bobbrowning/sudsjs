@@ -8,7 +8,7 @@
 module.exports = {
   description: 'Purchase orders',
   friendlyName: 'Purchase Orders',
-  permission: { all: ['purchasing', 'admin'] },
+  permission: { all: ['purchasing', 'admin'] , view: ['sales']},
   addRow: 'Add new purchase order',   // text in the link to add a new row  
   open: 'purchaseorderlines',
   attributes: {
@@ -47,10 +47,10 @@ module.exports = {
         type: 'autocomplete',
         required: true,
         search: {
-          andor: 'or',
+          andor: 'and',
           searches: [
             ['fullName', 'contains', '#input'],
-            ['id', 'equals', '#input'],
+            ['userType', 'equals', 'S'],
           ],
         },
         placeholder: 'Number or type name (case sensitive)',
@@ -79,7 +79,7 @@ module.exports = {
     total: {
       type: 'number',
       friendlyName: 'Total price',
-      input: { hidden: true },
+      input: { type: 'hidden'},
       display: {
         currency: true,
       }
@@ -88,14 +88,14 @@ module.exports = {
     {
       description: 'Status of the order',
       type: 'string',
+      values: {
+        A: 'Order placed',
+        B: 'Being processed',
+        C: 'Dispatched',
+        D: 'Confirmed recieved',
+      },
       input: {
         type: 'radio',
-        values: {
-          A: 'Order placed',
-          B: 'Being processed',
-          C: 'Dispatched',
-          D: 'Confirmed recieved',
-        }
       }
     },
     purchaseorderlines: {

@@ -38,7 +38,7 @@ module.exports = {
       model: 'user',
       process: { updatedBy: true }
     },
-    table: {
+    tableName: {
       type: 'string',
       database: { type: 'tinytext' },
     },

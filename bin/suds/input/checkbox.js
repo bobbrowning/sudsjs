@@ -7,6 +7,7 @@
   errorMsg: { type: 'string' },
 
 },*/
+let suds = require('../../../config/suds');
 let friendlyName = 'Checkbox';
 let description = 'Creates a checkbox field. ';
 
@@ -17,7 +18,7 @@ let getLabelsValues = require('./get-labels-values');
 
 
 module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
+  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace = require('track-n-trace');
   trace.log(arguments);
 

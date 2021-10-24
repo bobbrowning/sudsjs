@@ -1,13 +1,11 @@
-const { checkRequiredTime } = require("tarn/dist/utils")
 
-dotenv=require('dotenv').config();
+/* ****************************************************
+*
+*  Configure SUDS
+*
+***************************************************** */
 
 module.exports = {
-  /* ****************************************************
-  *
-  *  Configure SUDS
-  *
-  ***************************************************** */
 
   title: 'SUDS test database',
 
@@ -19,28 +17,28 @@ module.exports = {
     { version: '1.0.0', date: '2021-08-20', author: 'Bob', description: 'Initial test database' },
   ],
 
+  /** **********************************************
+   * 
+   *           Database
+   *           --------
+   *********************************************** */
 
-  emailTransport: {
-    service: 'gmail',
-    auth: {
-      user: 'sudsexpress21@gmail.com',
-      pass: 'suds-2021&$'
-    }
-
-  },
-
-  /*
-    database:
-    {
-      client: 'mysql',
-      connection: {
-        host: 'localhost',
-        user: 'bob',
-        password: '*********',
-        database: 'suds',
+  /** *********   mysql config ***************************
+   * commented out as we are using sqlite for the demo version...
+   
+      database:
+      {
+        client: 'mysql',
+        connection: {
+          host: 'localhost',
+          user: 'bob',
+          password: '*********',
+          database: 'suds',
+        },
       },
-    },
-  */
+
+   **************  end of commented section ************ */
+
   database: {
     client: 'sqlite3',
     connection: {
@@ -48,7 +46,6 @@ module.exports = {
     },
     useNullAsDefault: true,
   },
-
 
   tables: [
     'user',
@@ -61,101 +58,70 @@ module.exports = {
     'purchaseorders',
     'productjoin',
     'purchaseorderlines',
-    'productsparesjoin',
-    'spares',
+    'fieldtypes',
   ],
 
-  /* Normally SQL statements are like this SELECT FROM table WHREE col=xxx                */
-  /* But if the column name is a reserved word this won't work. Set this to true          */
-  /*  and the SQL will loook like this  SELECT FROM table WHREE table.col=xxx             */
-  /* If this doesn't work for your DBM, it can be changed in /bin/suds/get-instruction.js */
-  fixWhere: true,
+  /** **********************************************
+   * 
+   *           Routes
+   *           ------
+   *********************************************** */
 
+  port: 3000,
+  mainPage: '/admin',                          // e.g. http://localhost:3000/admin
 
+ 
+  /**  routes -> module */
+  /**  GET requests  */
+  get: {                
+    login: '../bin/suds/login',                      // e.g. http://localhost:3000/login results in bin/suds.login.js being run.
+    admin: '../bin/suds/admin',
+    changepw: '../bin/suds/change-password',
+    resetpw: '../bin/suds/reset-password',
+    auto: '../bin/suds/api/autocomplete',
+    lookup: '../bin/suds/api/lookup',
+    unique: '../bin/suds/api/unique',
+    validateconfig: '../bin/suds/validateconfig',
+    configreport: '../bin/suds/configreport',
+    createtable: '../bin/suds/create-table',
+    register: '../bin/suds/register',
+    logout: '../bin/suds/logout',
+    forgotten: '../bin/suds/forgotten',
+  },
+  /** POST requests */
+  post: {
+    changepw: '../bin/suds/change-password-process',
+    register: '../bin/suds/register-process',
+    login: '../bin/suds/login-process',
+    admin: '../bin/suds/admin',
 
-
-
-  /**
-   *  Presentation
-   */
-
-  pageLength: 10,                              //  Number of rows per page on a table list
-  defaultInputFieldWidth: '480px',
-  audit: {                                    // Audit trail file - logs every operation
-    include: true,
-    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records. 
-  },                                          // when it reaches 1200.  Comment out for no trim.
-  currency: {
-    currency: 'GBP',                          // British pounds
-    locale: 'en-GB',
-    digits: 2,
   },
 
-  viewEngine: 'ejs',
-  views: [
-    'admin',  /* REQUIRED */
-    'pages',
-  ],
 
 
-  /**
+   /** These map home page user functions (config/home.js) to routes */
+   validate: { page: '/validateconfig', permission: ['admin'], },
+   report: { page: '/configreport', permission: ['admin'], },
+   login: { page: '/login', },
+   logout: { page: '/logout', },
+   changepw: { page: '/changepw', },
+   register: { page: '/register', },
+   forgotten: { page: '/forgotten', },
+ 
+ 
+
+  /** **********************************************
    * 
-   * Content Management
-   * 
-   */
-
-  homePage: 'index',     /* slug of the home page */
-   pageFile: {
-    table: 'webpages',
-    /* Columns in the page File */
-    id: 'pageno',
-    title: 'title',
-    status:'status',
-    embargo:'embargo',
-    expires:'expires',
-    slug:'slug',
-  
-   },
-
-  /* ****************************************************
-  *
-  * The default format for fields in the input form. This can be over-ridden for 
-  * individual fields. For example see config>suds-website.js in the test data   
-  * the 'content' field is in column format (input field under the title) 
-  *
-  ***************************************************** */
-
-  input: {
-    default: 'row',
-    class: 'form-control',
-  },
+   *           Input
+   *           ------
+   *********************************************** */
 
   /* 
-  *
-  *  Search / filter rules.
-  *
+   *
+   * These are the input field types that are passed on to the 
+   * generic input routine. (bin/suds/input/generic.js) 
+   *
    */
-
-  search: {
-    fieldWidth: '250px',                       // Size of search text fields
-    maxConditions: '7',                        // This number can be increased if you need more conditiona
-    /* These are always equals search types. Less than & greater than have no meaning */
-    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox'],
-    /* These input types always have a simple input text field in the search      */
-    /* whatever the input type on forms                                           */
-    allwaysText: ['text', 'autocomplete', 'textarea', 'summernote','unique'],
-  },
-
-
-  /* 
-  *
-  *  Input field types 
-  * There are the input.type values that are passed on to the 
-  * generic input routine.  Any other input types must be 
-  * created by a handler called suds-input-fieldtype.js 
-  * The report will list the handlers currently installed.
-  *
-  */
   inputFieldTypes: [
     'text',
     'date',
@@ -170,35 +136,298 @@ module.exports = {
     'week',
     'hidden',
     'number',
-    'country',
   ],
   /** 
-   * These are onput types that are handles by modules in
-   * bin/suds/input. 
+   * Any other input types must be covered by a handler 
+   * in /bin/suds/input/ and listed below.  
+   * 
+   * To add new input types simply add a new source file
+   * to the directory bin/suds/input anf add to this list.
    */
   inputTypes: [
-    'autocomplete',
+    'autocomplete',              //  e.g. an autocomplete input field ig generated by bin/suds/input/automomplete.js
     'checkbox',
+    'checkboxes',
     'radio',
     'readonly',
     'select',
     'summernote',
+    'ckeditor4',
+    'ckeditor5',
     'textarea',
     'upload-file',
     'yesno-radio',
+    'record-type-select',
+  ],
+  /**
+  * 
+  * The default format for fields in the input form. This can be over-ridden for 
+  * individual fields. For example see config>suds-website.js in the test data   
+  * the 'content' field is in column format (input field under the title) 
+  * 
+  * This assuming the use of bootstrap.
+  *
+  */
+
+  input: {
+    default: 'row',
+    class: 'form-control',
+  },
+
+  defaultInputFieldWidth: '480px',
+
+
+
+
+  /**  
+   * 
+   *                      Input type configuration
+   *                      ------------------------
+   * 
+   * You can use this to add help text that is added to the column 
+   * description in the tooltip you get by hovering over the field 
+   * name.
+   * 
+   * However, mostly this is configuring the rich text editors that have
+   * been tested. There are a number of these available but so far
+   * these have been tested:
+   * 
+   *   * Summernote: A simple rich text editor. You can upload images
+   *     and videos which are included in the html - not stored on the 
+   *     server.
+   *   * Ckeditor 4: A descendent of the venerable fckeditor. As such 
+   *     it is very stable and functional. 
+   *   * Ckeditor 5: A rewrite of the editor and the implementation here
+   *     is very basic. To confure it properly you would need to download 
+   *     it and configure your installation. You might want to fork the
+   *     handletr as well,
+   * 
+   * In all cases I have used and tested the cdn versions so I didn't need
+   * to download the software. You might get better and more configurable
+   * results from the downloaded version.  
+   * 
+  */
+
+  inputTypes: {
+
+    number: {
+      helpText: `This field only accepts numbers`,     // included in the tooltip for this tyle of field.
+    },
+    /** 
+     * 
+     *                     Summernote configuration 
+     *                     ------------------------
+     * 
+     * */
+    summernote: {
+      headerTags: `
+      <!-- ----- include libraries(jQuery, bootstrap) needed for summernote ---- -->
+       <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+       <!----------------------------------------------------------------------- -->
+        `,
+      helpText: `The rich text editor is called summernote.
+More about this in https://www.summernote,org. There are
+some things to be aware of:
+1. normal style doesn't change the format of marked text. 
+   it is only useful for new text. Other styles do.
+2. This includes a faciity to upload images to include on the page.
+    However you might find it better to upload images and copy
+    the html from the link to the image.
+3. You can increase the size of the box by dragging down the
+bottom bar.`,
+      height: 300,    // can be over-ridden in the input attributes.
+      fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New'],
+      styleTags: [
+        { title: 'Normal', tag: 'p', className: '', value: 'p' },
+        { title: 'Header 1', tag: 'h1', className: '', value: 'h1' },
+        { title: 'Header 2', tag: 'h2', className: '', value: 'h2' },
+        { title: 'Header 3', tag: 'h3', className: '', value: 'h3' },
+        { title: 'Small', tag: 'p', className: 'smalltext', value: 'p' },
+        { title: 'Block of text floating right', tag: 'div', className: 'rightdiv', value: 'div' },
+        { title: 'Hover image 200px', tag: 'img', className: 'himage200', value: 'img' },
+
+      ],
+
+      toolbar: {                                   // this is optional. Omit for standard toolbar
+        style: ['style'],                         // ful list of options https://summernote.org/deep-dive/
+        font: ['bold', 'italic', 'underline', 'clear', 'hr'],
+        fontname: ['fontname', 'fontsize'],
+        color: ['color'],
+        para: ['ul', 'ol', 'paragraph'],
+        table: ['table'],
+        insert: ['link', 'picture', 'video'],
+        view: ['fullscreen', 'codeview', 'help'],
+      },
+      popover: {
+        image: [
+          ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
+          ['float', ['floatLeft', 'floatRight', 'floatNone']],
+          ['remove', ['removeMedia']]
+        ],
+        link: [
+          ['link', ['linkDialogShow', 'unlink']]
+        ],
+        table: [
+          ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
+          ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
+        ],
+        air: [
+          ['color', ['color']],
+          ['font', ['bold', 'underline', 'clear']],
+          ['para', ['ul', 'paragraph']],
+          ['table', ['table']],
+          ['insert', ['link', 'picture']]
+        ]
+      },
+      /* There are other simple config options which are commented out
+    blockquoteBreakingLevel: 1,
+         Array options like this can also be added
+    fontSizeUnits: ['px', 'pt'],    
+       *******************   */
+    },
+
+    /**
+     *                                 ckeditor 4 configuration 
+     *                                 ------------------------
+     * 
+     *  **distribution**: can be as follows:
+     *     basic - the Basic preset
+     *     standard - the Standard preset
+     *     standard-all - the Standard preset together with all other plugins created by CKSource*
+     *     full - the Full preset
+     *     full-all - the Full preset together with all other plugins created by CKSource*
+     * 
+     * The CDN version I am using does not come with the **editorplaceholder** plugin so this is 
+     * commented out. It 'should' work if you use the downloaded editor and install the plugin. 
+     *    
+     */
+
+    ckeditor4: {
+      /** replace 'standard' by 'full' for the complete set of options. */
+      headerTags: `
+  <!-- ------------------ tags required for ckedit 4 --------------------- -->
+  <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+  <link rel="stylesheet" href="/stylesheets/page.css">
+  <!----------------------------------------------------------------------- -->
+      `,
+      /** This *should* work if the software is downloaded and editorplaceholder plugin added */
+      //  editorplaceholder: 'Please enter page content',
+
+      /** omit styles or formats to get the defaults */
+      /** styles apply to marked text. Formats apply to the whole block the cursor is in */
+      styles: [
+        {
+          name: 'Block floating right',
+          element: 'div',
+          attributes: { style: 'float: right' }
+        },
+        {
+          name: 'Hover image 200px',
+          element: 'img',
+          attributes: { class: 'himage200' }
+        },
+       ],
+
+      formats: [
+        'p',    // shortcut for {name: 'p', element: 'p'}
+        'h1', 
+        'h2',  
+        /** example of custom style */
+        {   
+          name: 'Divright',
+          element: 'div',
+          attributes: { style: 'float: right;' }
+        },
+      ],
+
+
+    },
+
+  },
+
+  /** 
+   * 
+   *                            Ckeditor 5
+   *                            ----------
+   *     This is a basic implementation
+   * 
+   */
+  ckeditor5: {
+    headerTags: `
+    <script src="https://cdn.ckeditor.com/ckeditor5/30.0.0/classic/ckeditor.js"></script>`,
+  },
+
+
+  /** **********************************************
+   * 
+   *           View configuration
+   *           ------------------
+   * 
+   *   Configures output options and view engine.
+   * 
+   *********************************************** */
+
+  pageLength: 10,                              //  Number of rows per page on a table list
+ 
+  currency: {
+    currency: 'GBP',                          // British pounds
+    locale: 'en-GB',
+    digits: 2,
+  },
+
+  /** The system is not tested with other view engines. But changing this
+   * would call a different engine to be called.  See the following for a comp,ete list
+   *  https://expressjs.com/en/resources/template-engines.html
+   * 
+   * List the views used below.
+   * 
+   */
+  viewEngine: 'ejs',
+  views: [
+    'admin',  /* REQUIRED */
+    'pages',
   ],
 
-
+  /**   Search / filter rules.
+   * 
+   *   Normally the search uses the same input type as the input field.
+   *   so if the input is a radio button the search request will also be 
+   *   a radio  button. However some input types are not available 
+   *   in search so a simple input field is used instead.
+   * 
+   */
+  search: {
+    fieldWidth: '250px',                       // Size of search text fields
+    maxConditions: '7',                        // This number can be increased if you need more conditiona
+    /* These are always equals search types. Less than & greater than have no meaning */
+    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox'],
+    /* These input types always have a simple input text field in the search      */
+    /* whatever the input type on forms                                           */
+    allwaysText: [
+      'text',
+      'autocomplete',
+      'textarea',
+      'summernote',
+      'ckeditor4',
+      'ckeditor5',
+      'unique',
+      'recordTypeSelect'],
+  },
 
 
   /* ****************************************************
   *
-  *  Security
+  *                    Security
+  *                    --------
   *
   ***************************************************** */
   superuser: 'admin@admin.com',                //  This person is always superuser.
 
-  forgottenPasswordExpire: 20,
+  forgottenPasswordExpire: 600,                //  Token sent in forgotten password emasil
 
   permissionSets: {
     /*   all: 'Built-in permission meaning everyone',  */
@@ -213,54 +442,94 @@ module.exports = {
 
   /** **********************************************
    * 
-   *           Routes
-   *           ------
+   *           Other technical config
+   *           ----------------------
    *********************************************** */
+
+  audit: {                                    // Audit trail file - logs every operation
+    include: true,
+    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records. 
+  },
+
+  emailTransport: {
+    service: 'gmail',
+    auth: {
+      user: 'sudsexpress21@gmail.com',
+      pass: 'suds-2021&$'
+    }
+
+  },
+
+
+  /** 
+   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
+   * work. Set this to true and the SQL will loook like this  
+   *    SELECT FROM table WHERE table.col=xxx  
+   * If this doesn't work for your DBM, it can be changed in /bin/suds/get-instruction.js 
+   * 
+   * Theoretically this means you can use SQL reserved words as column names but I am 
+   * not convinced this always works with sqlite. 
+   * 
+   */
+
+  fixWhere: true,
+
 
   /**
    * 
-   * Functions -> route
-   * 
+   * Documentation flag. If the first argument to many routines 
+   * is this value then the function will return the friendly name and description
+   * instead of its normal function.  You onlu need to change this if whatever 
+   * this is set to is a credible first parameter.  
    */
-  mainPage: '/admin',                          // e.g. http://localhost:1337/admin
-  baseURL: 'http://zorin2:3000',
-  validate: {
-    description: `Validate the configuration files`,
-    page: '/validate-config',             // validate this config file plus sudstables
-    permission: ['admin'],
-  },
 
-  report: {
-    page: '/config-report',                 //  Database report
-    permission: ['admin'],
-  },
+  documentation: 'documentation',
 
-  /** 
+    /**
+     *  Header tags required for all input/list functions.  You could put this 
+     * in the suds.ejs file instead, but it seemed safer to keep the 
+     * technical stuff here.  
+     * 
+     */
+  headerTags: `
+  <!-- ------------------ Bootstrap CSS start ------------------- -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <!-- ------------------ Bootstrap CSS end ------------------- -->
+
+  <!-- ------------------- suds styles and routines ------------ -->
+  <link rel="stylesheet" href="/stylesheets/suds.css">
+  <script src="/javascripts/suds.js"></script>
+   <!-- -------------------------------------------------------- -->
+  `,
+
+  /** **********************************************
    * 
-   * routes -> module
+   *           Content Management System
+   *           -------------------------
    * 
-   */
-  get: {
-    login: '../bin/suds/login',
-    admin: '../bin/suds/admin',
-    changepw: '../bin/suds/change-password',
-    resetpw: '../bin/suds/reset-password',
-    auto: '../bin/suds/api/autocomplete',
-    unique: '../bin/suds/api/unique',
-    validateConfig: '../bin/suds/validateconfig',
-    configReport: '../bin/suds/configreport',
-    createTable: '../bin/suds/create-table',
-    register: '../bin/suds/register',
-    logout: '../bin/suds/logout',
-    forgotten: '../bin/suds/forgotten',
-  },
-  post: {
-    changepw: '../bin/suds/change-password-process',
-    register: '../bin/suds/register-process',
-    login: '../bin/suds/login-process',
-    admin: '../bin/suds/admin',
+   *   The CMS included here is a starter app so see how
+   *   the software can be used.
+   * 
+   *********************************************** */
 
-  }
+
+  homePage: 'index',     /* slug of the home page */
+  pageFile: {
+    table: 'webpages',
+    /* Columns in the page File */
+    id: 'pageno',
+    title: 'title',
+    status: 'status',
+    embargo: 'embargo',
+    expires: 'expires',
+    slug: 'slug',
+
+  },
+
 
 }
 

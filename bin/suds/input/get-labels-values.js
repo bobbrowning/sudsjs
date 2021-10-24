@@ -1,7 +1,12 @@
 
+/**
+ * Create a pair of arrays containing values and corresponding descriptions 
+ * to use is a select, chekboxes etc.
+ */
+
 let tableDataFunction = require('../table-data');
 //let getRows = require('../get-rows');
-let db=require('../db');
+let db = require('../db');
 
 module.exports = async function (attributes, record) {
   trace = require('track-n-trace');
@@ -33,7 +38,7 @@ module.exports = async function (attributes, record) {
         value = attributes.input.search.searches[i][2];
         if (value.substr(0, 1) == '$') { value = record[value.substr(1)] }
         if (!value) { break; }
-        search.searches[i]=[];
+        search.searches[i] = [];
         search.searches[i][0] = attributes.input.search.searches[i][0];
         search.searches[i][1] = attributes.input.search.searches[i][1];
         search.searches[i][2] = value;
@@ -49,24 +54,34 @@ module.exports = async function (attributes, record) {
     }
   }
   else {
-    if (attributes.input.values) {
-      if (typeof attributes.input.values == 'function') {
-        let lvObject = attributes.input.values();
+    if (attributes.values) {
+      if (typeof attributes.values == 'function') {
+        let lvObject = attributes.values();
         for (let key of Object.keys(lvObject)) {
           values.push(key);
           labels.push(lvObject[key]);
         }
       }
       else {
-        if (Array.isArray(attributes.input.values)) {
-          for (let i = 0; i < attributes.input.values.length; i++) {
-            values[i] = labels[i] = attributes.input.values[i];
+        if (Array.isArray(attributes.values)) {
+          for (let i = 0; i < attributes.values.length; i++) {
+            values[i] = labels[i] = attributes.values[i];
           }
         }
         else {
-          for (let key of Object.keys(attributes.input.values)) {
-            values.push(key);
-            labels.push(attributes.input.values[key]);
+          if (typeof attributes.values == 'string') {
+            let lookup = require(`../../../config/${attributes.values}`)
+            for (let key of Object.keys(lookup)) {
+              values.push(key);
+              labels.push(lookup[key]);
+            }
+          }
+
+          else {
+            for (let key of Object.keys(attributes.values)) {
+              values.push(key);
+              labels.push(attributes.values[key]);
+            }
           }
         }
       }

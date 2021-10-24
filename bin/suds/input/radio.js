@@ -7,6 +7,7 @@
   errorMsg: { type: 'string' },
 
 },*/
+let suds = require('../../../config/suds');
 
 let friendlyName='Radio Buttons';
 let description='Create radio buttons';
@@ -16,7 +17,7 @@ let getLabelsValues = require('./get-labels-values');
 
 
 module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,record) {
-  if (arguments[0] == 'documentation') { return ({ friendlyName:friendlyName, description: description }) }
+  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace = require('track-n-trace');
   trace.log(arguments);
 

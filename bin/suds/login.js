@@ -1,13 +1,15 @@
 let trace = require('track-n-trace');
 let sendView = require('./send-view');
-
+let suds=
 
 module.exports = async function (req, res) {
     console.log(__dirname);
     trace.log('login form' );
     output=`
+    <div class="suds">
+
     <h1>Log in</h1>
-    <form action="/login" method="post">
+    <form action="/login" method="post" class="sudsLogin">
        <div class="form-group">
         <label for="InputEmail">Email address</label>
         <input name="emailAddress" type="email" class="form-control" id="InputEmail" placeholder="Enter  your email address" required>
@@ -23,6 +25,7 @@ module.exports = async function (req, res) {
   </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+</div>
 `;
 
     let result = await sendView(res, 'admin',output);

@@ -8,6 +8,7 @@
   errorMsg: { type: 'string' },
 
 },*/
+let suds = require('../../../config/suds');
 
 let friendlyName='Select';
 let description=`Create select dropdown based on values in the table definition, 
@@ -18,7 +19,7 @@ let lang = require('../../../config/language')['EN'];
 let getLabelsValues= require('./get-labels-values');
 
 module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
-  if (arguments[0] == 'documentation') { return ({ friendlyName:friendlyName, description: description }) }
+  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace = require('track-n-trace');
   trace.log(arguments);
     let results = '';

@@ -3,6 +3,8 @@
  *
   */
 
+const { textContent } = require('domutils');
+
 module.exports = {
   description: 'Products',
   extendedDescription: `One record for each product that the organisation deals in.`,
@@ -17,10 +19,10 @@ module.exports = {
         minimumFractionDigits: suds.currency.digits,
       })
     price = formatter.format(record.price);
-    return `${record.name} (No: ${record.id}) Price: ${price}`
+    return `${record.name} (No: ${record.id}) Guide retail price: ${price}`
   },
   list: {
-    columns: ['id', 'updatedAt', 'id', 'name', 'supplier', 'price'],
+    columns: ['id', 'updatedAt', 'id', 'name','class', 'supplier', 'price'],
   },
   permission: { all: ['admin', 'purchasing'], view: ['sales'] },
   groups: {
@@ -29,7 +31,7 @@ module.exports = {
       columns: ['id', 'name', 'price'],
     },
     details: {
-      columns: ['supplier', 'vatable', 'class', 'overview',],
+      columns: ['supplier', 'vatable', 'class', 'overview','image'],
     },
     transactions: {
       columns: ['purchases', 'sales'],
@@ -95,14 +97,13 @@ module.exports = {
     },
     price: {
       type: 'number',
-      description: 'Unit price',
+      friendlyName: 'Guide retail unit price',
       input: {
         width: '150px',
         step: .01,
         required: true,
       },
       display: { currency: true },
-      friendlyName: 'Sales price',
     },
     vatable: {
       type: 'boolean',
@@ -110,10 +111,20 @@ module.exports = {
     },
     class: {
       type: 'string',
-      input: {
-        type: 'select',
-        values: ['houshold', 'sports', 'toys', 'auto', 'destructive'],
-      }
+      values: {
+        H:'houshold', 
+        S: 'sports', 
+        T:'toys', 
+        A:'auto', 
+        HW:'hardware',
+        AG: 'Agricultural',
+        O: 'Other'
+      },
+    input: {
+        type: 'checkboxes',
+       },
+      process: {JSON: true},
+      display: {JSON: true},
     },
     overview: {
       type: 'string',
@@ -123,6 +134,10 @@ module.exports = {
         placeholder: 'Enter a brief description of the product',
       },
     },
+    image: {
+       type: 'text',
+       input: { type: 'uploadFile' },
+  },
     description: {
       type: 'string',
       input: {
@@ -138,7 +153,7 @@ module.exports = {
       via: 'subproduct',
       friendlyName: 'Parent products ',
       collectionList: {
-        columns: ['mainproduct'],                       // Heading to the listing Default to table name
+        columns: ['type','mainproduct'],                       // Heading to the listing Default to table name
         heading: 'Parent products / Spare for',                         // Heading to the listing Default to table name
         hideEdit: true,
         hideDetails: true,
@@ -150,7 +165,7 @@ module.exports = {
       friendlyName: 'Sub products / Spare parts',
       collectionList: {
         open: true,
-        columns: ['subproduct'],                       // Heading to the listing Default to table name
+        columns: ['type','subproduct'],                       // Heading to the listing Default to table name
         hideEdit: true,
         hideDetails: true,
       },

@@ -142,7 +142,7 @@ async function countRows (table, spec) {
     trace.log({ input: arguments });
     let countobj={};
     let tableData = require('../../tables/' + table);
-    if (spec && spec.searches.length) {
+    if (spec && spec.searches && spec.searches.length) {
         if (!spec.instruction) {
             spec.instruction = getInstruction(table, spec);
         }
@@ -215,7 +215,8 @@ async function totalRows(table, spec, col) {
     temp=await knex(table).insert(rec).into(table).returning('*');
     trace.log(temp);
     if (suds.database.client == 'sqlite3') {
-      console.log('Kludge needed to get the last inserted ID from sqlite. Thus WILL NOT WORK in a multi-user environment.')
+      console.log(`Table ${table}: Special code is used to get the inserted ID from sqlite.
+      This is not suitable for  multi-user environment.`)
       let last= await knex(table).orderBy('updatedAt','DESC').limit(1);
       trace.log(last);
       id=last[0][tableData.primaryKey];

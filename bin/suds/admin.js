@@ -1,5 +1,6 @@
 let listTable = require('./list-table');
 let listRow = require('./list-row');
+let deleteRow = require('./delete-row');
 let sendView = require('./send-view');
 let updateForm = require('./update-form');
 let home = require('./home');
@@ -10,44 +11,47 @@ const db = require('./db');
 const lang = require('../../config/language')['EN'];
 
 
-/**
- * Central switching program. 
- * 
- * The program checks whether the user is logged in. If not it links to 
- * the login screen. The login URL must be routed from '/login'. 
- * 
- * Transfers control to a controller depending on mode.  If there is no 
- * mode, the main menu is presented.
- * 
- * Mode can be as follows
- *   Mode        Description                                              Controller             
- *   list        list rows in the table                                   list-table.js   
- *   listrow     list one row in the table                                list-row.js    
- *   new         Blank for for a new record                               update-form.js
- *   populate    Read record for given ID and populate form for update.   update-form.js
- *   update      validate data and update if valid                        update-form.js
- *   delete      Delete a row                                             db.js (deleteRow function)
- * 
- * The controller creates and returns the page content.   This program
- * is then responsible for sending it to the user.
- * 
- * All operations and parameters are logged to the audit trail unless this feature
- * has been switched off.
- * 
- *  
- */
+let friendlyName = `Central switching program.`;
+let description = `
+ The program checks whether the user is logged in. If not it links to 
+ the login screen. The login URL must be routed from '/login'. 
+ 
+ Transfers control to a controller depending on mode.  If there is no 
+ mode, the main menu is presented.
+ 
+ Mode can be as follows
+   Mode        Description                                              Controller             
+   list        list rows in the table                                   list-table.js   
+   listrow     list one row in the table                                list-row.js    
+   new         Blank for for a new record                               update-form.js
+   populate    Read record for given ID and populate form for update.   update-form.js
+   update      validate data and update if valid                        update-form.js
+   delete      Delete a row                                             db.js (deleteRow function)
+ 
+ The controller creates and returns the page content.   This program
+ is then responsible for sending it to the user.
+
+ All operations and parameters are logged to the audit trail unless this feature
+ has been switched off.
+ `;
+
+
 module.exports = async function (req, res) {
+    if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
     trace.log({
         start: 'admin',
         query: req.query,
         body: req.body,
+        files: req.files,
         break: '#',
-        level: 'min'
+        level: 'min',
     });
 
-    /* Consolidate all parameters in one object. */
-    let allParms = {};
-    allParms = { ...req.query, ...req.body };
+    trace.log({
+        req: req,
+        maxdepth: 3,
+        level: 'verbose',
+    });
 
     /** *************************************************************
      * 
@@ -220,13 +224,16 @@ module.exports = async function (req, res) {
     *  Audit trail
     * ******************************************** */
 
+    /* Consolidate all parameters in one object. */
+    let allParms = {};
+    allParms = { ...req.query, ...req.body };
 
 
     if (suds.audit.include) {
         if (table && !page) {
             let rec = {
                 updatedBy: req.session.userId,
-                table: table,
+                tableName: table,
                 mode: mode,
                 row: id,
                 data: JSON.stringify(allParms),
@@ -296,6 +303,7 @@ module.exports = async function (req, res) {
             if (reportObject.search) {
                 reportData.search = {};
                 reportData.search.andor = reportObject.search.andor;
+                if (req.query.andor) { reportData.search.andor = req.query.andor }
                 reportData.search.searches = [];
                 for (let i = 0; i < reportObject.search.searches.length; i++) {
                     /* search is an array contains search criteria  number i*/
@@ -321,6 +329,9 @@ module.exports = async function (req, res) {
                                 term = value.substring(1);
                                 if (req.query[term]) {
                                     search[2] = req.query[term];
+                                }
+                                else {
+                                    continue;
                                 }
 
                             }
@@ -383,7 +394,7 @@ module.exports = async function (req, res) {
             /* Over-write from URL if sort/search/open are there... */
             if (req.query.open) { reportData.open = req.query.open; }
             if (req.query.openGroup) { reportData.openGroup = req.query.opengroup; }
- 
+
             /* If there is no search structure make sure there is one to be modified.*/
             if (!reportData.search) {
                 reportData.search = {
@@ -399,7 +410,15 @@ module.exports = async function (req, res) {
             let i = 0;
             for (let j = 1; j < req.app.locals.suds.search.maxConditions; j++) {
                 if (req.query['searchfield_' + j]) {
-                    reportData.search.searches[i++] = [req.query['searchfield_' + j], req.query['compare_' + j], req.query['value_' + j]]
+                    let searchField = req.query['searchfield_' + j];
+                    let compare = req.query['compare_' + j];
+                    let value = req.query['value_' + j];
+                    if (attributes[searchField].process.JSON) {
+                        compare = 'contains';
+                        value = `"${value}"`;
+                    }
+
+                    reportData.search.searches[i++] = [searchField, compare, value]
                 }
             }
 
@@ -479,12 +498,12 @@ module.exports = async function (req, res) {
 
     if (mode == 'new' || mode == 'populate') {
         let record = {};
- 
- /*       if (req.query.parent) {
-            record[req.query.searchfield] = req.query[req.query.searchfield];
-        } */
- 
- 
+
+        /*       if (req.query.parent) {
+                   record[req.query.searchfield] = req.query[req.query.searchfield];
+               } */
+
+
         if (req.query.prepopulate) {
             let fieldName = req.query.prepopulate;
             let value = req.query[fieldName];
@@ -505,7 +524,7 @@ module.exports = async function (req, res) {
             openGroup,
         );
     }
-  
+
     /** *********************************************
     *
     *           U P D A T E
@@ -526,6 +545,7 @@ module.exports = async function (req, res) {
             req.session.userId,
             open,
             openGroup,
+            req.files,
         );
     }
 
@@ -537,7 +557,8 @@ module.exports = async function (req, res) {
     *  
     * ******************************************** */
     if (mode == 'delete') {
-        output = await db.deleteRow(
+
+        output = await deleteRow(
             permission,
             table,
             id,
@@ -561,7 +582,7 @@ module.exports = async function (req, res) {
     else {
         viewData = output;
     }
-
+    viewData.heading = lang.homeHeading;
     let result = await sendView(res, 'admin', viewData);
     trace.log(result);
     return;

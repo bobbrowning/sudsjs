@@ -4,7 +4,6 @@
 *
 * ***********************************************************************/
 
-const { stringify } = require('postcss');
 
 module.exports = {
 
@@ -18,13 +17,13 @@ module.exports = {
   *    Users - customers, suppliers and admin atrea users 
   *
   * ********************************************************************* */
-  friendlyName: 'Users',                                  // Name of the table
+  friendlyName: 'User table',                                  // Name of the table
 
   description: `This table includes a row for each person or organisation that 
   the system needs to process. This may be a customer, supplier, or in-house staff. 
   Rows can be linked so it can indicate which organisation a customer works for.`,
   permission: {                                           // Permission sets who can see this file 
-    all: ['sales', 'purchasing', 'admin']
+    all: ['sales', 'purchasing', 'admin'], view: ['all']
   },
   addRow: 'Add a new user',                               // Words that appear in the add button
 
@@ -38,7 +37,7 @@ module.exports = {
   /* Columns on the table listing. All columns are in the detail page       */
   /* This can be over-ridden in a report.                                   */
   list: {
-    columns: ['id', 'fullName', 'emailAddress', 'userType', 'organisation'],
+    columns: ['id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
   },
 
   /* The columns can be split into groups for editing and display purposes   */
@@ -56,7 +55,7 @@ module.exports = {
     profile: {
       friendlyName: 'profile',
       open: 'none',
-      columns: ['organisation', 'business', 'notes'],
+      columns: ['organisation', 'business', 'picture', 'notes'],
     },
     location: {
       friendlyName: 'How to contact',
@@ -66,12 +65,12 @@ module.exports = {
     contacts: {
       friendlyName: 'Contacts',
       open: 'contacts',
-      columns: ['people','contacts','lastContact', 'nextAction', 'nextActionDate',],
+      columns: ['people', 'contacts', 'lastContact', 'nextAction', 'nextActionDate',],
     },
     sales: {
       friendlyName: 'Sales',
       open: 'salesorders',
-      columns: ['salesorders','lastSale'],
+      columns: ['salesorders', 'lastSale', 'salesorderlines'],
       permission: { all: ['admin', 'sales'] },
     },
     products: {
@@ -86,9 +85,27 @@ module.exports = {
       columns: ['webpages'],
       permission: { all: ['admin', 'web'] },
     },
+    security: {
+      friendlyName: 'Security',
+      permission: { all: ['admin'] },
+      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission']
+    },
     other: {                                        // This is a *special* name. 
       friendlyName: 'Other',                         // This will scoop up the rest
     },
+  },
+
+
+  recordTypeColumn: 'userType',
+  recordTypes: {
+    L: { friendlyName: 'Sales lead', omit: ['products', 'website'] },
+    P: { friendlyName: 'Prospect', omit: ['products', 'website'] },
+    C: { friendlyName: 'Customer', omit: ['products', 'website'] },
+    S: { friendlyName: 'Supplier', omit: ['sales', 'website'] },
+    W: { friendlyName: 'Website support', omit: ['products', 'sales'] },
+    I: { friendlyName: 'In-house staff' },
+    N: { friendlyName: 'No longer considered a prospect', omit: ['products'] },
+    O: { friendlyName: 'Other' },
   },
 
   /* These sections extend the information in the model files with processing     */
@@ -110,14 +127,14 @@ module.exports = {
     createdAt: {
       friendlyName: 'Date created',
       type: 'number',
-      display: { type: 'datetime',truncateForTableList: 16 },
+      display: { type: 'datetime', truncateForTableList: 16 },
       database: { type: 'biginteger' },
       process: { createdAt: true }
     },                                      // You don't actually enter these
     updatedAt: {                            // but if you did they would be dates. 
       friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
       type: 'number',
-      display: { type: 'datetime',truncateForTableList: 16 },
+      display: { type: 'datetime', truncateForTableList: 16 },
       database: { type: 'biginteger' },
       process: { updatedAt: true }
     },
@@ -131,7 +148,7 @@ module.exports = {
     fullName: {
 
       type: 'string',
-     description: 'Full representation of the user\'s name.',
+      description: 'Full representation of the user\'s name.',
       example: 'Mary Sue van der McHenst',
       input: {
         required: true,
@@ -141,39 +158,47 @@ module.exports = {
     emailAddress: {
       type: 'string',
     },
+
+    picture: {
+      type: 'string',
+      input: { type: 'uploadFile' },
+      process: { uploadFile: true },
+    },
+
+
     password: {
       type: 'string',
       //      required: true,
       description: 'Securely hashed representation of the user\'s login password.',
-      permission: {all: ['#superuser#']},
+      permission: { all: ['#superuser#'] },
       example: '2$28a8eabna301089103-13948134nad'
     },
     salt: {
       type: 'string',
-      permission: {all: ['#superuser#']},
+      permission: { all: ['#superuser#'] },
     },
     forgottenPasswordToken: {
-      permission: {all: ['#superuser#']},
+      permission: { all: ['#superuser#'] },
       type: 'string',
     },
     forgottenPasswordExpire: {
-      permission: {all: ['#superuser#']},
+      permission: { all: ['#superuser#'] },
       type: 'number',
-      display: { type: 'datetime',truncateForTableList: 16 },
+      display: { type: 'datetime', truncateForTableList: 16 },
       database: { type: 'biginteger' },
-     
+
     },
-  isSuperAdmin: {
+    isSuperAdmin: {
       type: 'boolean',
-      permission: {view: ['all'], edit: ['admin']},
+      permission: { view: ['all'], edit: ['admin'] },
       description: 'Whether this user is a "super admin" with extra permissions, etc.',
     },
     lastSeenAt: {
       type: 'number',
-      permission: {view: ['all']},
+      permission: { view: ['all'] },
       description: 'A JS timestamp (epoch ms) representing the moment at which this user most recently interacted with the backend while logged in (or 0 if they have not interacted with the backend at all yet).',
       example: 1502844074211,
-      input: {type: 'date', },
+      input: { type: 'date', },
       display: { type: 'date' },
       database: { type: 'biginteger' }
     },
@@ -191,19 +216,25 @@ module.exports = {
     },
     country: {
       type: 'string',
+      input: {
+        type: 'autocomplete',
+        route: 'lookup',
+      },
+      values: 'countries',       // values are in /config/countries.js
+
     },
     region: {
       description: 'This is an example of a select using the data in the isIn attribute.',
       type: 'string',
+      values: ['Europe', 'Middle East', 'Africa', 'South Asia', 'East', 'N America', 'S America'],
       input: {
         type: 'select',
-        values: ['Europe', 'Middle East', 'Africa', 'South Asia', 'East', 'N America', 'S America'],
       }
     },
 
     permission: {
       friendlyName: 'Permission set',
-      permission: {view: ['all'], edit: ['admin']},
+      permission: { view: ['all'], edit: ['admin'] },
       type: 'string',
       description: 'Permission set.',
       extendedDescription:
@@ -212,11 +243,11 @@ module.exports = {
         The user can only carry out this finmction if their permission in this
         field is in the permission array. The permissions are set in config.subdstables`,
       allowNull: true,
+      values: function (req) {
+        return require('../config/suds').permissionSets;
+      },
       input: {
         type: 'select',
-        values: function (req) {
-          return require('../config/suds').permissionSets;
-        }
       }
     },
     /*  This will be a set of radion buttons with the values and labels as shown      */
@@ -224,12 +255,12 @@ module.exports = {
       friendlyName: 'Person or Business?',
       type: 'string',
       description: 'This record describes a business rather than a person',
+      values: {
+        P: 'Person',
+        B: 'Business/Organisation',
+      },
       input: {
         type: 'radio',
-        values: {
-          P: 'Person',
-          B: 'Business/Organisation',
-        },
         required: true,
       },
     },
@@ -271,17 +302,8 @@ module.exports = {
       description: 'The type of user.  Customer/Supplier or in-house.',
       type: 'string',
       input: {
-        type: 'select',
-        values: {
-          L: 'Sales lead',
-          P: 'Prospect',
-          C: 'Customer',
-          S: 'Supplier',
-          I: 'In-house staff',
-          N: 'No longer considered a prospect',
-          O: 'Other',
-        },
-        required: true,     
+        type: 'recordTypeSelect',
+        required: true,
       },
     },
 
@@ -346,7 +368,7 @@ module.exports = {
         placeholder: `Please enter any notes about this user.`,
       }
     },
- 
+
     //  ╔═╗╔═╗╔═╗╔═╗╔═╗╦╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
     //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
@@ -360,7 +382,7 @@ module.exports = {
     /* The contacts made with this user is one of the collections in the model.        */
     /* Contact notes are listed below the person's record.                            */
 
-    
+
     contacts: {
       collection: 'contacts',
       via: 'user',
@@ -369,24 +391,47 @@ module.exports = {
         order: 'date',                                 // The order in which the are listed (default updatedAt)
         direction: 'DESC',                                  // ASC or DESC  default DESC
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
-        columns: ['id','date', 'notes', 'closed'],
+        columns: ['id', 'date', 'notes', 'closed'],
         addChildTip: 'Add a new contact for this user.',
       },
     },
-     
 
-    
-      salesorders: {
-        collection: 'salesorders',
-        via: 'customer',
-        collectionList: {
-          columns: ['date', 'id', 'status', 'total'],
+
+
+    salesorders: {
+      collection: 'salesorders',
+      friendlyName: 'Sales orders',
+      via: 'customer',
+      collectionList: {
+        columns: ['date', 'id', 'status', 'totalValue'],
+        derive: {
+          nosales: { type: 'count', friendlyName: 'Number of sales ' },
+          totsales: { type: 'total', column: 'totalValue', friendlyName: 'Total sales', display: { currency: true } },
+          ave: { type: 'average', column: 'totalValue', friendlyName: 'Average value per order', display: { currency: true } },
         }
-      },
-     
+      }
+    },
+
     /* These are products supplied if the user is a supplier.                      */
 
-    
+    salesorderlines: {
+      collection: 'salesorderlines',
+      friendlyName: 'Products ordered',
+      via: 'customer',
+      collectionList: {
+        columns: ['orderNo', 'product', 'units', 'price', 'total'],
+        derive: {
+          lines: { type: 'count', friendlyName: 'Number of order lines ' },
+          sales: { type: 'total', column: 'total', friendlyName: 'Total sales', display: { currency: true } },
+          ave: { type: 'average', column: 'total', friendlyName: 'Average value per product line', display: { currency: true } },
+          units: { type: 'total', column: 'units', friendlyName: 'No of units', },
+          aveunits: { type: 'composite', divide: ['sales','units'] , display: { currency: true }, friendlyName: 'Average unit price', },
+        }
+
+      }
+    },
+
+
     products: {
       collection: 'products',
       via: 'supplier',
@@ -394,25 +439,25 @@ module.exports = {
         columns: ['name', 'price', 'class', 'description'],
       }
     },
-    
+
     purchaseorders: {
       collection: 'purchaseorders',
       via: 'supplier',
       collectionList: {
         columns: ['name', 'date', 'status', 'notes'],
       }
-    
+
     },
-    
+
     people: {
       friendlyName: 'Associated people',
       collection: 'user',
       via: 'organisation',
       collectionList: {
-        columns: ['fullName','mobilePhone','lastContact'],
+        columns: ['fullName', 'mobilePhone', 'lastContact'],
       }
     },
-    
+
 
 
 

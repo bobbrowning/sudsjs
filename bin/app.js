@@ -4,14 +4,15 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var crypto = require('crypto');
-let suds=require('../config/suds');
+let suds = require('../config/suds');
+let fileUpload = require('express-fileupload');
 
 var indexRouter = require('../bin/routes');
 //var adminRouter = require('./routes/admin');
 var csrf = require('csurf')
 var bodyParser = require('body-parser');
 
-console.log('in app.js');
+console.log('starting app.js');
 var session = require('express-session')
 var csrfProtection = csrf()
 // var parseForm = bodyParser.urlencoded({ extended: false })
@@ -19,15 +20,13 @@ var csrfProtection = csrf()
 
 var app = express();
 
-app.use(function(req, res, next) {
-  let trace = require('track-n-trace');
-  console.log('in app.js');
-  trace.init(req, './');
-  next();
-});
 
 
-app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
+app.use(fileUpload({
+  useTempFiles : true,
+   tempFileDir : path.join(__dirname,'tmp'),
+}));
+
 
 app.use(session({
   secret: 'head shoe',
@@ -43,8 +42,8 @@ app.locals.language = require('../config/language');
 app.locals.home = require('../config/home');
 
 // view engine setup
-let homeDir=__dirname;
-homeDir=homeDir.replace('/bin','');
+let homeDir = __dirname;
+homeDir = homeDir.replace('/bin', '');
 
 
 app.set('views', path.join(homeDir, 'views'));

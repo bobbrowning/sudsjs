@@ -2,9 +2,8 @@ let trace = require('track-n-trace');
 let sendView = require('./send-view');
 //let getRow = require('./get-row');
 //let createRow = require('./create-row');
-
-let crypto = require('crypto');
 let suds=require('../../config/suds');
+let crypto = require('crypto');
 let db=require('./db');
 
 module.exports = async function (req, res) {
@@ -37,7 +36,7 @@ module.exports = async function (req, res) {
 
     }
     req.session.userId = userRec.id;
-    if (allParms.remember) { res.cookie('user', userRec.id, { maxAge: 1000*60*60*24 }) };
+    if (allParms.remember) { res.cookie('user', userRec.id, { maxAge: 1000*60*60*suds.forgottenPasswordExpire }) };
     output += `<p>Log in complete - <a href="${suds.mainPage}">Admin page</a></p>`;
     let result = await sendView(res, 'admin',output);
     trace.log(result);

@@ -55,9 +55,9 @@ let db = require('./db');                                // Database routines
 let listRow = require('./list-row');                     // List one row of the table plus a limited number of child roecords
 let createField = require('./create-field');             // Creates an input field
 let displayField = require('./display-field');           // displays a column value
+let fs = require('fs');
 
-
-module.exports = async function (permission, table, id, mode, record, loggedInUser, open, openGroup) {
+module.exports = async function (permission, table, id, mode, record, loggedInUser, open, openGroup, files) {
   if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
 
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
@@ -186,20 +186,40 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         record[key] = record[key[0]]
       }
 
-      if (Array.isArray(record[key]) && attributes[key].type == 'string') {
-        let value = '';
-        for (let i = 0; i < record[key].length; i++) {
-          value += record[key][i] + ',';
-        }
-        record[key] = value;
-      }
 
       if (attributes[key].process && attributes[key].process.updatedBy) { record[key] = loggedInUser; }
-      if (attributes[key].input.type == 'file') {
-        // doesn't work
-        trace.log();
-        let result = await upload(inputs.req, inputs.res, key);
-        trace.log(result);
+      if (attributes[key].process
+        && record[key]
+        && attributes[key].process.JSON) {
+        trace.log(record[key]);
+        record[key] = JSON.stringify(record[key]);
+        trace.log(record[key]);
+      }
+
+
+      if (attributes[key].input.type == 'uploadFile' && files && files[key]) {
+        let rootdir = __dirname;
+        rootdir = rootdir.replace('/bin/suds', '');
+        let oldRecord = {};
+        if (id) {
+          oldRecord = await db.getRow(table, id);     // populate record from database
+        }
+
+        trace.log(files[key], rootdir, oldRecord[key]);
+        if (oldRecord[key]) {
+          try {
+            fs.unlinkSync(`${rootdir}/public/uploads/${oldRecord[key]}`);
+            console.log(`successfully deleted ${rootdir}/public/uploads/${oldRecord[key]}`);
+          } catch (err) {
+            console.log(`Can't delete ${rootdir}/public/uploads/${oldRecord[key]}`);
+          }
+        }
+        let uploadname = Date.now().toString() + '-' + files[key].name;
+        if (attributes[key].input.keepFileName) { uploadname = files[key].name }
+        files[key].mv(`${rootdir}/public/uploads/${uploadname}`);
+        record[key] = uploadname;
+        //   let result = await upload(inputs.req, inputs.res, key);
+        //    trace.log(result);
 
       }
       if (attributes[key].type == 'boolean') {
@@ -280,6 +300,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       operation = 'update';
       trace.log({ Updating: id, table: table });
       for (let key of Object.keys(attributes)) {
+        trace.log({ Updating: id, key: key, process: attributes[key].process });
         if (attributes[key].process.updatedAt) { record[key] = Date.now() }
         if (attributes[key].process.updatedBy) { record[key] = loggedInUser }
       }
@@ -362,6 +383,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     * 
     ****************************************************** */
 
+  trace.log('edit', tableData.edit.preForm);
   if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
 
   let form = '';
@@ -496,6 +518,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
   let fieldNo = 0;  //  create array of clear names and form elements
   let formData = {};
+  let headerTags = '';
+  
   for (const key of formList) {
     let linkedTable = '';
     let fieldValue = '';
@@ -573,7 +597,11 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         <input type="hidden" name="${key}" value="${fieldValue}">`;
     }
     else {
-      formField += await createField(key, fieldValue, attributes, errorMsg, 'update', record);
+      let result = await createField(key, fieldValue, attributes, errorMsg, 'update', record, tableData);
+      formField += result[0];
+      if (!headerTags.includes(result[1])) {
+        headerTags += result[1];
+      }
       let format = suds.input.default;
       if (attributes[key].input.format) { format = attributes[key].input.format }
       let groupClass;
@@ -589,17 +617,29 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         labelClass = classes.input.col.label;
         fieldClass = classes.input.col.field;
       }
+      let pretext = '';
+      let posttext = '';
+      let tooltip = attributes[key].description;
+      if (attributes[key].helpText) {
+        tooltip = `${attributes[key].description}
+________________________________________________________
+${attributes[key].helpText}`;
+
+      }
       formField = `
-        <div class="${classes.input.group} ${groupClass}">  <!-- Form group for ${attributes[key].friendlyName} -->
-          <div class="${labelClass}">
-            <label class="${classes.label}" for="${key}"  title="${attributes[key].description}" id="label_${key}">
+         <div class="${classes.input.group} ${groupClass}">    <!-- Form group for ${attributes[key].friendlyName} start -->
+          <div class="${labelClass}">                      <!--  Names column start -->
+            <label class="${classes.input.label}" for="${key}"  title="${tooltip}" id="label_${key}">
               ${attributes[key].friendlyName}
             </label>
-          </div>  <!-- names column -->
-          <div class="${fieldClass}">
-  ${formField}
-          </div> <!-- fields column -->
-        </div>  <!--  Form group for ${key} -->`;
+          </div>                                      <!-- Names column end -->
+          <div class="${fieldClass}">                      <!-- Fields column start -->
+          ${pretext}
+          ${formField}
+          ${posttext}
+          </div>                                       <!-- Fields column end -->
+        </div>                                         <!--Form group for ${attributes[key].friendlyName} end-->
+        `;
     }
     //  store clear name of the field and html in two arrays.
     formData[key] = formField;
@@ -796,16 +836,16 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
    *  Create form
    * 
    ****************************************************** */
-
-  if (mode == 'populate') { operation = lang.update; }
-  if (mode == 'update') { operation = lang.update; }
-  if (mode == 'new') { operation = lang.addRow; }
+  let displayOp = '';
+  if (mode == 'populate') { displayOp = lang.update; }
+  if (mode == 'update') { displayOp = lang.update; }
+  if (mode == 'new') { displayOp = lang.addRow; }
   // let from = '';
   //  if (allParms['#from#']) { from = allParms['#from#']; }
 
   if (message) { form += `\n<P>${message}</P>` }
   form += `
-    <h2>${operation} ${lang.forTable}: ${tableName}</h2>`;
+    <h2>${displayOp} ${lang.forTable}: ${tableName}</h2>`;
 
   //       enctype="multipart/form-data" 
 
@@ -820,7 +860,9 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         method="post" 
         name="mainform" 
         class="${classes.input.form}"
-        onsubmit="return validateForm()"
+       onsubmit="return validateForm()"
+        autocomplete="off"
+        enctype="multipart/form-data"
     >
       <input type="hidden" name="_csrf" value="" id="csrf" />`;
   //   <input type="hidden" name="table" value="${table}">`;
@@ -829,7 +871,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   //      <input type="hidden" name="#from#" value="${from}" >`;
   if (id) {
     form += `
-      <input type="hidden" name="${tableData.primaryKey}" value="${id}">`;
+      <input type="hidden" name="${tableData.primaryKey}" value="${id}">
+`;
   }
   //form += `
   //   <input type="hidden" name="mode" value="update">
@@ -881,7 +924,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         trace.log(key);               //      just output the fields
         if (!formData[key]) { continue }
         form += `
-      <!-- --- --- form-group for ${key} --- ---  -->`;
+      <!-- --- --- --- --- --- --- Form group for ${key} --- --- --- --- --- ---  -->`;
         form += `
             ${formData[key]}
               `;
@@ -899,8 +942,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     if (tabs.length > 1) {
       form += `
           <!-- this section controlled by tabs -->
-          <div class="${classes.input.groupLinks.row}">
-          <div class="${classes.input.groupLinks.envelope}">
+          <div class="${classes.input.groupLinks.row}">  <!-- group links row -->
+          <div class="${classes.input.groupLinks.envelope}"> <!-- group links envelope -->
               <span class="${classes.input.groupLinks.spacing}">${lang.formGroup}</span>`;
       for (let group of tabs) {                              // run through the tabs
         trace.log(openTab, group);
@@ -914,8 +957,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
           </a>`;        // outputting a list of links
       }
       form += `
-        </div>
-        </div>
+        </div> <!-- group links row end -->
+        </div> <!-- group links envelope end -->
         `;
     }
     let disp;
@@ -923,7 +966,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       if (openTab == group) { disp = 'block'; } else { disp = 'none' }   // the first will be shown the rest hidden
       form += `
        <!--  --------------------------- ${group} ---------------------- -->
-        <div id="group_${group}" style="display: ${disp}">`;         // div aroiun dthem
+        <div id="group_${group}" style="display: ${disp}">  <!-- Group ${group} -->`;         // div aroiun dthem
       trace.log({ group: group, columns: groups[group].columns });
       for (let key of groups[group].columns) {               // then run through the columns
         if (!formData[key]) { continue }                     // sending out the fields as before
@@ -934,7 +977,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       }
       first = false;    // thhis will switch on the hidden grouos after first
       form += `
-        </div>  <!-- end of ${group} --> `;
+        </div>  <!-- Group ${group} end --> `;
     }
   }
 
@@ -977,7 +1020,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   }
   else { footnote = ''; }
   trace.log(form);
-  return ({ output: form, footnote: footnote });
+  return ({ output: form, footnote: footnote, headerTags: headerTags });
   //  return exits.success(form);
 
 

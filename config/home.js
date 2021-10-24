@@ -5,10 +5,11 @@
  */
 
 module.exports = {
-  /* ****************************************************
- *  Specify the admnistration home page.
- *  ****************************************************
- * * 
+ /** ****************************************************
+  * 
+  *         Specify the admnistration home page.
+  *         -----------------------------------
+  
  *  This is divided into into sections.
  *  Sections can contain links to file listing programs or 
  *  links to arbitrary web pages   
@@ -24,20 +25,17 @@ module.exports = {
       {
         report: 'userSearch', title: 'Search',     // Pre-defined report which uses the fullName 
         input: {                                                // input field in the search.
-          fullName: {
-            type: 'text',
-            placeholder: 'Search all',
-          },
+          fullName: { type: 'text', placeholder: 'Search all users', },
         },
       },
       { table: 'contacts', title: 'Log contact', mode: 'new' },
       { table: 'user', title: 'All users' },
       { report: 'allFollowUps', title: 'All overdue Follow ups', },
       { report: 'allUpcomingFollowUps', title: 'All upcoming Follow ups', },
-     ],
+    ],
   },
 
-  
+
   sales: {
     title: 'Sales',                                   // Title of the section
     img: '/images/suds/edit.jpg',                     // Optional image 
@@ -45,7 +43,7 @@ module.exports = {
     description: 'Let\'s get more business',          // explanitory text under the heading.
     links: [
       {
-        report: 'customerSearch', 
+        report: 'customerSearch',
         title: 'Customer search',     // Pre-defined report which uses the fullName 
         input: {                                                // input field in the search.
           fullName: {
@@ -56,12 +54,12 @@ module.exports = {
         open: 'contacts',
       },
       {
-        table: 'user', 
-        title: 'New prospect', 
+        table: 'user',
+        title: 'New prospect',
         mode: 'new',                       // add new record
         prePopulate: [['userType', 'P']],  // pre-set the user type to 'P' (prospect)
-        open: 'contacts',       
-        openGroup: 'contacts',       
+        open: 'contacts',
+        openGroup: 'contacts',
       },
       { report: 'customers' },
       { report: 'prospects' },
@@ -111,6 +109,7 @@ module.exports = {
     permission: ['admin', 'web'],
     links: [
       { table: 'webpages', title: 'Web Pages' },
+      { www: '/', title: 'Home page', target: '_blank' },
       { www: 'https://www.google.com/analytics', title: 'Google analytics', target: '_blank' }
     ],
   },
@@ -125,39 +124,47 @@ module.exports = {
     description: 'Used by system admin',
     links: [
       { table: 'user', title: 'All users' },
-      { table: 'audit', title: 'Audit trail' },
-      { www: '/create-table',title: 'Create database tables'},
-      { www: '/validate-config',title: 'Validate configuration'},
-      { www: '/config-report',title: 'Configuration report'},
+      { report: 'auditTrail', title: 'Audit trail', },
+      { www: '/createtable', title: 'Create new database tables' },
+      { www: '/validateconfig', title: 'Validate configuration' },
+      { www: '/configreport', title: 'Configuration report' },
+      { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
+
     ],
   },
-  
+
   trouble: {
     title: 'Trouble Shooting',
     img: '/images/suds/settings.jpg',
     permission: ['admin'],
     description: 'Used by system admin',
     links: [
-      { table: 'audit', title: 'Audit trail', sort: ['createdAt', 'DESC'] },
+      {
+        report: 'auditTrail', title: 'Audit trail',
+        input: {                                                // input field in the search.
+          table: { type: 'text', placeholder: 'Table', },
+          button: 'search audit trail',
+        },
+      },
       { table: 'contacts', title: 'All external contacts' },
       { table: 'productjoin', title: 'Product Join Table' },
       { table: 'salesorderlines', title: 'Sales order lines' },
       { table: 'purchaseorderlines', title: 'Purchase order lines' },
-     ],
+    ],
   },
 
   //  Setup / admin section
   profile: {
     title: 'Profile',
     img: '/images/suds/profile.jpg',
-    permission: ['#guest#','all'],
-    description: 'About you',
+    permission: ['#guest#', 'all'],
+    description: '#username#',
     links: [
       { user: 'login', title: 'Log in' },
       { user: 'register', title: 'Register' },
       { user: 'forgotten', title: 'Forgotten password' },
       { user: 'logout', title: 'Log out' },
-     { user: 'changepw', title: 'Change password' },
+      { user: 'changepw', title: 'Change password' },
       { user: 'profile', title: 'Update your profile' },
     ],
   },

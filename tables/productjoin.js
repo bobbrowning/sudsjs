@@ -47,7 +47,7 @@ module.exports = {
             ['name', 'contains', '#input'],
           ],
         },
-        width: '500px',
+        width: '80%',
         minLength: 2,               // min characters entered before search
         placeholder: 'Number or type name (case sensitive)',
         idPrefix: 'Product number: ',
@@ -69,7 +69,7 @@ module.exports = {
             ['name', 'contains', '#input'],
           ],
         },
-        width: '500px',
+        width: '80%',
         minLength: 2,               // min characters entered before search
         placeholder: 'Number or type name (case sensitive)',
         idPrefix: 'Product number: ',
@@ -79,5 +79,12 @@ module.exports = {
         makeLink: true,             // hypertext link to the linked table
       },
     },
+    type: {
+      input: {type: 'radio'},
+      values: {
+        C: 'Component / spare part',
+        A: 'Accessory',
+      }
+    }
   },
 }

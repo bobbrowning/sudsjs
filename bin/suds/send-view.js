@@ -1,6 +1,7 @@
 
 
 trace = require('track-n-trace');
+const suds = require('../../config/suds');
 let db = require('./db');
 
 
@@ -11,12 +12,19 @@ module.exports = async function (res, view, output) {
   let viewData = {};
   if (typeof output == 'string' && output) {
     viewData.output = output;
-    viewData.footnote='';
+    viewData.footnote = '';
+    viewData.heading = suds.headerTags;
   }
+  
   else {
     viewData = output;
+    let headerTags = suds.headerTags;
+    if (output.headerTags) { headerTags += output.headerTags; }
+    viewData.headerTags = headerTags;
   }
-   res.render(view, viewData);
+
+  if (!viewData.headerTags) { viewData.headerTags = '<!-- space for program generated header tags -->' }
+  res.render(view, viewData);
   return ('OK');
 
 }

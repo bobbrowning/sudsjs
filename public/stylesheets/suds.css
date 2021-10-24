@@ -1,3 +1,10 @@
+
+
+
+.editorTitle1 {background-color: green}
+
+
+
 .suds {
   margin-left : 50px;
   margin-top  : 50px;
@@ -44,7 +51,7 @@ a:active {
   text-decoration: none;
 }
 
-P {}
+
 
 table .table-striped .table-bordered {
   width: 900px;
@@ -64,13 +71,80 @@ TH {
 }
 
 form {
-  padding top   : 20px;
+  padding-top   : 10px;
   padding-bottom: 20px;
 }
+
+
+
+.nav {
+  display: flex;
+  align-items: center;
+  position        : fixed;
+  top             : 0;
+  width           : 100%;
+  background-color: #f0f0f0;
+ }
+
+ .sudsHeading {
+   padding-left: 250px; 
+  font-size: 1.4em;
+  font-weight: bold;
+ }
+
+
+.autocomplete-container {
+  position: absolute;
+  width: 500px;
+  white-space: nowrap;
+}
+
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-item {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9; 
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important; 
+  color: #ffffff; 
+}
+
+
+.autodelete {
+  margin-left: 20px;
+}
+
 
 .sudserror {
   color      : red;
   margin-left: 20px;
+}
+
+.sudsmessage {
+  color      :green;
+  margin-left: 20px;
+  clear: both;
 }
 
 .sudsSearch  {
@@ -124,6 +198,7 @@ ul.homeSectionList {
 
 .sudsListTableLinks {
   margin-top: 20px;
+  margin-bottom: 50px;
 }
 
 .sudschilddata {
@@ -135,6 +210,12 @@ ul.homeSectionList {
   font-weight: normal;
 }
 
+.sudspretext {
+  font-style: italic;
+}
+.sudsposttext {
+  font-style: italic;
+}
 .sudstabs {
   margin-bottom: 20px;
 }
@@ -172,7 +253,7 @@ ul.homeSectionList {
 
 .sudsbuttons {margin-bottom: 50px}
 
-.sudsForm {}
+.sudsLogin {width: 500px}
 
 .sudsFormGroup {
   width  : 900px;
@@ -214,32 +295,6 @@ td {
 }
 
 
-.ui-autocomplete {
-  cursor               : default;
-  padding              : 0;
-  margin-top           : 2px;
-  list-style           : none;
-  background-color     : #ffffff;
-  border               : 1px solid #ccc;
-  -webkit-border-radius: 5px;
-  -moz-border-radius   : 5px;
-  border-radius        : 5px;
-  -webkit-box-shadow   : 0 5px 10px rgba(0, 0, 0, 0.2);
-  -moz-box-shadow      : 0 5px 10px rgba(0, 0, 0, 0.2);
-  box-shadow           : 0 5px 10px rgba(0, 0, 0, 0.2);
-}
-
-.ui-autocomplete>li {
-  padding: 3px 20px;
-}
-
-.ui-autocomplete>li.ui-state-focus {
-  background-color: #DDD;
-}
-
-.ui-helper-hidden-accessible {
-  display: none;
-}
 
 .courier {
   font-family: 'Courier New', monospace;

@@ -6,7 +6,7 @@
  */
 
 let db = require('../bin/suds/db');
- 
+
 
 module.exports = {
   description: `A record should be created for all contacts with prospects, customers 
@@ -156,17 +156,19 @@ module.exports = {
       description: 'Type of contact',
       type: 'string',
       friendlyName: 'Type of contact',
-      input: {
-        type: 'radio',
-        values: {
-          E: 'email',
-          X: 'Text',
-          T: 'Telephone call',
-          P: 'Personal visit',
-          M: 'Post',
-        },
+      input: { type: 'radio' },
+      values: {
+        C: 'Cold call',
+        O: 'Phone out',
+        T: 'Phone in',
+        X: 'Text',
+        E: 'Email',
+        P: 'Face to face',
+        M: 'Post',
+
       },
     },
+
     isFollowUp: {
       model: 'contacts',
       description: 'If this is a follow-up to another contact. Yhis refers.',
@@ -192,15 +194,15 @@ module.exports = {
     result: {
       description: 'How did it go',
       type: 'string',
+      values: {
+        E: 'Excellent - objectives reached',
+        G: 'Good - progress towards objective met',
+        N: 'Neutral',
+        B: 'Not as well as exected',
+        F: 'Failure',
+      },
       input: {
         type: 'select',
-        values: {
-          E: 'Excellent - objectives reached',
-          G: 'Good - progress towards objective met',
-          N: 'Neutral',
-          B: 'Not as well as exected',
-          F: 'Failure',
-        }
       }
     },
     nextActionDate: {

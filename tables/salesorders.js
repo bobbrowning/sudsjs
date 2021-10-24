@@ -4,13 +4,14 @@
  * @description :: A model definition represents a database table/collection.
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
  */
+ let db = require('../bin/suds/db');
 
 module.exports = {
   description: 'Customer orders',
-   permission: { all: ['sales', 'admin'] },
+   permission: { all: ['sales', 'admin'], view: ['purchasing'] },
   friendlyName: 'Sales orders',   // text in the link to add a new row  
   rowTitle: function (record) {
-    return `Order no:${record.id} - Value: £${record.total}`;
+    return `Order no:${record.id} - Value: £${record.totalValue}`;
   },
 
   list: {
@@ -19,9 +20,8 @@ module.exports = {
   },
   edit: {
     postProcess: async function (record, operation) {
-      let updateRow=require('../bin/suds/update-row');
       if (operation == 'addNew') {
-        await updateRow('user', {
+        await db.updateRow('user', {
           id: record.customer,
           userType: 'C',
           lastSale: record.id,
@@ -90,14 +90,14 @@ module.exports = {
     {
       description: 'Status of the order',
       type: 'string',
+      values: ['Order placed', 'Processing', 'Dispatched'],
       input: {
         type: 'select',
-        values: ['Order placed', 'Processing', 'Dispatched'],
-      }
+       }
     },
-    total: {
+    totalValue: {
       type: 'number',
-      input: { type: 'readonly' },
+      input: { type: 'hidden' },
       display: { currency: true },
       friendlyName: 'Total order value',
     },

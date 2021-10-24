@@ -1,3 +1,8 @@
+let suds = require('../../../config/suds');
+let friendlyName='Generic input';
+let description='Generic routine geneating an input tag.';
+
+
 module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
 
   /*
@@ -10,8 +15,8 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
     },
   */
 
-  if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
-  trace = require('track-n-trace');
+    if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+    trace = require('track-n-trace');
   trace.log(arguments);
   let input = attributes.input;
   if (attributes.model) { fieldType = 'number' };

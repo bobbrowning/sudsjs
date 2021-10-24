@@ -1,7 +1,7 @@
 
+let suds = require('../../../config/suds');
+
 let friendlyName = 'Summernote WYSIWYG rich text input field';
-
-
 let description = `A very simple and light input field which creats HTML. There are many such text editors on the market, but this one is (a) Free an (b) very easy to set up.  
   However if you want to use one of the more sophisticated products available then you
   might ue this as a starting point for writing a helper for it.`;
@@ -22,24 +22,116 @@ let getLabelsValues = require('./get-labels-values');
 
 
 module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == 'documentation') { return ({ friendlyName:friendlyName, description: description }) }
+  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace = require('track-n-trace');
   trace.log(arguments);
 
   let results = '';
+  let headerTags = suds.inputTypes.summernote.headerTags;
+  let conf = '';
 
-  let height = 100;
+  for (let key of [
+    'height',
+    'blockquoteBreakingLevel',
+    'dialogsInBody',
+    'dialogsFade',
+    'disableDragAndDrop',
+    'shortcuts',
+    'tabDisable',
+    'codeviewFilter',
+    'codeviewIframeFilter',
+    'codeviewFilterRegex',
+    'spellCheck',
+    'disableGrammar',
+
+  ]) {
+    if (attributes.input[key]) {
+      conf += `
+                ${key}: ${attributes.input[key]},`;
+    }
+    else {
+      if (suds.inputTypes.summernote[key]) {
+        conf += `
+                  ${key}: ${suds.inputTypes.summernote[key]},`;
+      }
+    }
+  };
+
+
+
+  if (suds.inputTypes.summernote.styleTags) {
+    conf += `
+                styleTags: [`;
+    for (let style of suds.inputTypes.summernote.styleTags) {
+      conf += `
+                   {`;
+      for (let item of Object.keys(style)) {
+        conf += ` ${item}: '${style[item]}', `
+      }
+      conf += `},`;
+    }
+    conf += `
+                 ],`;
+  }
+
+  for (let arrayConf of ['fontNames', 'fontNamesIgnoreCheck', 'lineHeights', 'codeviewIframeWhitelistSrc']) {
+    if (suds.inputTypes.summernote[arrayConf]) {
+      conf += `
+                ${arrayConf}: [`;
+      for (let font of suds.inputTypes.summernote[arrayConf]) {
+        conf += `'${font}', `
+      }
+
+      conf += ` ],`
+    }
+  };
+
+
+  if (suds.inputTypes.summernote.toolbar) {
+    conf += `
+                toolbar: [`;
+    for (let group of Object.keys(suds.inputTypes.summernote.toolbar)) {
+      conf += `
+                 ['${group}', [`;
+      for (let tool of suds.inputTypes.summernote.toolbar[group]) {
+        conf += `'${tool}', `;
+      }
+      conf += ']],';
+    }
+    conf += `
+                ],`;
+  }
+  if (suds.inputTypes.summernote.popover) {
+    conf += `
+                popover: {`
+    for (let tag of ['image', 'link', 'table', 'air']) {
+      conf += `
+                 ${tag}: [`;
+      for (let group of suds.inputTypes.summernote.popover[tag]) {
+        trace.log(group[1]);
+        conf += `
+                    ['${group[0]}', [`;
+        for (let tool of group[1]) {
+          conf += `'${tool}', `;
+        }
+        conf += ']],';
+      }
+      conf += `
+                 ],`;
+    }
+    conf += `
+              }`
+  }
+
+
+
+
+
+
   let placeholder = '';
-  if (attributes.input.height) { height = attributes.input.height }
-  if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
+   if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
   results = `
-          <!-- include libraries(jQuery, bootstrap) -->
-            <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
-            <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-            <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-            <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
-            <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
-  
+   
           <textarea name="${fieldName}"  
             class="form-control"  
             id="summernote" 
@@ -49,13 +141,11 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
           <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
           <script>
             $('#summernote').summernote({
-              placeholder: '${placeholder}',
-              tabsize: 2,
-              height: ${height},
+                placeholder: '${placeholder}',
+                ${conf}
            });
           </script>`;
-  return (results);
-
+  return ([results, headerTags]);
 }
 
 
