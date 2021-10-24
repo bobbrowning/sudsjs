@@ -1,4 +1,3 @@
-new # Sails Update Database System (SUDS) - Beta
 
 # Overview / installation
 
@@ -18,45 +17,26 @@ It provides:
 
 SUDS Express is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
 
-The best place to start is probably the [Screen shots](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/screen-shots.pdf), but why not download it and take it out for a spin.  Please report any issues - thanks. 
-
-# More information
-
-* [A more detailed list of features](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/features.md)
-* [Screen shots with some explanitory text](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/screen-shots.pdf)
-* [Overview of the configuration files](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/configuration.pdf)
-* [Database/configuration report for the test system](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/database-report.pdf)
-
 
 # Setup of the SUDS system plus test data.
 
 
 ## Quick setup of the system plus test database
 
-This assumes that you are using Sails 1.4.x.  The script copies over the new files, plus modified versions of a few files created for the starter application. For details of the files affected see the step by step instructions below.
 
-Download the zip file from https://github.com/bobbrowning/suds-for-sails (the green button 'Code' - last option) and place it in the root directory for your sails applications. 
 
-Unzip the file and run the bash installation script as follows.
+Download the zip file from https://github.com/bobbrowning/suds-express-demo (the green button 'Code' - last option) and place it in the root directory for your  applications. 
 
-```
-unzip suds-for-sails-main.zip
-bash suds-for-sails-main/sudscopytest.sh
-```
-
-1. Enter the app name  (say 'myapp')
-1. Confirm that you are running sails 1.4.x
-1. The script creates the sails app in the directory you provide. It then loads sails. 
-1. You will see a picture of a yacht. **The install is not complete**.
-1. Wait a few seconds then hit CTRL-C to close it down and complete the process. 
-1. When complete, change directory to the generated app and lift sails.
+Unzip the file and run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
 
 ```
+unzip suds-express-demo-main.zip
+bash suds-express-demo-main/sudscopytest.sh
 cd myapp
 sails lift
 ```
 
-Then in a browser:  http://localhost:1337/admin  
+Then in a browser:  http://localhost:3000/admin  
 
 You will be asked to log in. The superuser is admin@admin.com password admin (not recommended for production use!)
 
@@ -67,17 +47,12 @@ Alternative logins are
 * willy@sales.com password: willy, permission set: sales;
 * howard@wagner.com password howard, permission set admin.
 
-## Step by step installation 
-
-The procedure for installing the system step by step is [here](https://github.com/bobbrowning/suds-for-sails/blob/main/More_information/Manual-changes.md). 
-
-
 ## Get started
 
 
 1. Edit the config/suds.js file and change the superuser email address to your email address.
-1. Run http://localhost:1337/admin and register with this email address
-1. Run http://localhost:1337/admin again and log in with the new email address you should see a setup menu
+1. Run http://localhost:3000/admin and register with this email address
+1. Run http://localhost:3000/admin again and log in with the new email address you should see a setup menu
 1. Edit the user table, find your new record and set up the Uset type to 'in-house' and person/business to person.
 
 The test system uses the same table for logged-in users (in-house), external customers, suppliers or companies. There is a user type that shows which is which.  There is also a radio button to identify people or organisations.  If you want to add new password-protected users, register them first via the starter app, then go in and add this information to their record. 
