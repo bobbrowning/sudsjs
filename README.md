@@ -27,13 +27,16 @@ SUDS Express is new and is in beta testing.  The software plus test data only ta
 
 Download the zip file from https://github.com/bobbrowning/suds-express-demo (the green button 'Code' - last option) and place it in the root directory for your  applications. 
 
-Unzip the file and run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
+Unzip the file into the root ditectory for your applications. Run and run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
 
 ```
-unzip suds-express-demo-main.zip
 bash suds-express-demo-main/sudscopytest.sh
 cd myapp
-sails lift
+node bin/www   or nodemon
+```
+nodemon needs installing but will restart the app every time you change a config file, whuch is a big time-saver during development. To restart when any file is changed use   
+```
+nodemon -e js,css, ejs
 ```
 
 Then in a browser:  http://localhost:3000/admin  
