@@ -344,14 +344,14 @@ async function  deleteRow(permission,table,id) {
     if (!sortKey) {sortKey=tableData.primaryKey;}
     if (!direction && spec.sort) {direction=spec.sort[1];}
    if (!direction) {direction='DESC';}
-    trace.log(spec); 
+    trace.log(spec,spec.searches.length ); 
     if (spec && spec.searches && spec.searches.length) {
       if (!spec.instruction) {
         spec.instruction = getInstruction(table, spec);
       }
       let instruction = spec.instruction[0];
       let bindings = spec.instruction[1];
-      trace.log({ instruction: instruction, bindings: bindings, edit: tableData.canEdit });
+      trace.log({ instruction: instruction, bindings: bindings, edit: tableData.canEdit , limit:limit});
       if (limit) {
         rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
       }

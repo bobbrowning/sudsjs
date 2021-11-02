@@ -10,9 +10,12 @@ module.exports = {
   description: `This table is maintained by the system to record every action. The table can get very 
   large, so it can be automatically trimmed.  The trimming rules are set in the suds configuration file.`,
   permission: {view: ['admin','support']},
+ list: {
+  columns: ['id','createdAt','tableName','mode','row'],
+ },
   attributes: {
     id: {
-      friendlyName: 'User No',                            // Visible name 
+      friendlyName: 'Number',                            // Visible name 
       type: 'number',
       autoincrement: true,
       primaryKey: true,
@@ -48,6 +51,10 @@ module.exports = {
     },
     row: {
       type: 'number',
+    },
+    notes: {
+      friendlyName: 'notes',
+      type: 'string',
     },
     data: {
       type: 'string',

@@ -8,7 +8,7 @@ let db=require('./db');
 
 module.exports = async function (req, res) {
     console.log(__dirname);
-    trace.log('register form');
+    trace.log('login process');
     let allParms = req.body;
     trace.log(allParms);
     output = `

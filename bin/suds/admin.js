@@ -38,7 +38,9 @@ let description = `
 
 module.exports = async function (req, res) {
     if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+    trace.log(req.connection);
     trace.log({
+        ip: req.ip,
         start: 'admin',
         query: req.query,
         body: req.body,
@@ -64,6 +66,7 @@ module.exports = async function (req, res) {
      * 
      ************************************************************** */
     let user = {};
+    let logNotes = '';
     permission = '#guest#';
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
@@ -82,14 +85,45 @@ module.exports = async function (req, res) {
             || Object.keys(suds.permissionSets).includes(permission)
         )
     ) {
-        console.log(`User has non-standard permission: ${user.emailAddress} ${permission}
-                      The user is being treated as a guest.`);
+        let note = `
+User has non-standard permission: ${user.emailAddress} ${permission}
+The user is being treated as a guest.
+        `;
+        console.log(note);
+        logNotes += logNotes;
         permission = '#guest#';
     }
     // store the permision in session data.
     req.session.permission = permission;
     trace.log(permission);
     //   global.suds = { user: req.session.userId, permission: permission };
+
+
+    trace.log(req.ip);
+    if (suds.blockIp && suds.blockIp.includes(req.ip)) {
+        let notes = `
+User ${req.ip} is blocked and being treated as a guest.
+`;
+        logNotes += notes;
+        console.log(notes);
+        permission = '#guest#';
+    }
+
+
+    if (req.session.userId && user.emailAddress) {
+        if (suds.blockEmail && suds.blockEmail.includes(user.emailAddress)) {
+            let notes = `
+User ${user.emailAddress} is blocked and being treated as a guest.
+`;
+            logNotes += notes;
+            console.log(notes);
+            permission = '#guest#';
+        }
+    }
+
+
+
+
 
 
 
@@ -230,13 +264,18 @@ module.exports = async function (req, res) {
 
 
     if (suds.audit.include) {
+
+        let requestData = {};
+        for (let item of suds.audit.log) { requestData[item] = req[item]; }
+
+
         if (table && !page) {
             let rec = {
                 updatedBy: req.session.userId,
                 tableName: table,
                 mode: mode,
                 row: id,
-                data: JSON.stringify(allParms),
+                data: JSON.stringify(requestData),
             }
             await db.createRow('audit', rec);
         }
@@ -413,7 +452,7 @@ module.exports = async function (req, res) {
                     let searchField = req.query['searchfield_' + j];
                     let compare = req.query['compare_' + j];
                     let value = req.query['value_' + j];
-                    if (attributes[searchField].process.JSON) {
+                    if (attributes[searchField].process && attributes[searchField].process.JSON) {
                         compare = 'contains';
                         value = `"${value}"`;
                     }

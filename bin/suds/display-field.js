@@ -29,8 +29,8 @@ module.exports = async function (attributes, value, children, permission) {
 
   /** Null value */
   if (attributes.model && !value) { return (lang.notSpecified) }
- 
- 
+
+
   /** Otherwise empty return blank */
   if (!value && !attributes.collection) return ('');
 
@@ -42,7 +42,7 @@ module.exports = async function (attributes, value, children, permission) {
   }
 
   /** This is not a real field on the database, but itendifies a child column */
-  trace.log(attributes.collection,children)
+  trace.log(attributes.collection, children)
   if (attributes.collection) {
     let num = children;
 
@@ -82,7 +82,7 @@ module.exports = async function (attributes, value, children, permission) {
 
   /** Date / time  */
   if (attributes.display.type == 'color' && value) {
-    display=`<span style="background-color: ${value}">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</span>`;
+    display = `<span style="background-color: ${value}">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</span>`;
     return (display);
   }
 
@@ -94,15 +94,15 @@ module.exports = async function (attributes, value, children, permission) {
     return (display);
   }
 
-  /** JSON value */
+ 
   trace.log(attributes.friendlyName, value);
   if (attributes.display && attributes.display.JSON) {
     let data = JSON.parse(value);
     trace.log(value, data);
-    display = '';
-    for (let i=0; i<data.length; i++) {
-      key=data[i];
-      if (i>0) {display+='; '}
+    let display = '';
+    for (let i = 0; i < data.length; i++) {
+      key = data[i];
+      if (i > 0) { display += '; ' }
       trace.log(key);
       let lookedup = await lookup(attributes, key);
       trace.log(lookedup);

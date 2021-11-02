@@ -83,6 +83,13 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
     mode: mode,
     id: id,
   });
+  /** Stop from editing if no permission
+   *        One exception - this row is a demonstration row and this is a guest user
+   */
+  if (!tableData.canEdit 
+    && !(tableData.demoRow && tableData.demoRow == id &&  permission=='#guest#')) {
+    return `<p>Sorry - you don't have permission to edit ${tableData.friendlyName} (${table})`;
+  }
 
   /* *******************************************************
   * 
@@ -519,7 +526,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   let fieldNo = 0;  //  create array of clear names and form elements
   let formData = {};
   let headerTags = '';
-  
+
   for (const key of formList) {
     let linkedTable = '';
     let fieldValue = '';
@@ -989,9 +996,17 @@ ${attributes[key].helpText}`;
     <br clear="all">  
     <div class="${classes.input.buttons}">
    
-          <button type="submit" class="btn btn-primary">
+    `;
+  if (permission == '#guest#' ) {
+    form+=`<button class="${classes.output.links.danger}" type="button" title="Guest users are not allowed to submit changes">
+    ${lang.submit}
+  </button>`;
+  }
+  else {
+    form += `<button type="submit" class="btn btn-primary">
             ${lang.submit}
           </button>`;
+  }
   if (id) {
     form += `
           <span style="margin-right: 10px; margin-left: 10px;">

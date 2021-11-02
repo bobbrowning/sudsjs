@@ -47,11 +47,11 @@ module.exports = async function (req, permission) {
 
   // loop through sections
   for (let section of Object.keys(home)) {
-    trace.log({ section: section, permission: permission });
     let canSee = false;
     if (permission == '#superuser#') { canSee = true; }
     if (home[section].permission.includes(permission)) { canSee = true; }
     if (home[section].permission.includes('all') && permission != '#guest#') { canSee = true; }
+    trace.log({ section: section, permission: permission, canSee: canSee });
 
     if (!canSee) { continue }
 
@@ -69,7 +69,7 @@ module.exports = async function (req, permission) {
               <p><span class="sudsHomeSectionHead">${title}</span>`;
     let description = '&nbsp;';
     if (home[section].description) {
-      if (home[section].description == '#username#') {
+      if (home[section].description == '#username#' && permission != '#guest#') {
         let record = await db.getRow('user', req.session.userId);
         trace.log(record);
         description = record.fullName
@@ -78,6 +78,7 @@ module.exports = async function (req, permission) {
         description = home[section].description;
       }
     }
+    if (home[section].description == '#username#') { description = ''; }
     output += `
                 <br />
                 <span class="breaktext">${description}</span>`;
@@ -180,8 +181,8 @@ module.exports = async function (req, permission) {
        * URL link - link to url
        * 
        */
-      let target='';
-      if (linkData.target) {target=` target="${linkData.target}"`}
+      let target = '';
+      if (linkData.target) { target = ` target="${linkData.target}"` }
       if (type == 'www') {
         output += `
                 <li>
@@ -203,9 +204,9 @@ module.exports = async function (req, permission) {
                    <input type="hidden" name="report" value="${report}">
                    <input type="hidden" name="mode" value="list">
                     <input type="hidden" name="source" value="home">`;
-                    let icount=-1;
+          let icount = -1;
           for (key of Object.keys(linkData.input)) {
-            if (key == 'button') {continue}
+            if (key == 'button') { continue }
             output += `
                     <input 
                       type="text" 
@@ -214,24 +215,23 @@ module.exports = async function (req, permission) {
                       placeholder="${linkData.input[key].placeholder}"
                       >
                       `;
-                      icount++;
-                
+            icount++;
+
           }
-          if (icount){
-            let button=`Filter ${link}`;
-            if (linkData.input.button) {button=linkData.input.button};
-            output+=`
+          if (icount) {
+            let button = `Filter ${link}`;
+            if (linkData.input.button) { button = linkData.input.button };
+            output += `
             <input type="radio" name="andor" value="and" checked>&nbsp;and&nbsp;   <input type="radio" name="andor" value="or">&nbsp;or<br /> 
             <button type="submit" class="btn btn-secondary btn-sm">${button}</button>`;
           }
-          else
-          {
+          else {
             if (linkData.input.button) {
-              output+=`
-              <button type="submit" class="btn btn-secondary btn-sm">${linkData.input.button}</button>`;              
+              output += `
+              <button type="submit" class="btn btn-secondary btn-sm">${linkData.input.button}</button>`;
             }
           }
-          output+=`</form>`;
+          output += `</form>`;
         }
         else {
           output += `

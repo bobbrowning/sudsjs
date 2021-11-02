@@ -651,6 +651,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
       if (attributes[child].collectionList.direction) { reportData.sort[0] = attributes[child].collectionList.direction; }
       if (attributes[child].collectionList.order) { reportData.sort[0] = attributes[child].collectionList.order; }
       if (attributes[child].collectionList.heading) { reportData.title = attributes[child].collectionList.heading }
+      if (attributes[child].collectionList.sort) { reportData.sort = attributes[child].collectionList.sort }
       if (attributes[child].collectionList.columns) { reportData.columns = attributes[child].collectionList.columns }
       if (attributes[child].collectionList.hideEdit) { reportData.hideEdit = true; }
       if (attributes[child].collectionList.hideDetails) { reportData.hideDetails = true; }

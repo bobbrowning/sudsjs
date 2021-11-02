@@ -412,9 +412,14 @@ module.exports = async function (
       if (suds.search.allwaysText.includes(attributes[key].input.type)) {
         attributes[key].input.type = 'text';
         attributes[key].input.width = suds.search.fieldWidth;
-        delete attributes[key].input.placeholder;
+        if (attributes[key].type == 'number') {
+          attributes[key].input.placeholder=lang.enterNumber;
+        }
+        else {
+           delete attributes[key].input.placeholder;
+        }
       }
-
+      trace.log(key,  attributes[key].input.type);
 
       // compare select depends on field type. defaults to text
       let comp = `

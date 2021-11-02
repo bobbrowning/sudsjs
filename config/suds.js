@@ -440,6 +440,11 @@ bottom bar.`,
   },
 
 
+/** You can block specific IPs or emails from using the system... A bit basic at present... 
+ *   Blocked users are trwated as guest users.  */
+ // blockIp: ['::ffff:192.168.0.56'],
+ // blockEmail: ['admin@admin.com'],
+
   /** **********************************************
    * 
    *           Other technical config
@@ -448,7 +453,8 @@ bottom bar.`,
 
   audit: {                                    // Audit trail file - logs every operation
     include: true,
-    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records. 
+    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
+    log: ['ip','method','query','body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
   },
 
   emailTransport: {
@@ -459,7 +465,6 @@ bottom bar.`,
     }
 
   },
-
 
   /** 
    * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
