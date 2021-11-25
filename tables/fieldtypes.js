@@ -9,7 +9,7 @@ module.exports = {
     friendlyName: 'Field types test',
     description: `This database has one example of each input
      field type for testing.`,
-    permission: { all: ['admin'] },
+    permission: { all: ['admin','demo'] },
     list: {
         columns: ['id', 'text']
     },

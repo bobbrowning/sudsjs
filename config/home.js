@@ -39,7 +39,7 @@ module.exports = {
   sales: {
     title: 'Sales',                                   // Title of the section
     img: '/images/suds/edit.jpg',                     // Optional image 
-    permission: ['clerical', 'sales', 'admin'],       // permission sets that will see this
+    permission: ['clerical', 'sales', 'admin','demo'],       // permission sets that will see this
     description: 'Let\'s get more business',          // explanitory text under the heading.
     links: [
       {
@@ -71,7 +71,7 @@ module.exports = {
   shipping: {
     title: 'shipping',
     img: '/images/suds/edit.jpg',
-    permission: ['clerical', 'warehouse', 'admin'],
+    permission: ['clerical', 'warehouse', 'admin','demo'],
     description: 'Shipping',
     links: [
       {
@@ -93,7 +93,7 @@ module.exports = {
   purchasing: {
     title: 'Purchasing',
     img: '/images/suds/edit.jpg',
-    permission: ['clerical', 'purchasing', 'warehouse', 'admin'],
+    permission: ['clerical', 'purchasing', 'warehouse', 'admin','demo'],
     description: 'Keeping stock levels right',
     links: [
       { report: 'suppliers', title: 'Suppliers' },
@@ -106,7 +106,7 @@ module.exports = {
   website: {
     title: 'Website Management',
     img: '/images/suds/www.jpg',
-    permission: ['admin', 'web'],
+    permission: ['admin', 'web','demo'],
     links: [
       { table: 'webpages', title: 'Web Pages' },
       { www: '/', title: 'Home page', target: '_blank' },
@@ -120,7 +120,7 @@ module.exports = {
   setup: {
     title: 'Setup',
     img: '/images/suds/settings.jpg',
-    permission: ['admin'],
+    permission: ['admin','demo'],
     description: 'Used by system admin',
     links: [
       { table: 'user', title: 'All users' },
@@ -136,7 +136,7 @@ module.exports = {
   trouble: {
     title: 'Trouble Shooting',
     img: '/images/suds/settings.jpg',
-    permission: ['admin'],
+    permission: ['admin','demo'],
     description: 'Used by system admin',
     links: [
       {
@@ -154,8 +154,8 @@ module.exports = {
   },
 
   //  Setup / admin section
-  profile: {
-    title: 'Profile',
+  you: {
+    title: 'You',
     img: '/images/suds/profile.jpg',
     permission: ['#guest#', 'all'],
     description: '#username#',

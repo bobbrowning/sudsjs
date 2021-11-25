@@ -9,20 +9,21 @@
 },*/
 let suds = require('../../../config/suds');
 
-let friendlyName='Radio Buttons';
-let description='Create radio buttons';
+let documentation = {
+  friendlyName: 'Radio Buttons',
+  description: 'Create radio buttons',
+}
 
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
+let getLabelsValues = require('../get-labels-values');
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,record) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
   trace = require('track-n-trace');
   trace.log(arguments);
 
   let results = '';
-    [values, labels] = await getLabelsValues(attributes,record);
+  [values, labels] = await getLabelsValues(attributes, record);
   trace.log({ values: values, labels: labels });
   for (let i = 0; i < values.length; i++) {
     selected = '';
@@ -45,4 +46,5 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
   return (results);
 }
 
-
+exports.documentation=documentation;
+exports.fn=fn;

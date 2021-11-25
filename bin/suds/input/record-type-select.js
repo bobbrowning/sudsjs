@@ -10,17 +10,18 @@
 },*/
 let suds = require('../../../config/suds');
 
-let friendlyName = 'Select';
-let description = `Create select dropdown based on values in the table definition, 
-or values in a linked table, or provided by a function.`;
+let documentation = {
+    friendlyName: 'Select',
+    description: `Create select dropdown based on values in the table definition, 
+or values in a linked table, or provided by a function.`,
+}
 
 
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
+let getLabelsValues = require('../get-labels-values');
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record, tableData) {
-    if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-    trace = require('track-n-trace');
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record, tableData, tabs) {
+     trace = require('track-n-trace');
     trace.log(arguments);
     let results = '';
     trace.log(tableData.recordTypes);
@@ -34,19 +35,28 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
             omits += `
           ${key}:[`;
             for (let omit of tableData.recordTypes[key].omit) {
-               omits+=`'${omit}',`;
+                omits += `'${omit}',`;
             }
             omits += `],`;
         }
     }
-    omits+=`
+    omits += `
         }`;
-    trace.log(omits)
+    trace.log(omits, tabs);
+    let groups = '[';
+    for (let item of tabs) { groups += `'${item}', `; }
+
+    groups += ']';
 
 
     results = `
           <script>
               function recordType(fieldName) {
+                  let allGroups=${groups};
+                  for (let group of allGroups) {
+                    document.getElementById('group_'+group).style.display="block"; 
+                    document.getElementById('tab_'+group).style.display="block"; 
+                  }
                   let omits=${omits}
                   let type=document.getElementById(fieldName).value;
                   console.log(type);
@@ -79,25 +89,6 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
     return (results);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+exports.documentation = documentation;
+exports.fn = fn;
 

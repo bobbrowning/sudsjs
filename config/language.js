@@ -1,5 +1,6 @@
 module.exports = {
   EN: {
+    activityLog: 'Activity Log',
     addCondition: 'Add condition',                             // Search function
     addIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>`,
     addRow: `New`,                                                  // List Table
@@ -12,9 +13,13 @@ module.exports = {
     back: 'Back',                                                       // List Table
     backToTables: ` <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/><path fill-rule="evenodd" d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z"/></svg> Admin home page`,
     backUp: 'delete last ',                                   // List Table, List Row, Edit/New Row 
+    change: 'Change',
+    changepd: 'Change password',
     childdata: 'Related data..',                                        // List Row
     contains: 'contains',
     createdAt: 'Created',
+    date: 'Date',
+    description: 'description',
     desc: 'descending',
     deleteIcon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
     <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
@@ -48,10 +53,13 @@ module.exports = {
     Enter this code {{token}} plus your new password.`,
     formGroup: 'Click for further data: ',
     forTable: 'for table',
+    fullList: 'Full listing',
     ge: 'greater than or equals',
     gt: 'greater than',
+    guest: 'Guest user',
     homeHeading: 'Database administration',                        // Home page heading 
     le: 'less than or equals',
+    limit: 'Limited to',
     linkTo: 'Up to',                                                    // Used in the button on the row detail page to link tp parent
     listTable: ``,                                            // Used in heading of table list
     listRow: 'List data',
@@ -75,6 +83,7 @@ module.exports = {
   </svg> Details ...`,                                             // Used in input form
     listRowHelp: 'Click here to  view/edit/delete this row',            // Tootip over 'more...' on table listing
     lt: 'less than',
+    login: 'Log in',
     mandatory: 'Error: Required Field',                                 // Error message
     max: 'Error: This must be less that ',                              //     "    "
     maxLength: 'Error: The maximum number of characters allowed is ',   //     "    "  
@@ -84,6 +93,7 @@ module.exports = {
     nan: 'Error: this field must be a number',
     ne: 'not equal to',                       // Error message                                               
     next: 'Next page >',                                                // Table list pagination
+    new: 'New record',
     no: 'no',
     No: 'No',                                                        // Used in YesNoRadio
     noChildren: '<i>No associated data</i>',
@@ -91,9 +101,11 @@ module.exports = {
     notEmail: 'Error: This must be a valid email,address',              // Error message
     notSpecified: '<i>Not specified</i>',                               // On listing if value is null
     or: 'Or',
+    populate: 'Create update form',
     prev: '< Previous page',                                            // Table list pagination
     //  returnToParent: 'Return',  // not used any more                                          
     recordCount: 'Record count',
+    reason: 'Reason',
     row: 'record',
     rows: 'records',
     rowAdded: 'Row added to table - No:',
@@ -105,6 +117,7 @@ module.exports = {
     startswith: 'saterts with',
     startTyping: 'or start typing ...',
     submit: 'Submit',
+    table: 'Table',
     tableList: 'List table data',
     TableListRow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16"><path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>`,
     TableEditRow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
@@ -116,10 +129,11 @@ module.exports = {
   </svg>`,
     type: 'Start typing...',
     uploaded: 'Will replace file currently uploaded: ',
-    update: 'Update',
+    update: 'Update record',
     updatedAt: 'Last updated',
     yes: 'Yes',
     value: 'Value',
-  }
+    }
+
 
 }

@@ -7,7 +7,7 @@ module.exports = {
   description: 'Product Join',
    friendlyName: 'Main product to Sub product link',
   extendedDescription: 'Used to link products, such as product/spares or product/accessories.',
-  permission: { all: ['admin', 'purchasing'], view: ['sales'] },
+  permission: { all: ['admin', 'purchasing','demo'], view: ['sales'] },
   attributes: {
     id: {
       friendlyName: 'User No',                            // Visible name 

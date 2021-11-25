@@ -1,24 +1,23 @@
 
 let suds = require('../../../config/suds');
 
-let friendlyName = 'Autocomplete input.';
-let description = `Generates autocomplete field. This can be based in a fixed set of items which are in the model (isIn), 
+
+
+
+let documentation={
+  
+
+friendlyName: 'Autocomplete input.',
+description: `Generates autocomplete field. This can be based in a fixed set of items which are in the model (isIn), 
   or more normally based on a linked table. In this case the field must be a key to some other table. 
   The user either enters the key of the linked file, or starts typing the 
   value in the linked table that is specified (e.g.someone's name). 
   A list of candidates is shown and one can be selected or more characters typed to narrow it down. 
   The selected name is shown on screen and the record key ('id' always) is stored in a hidden field. 
-  `;
+  `,
+};
 
 
-/*inputs: {
-  fieldType: { type: 'string' },
-  fieldName: { type: 'string' },
-  fieldValue: { type: 'string' },
-  attributes: { type: 'ref' },
-  errorMsg: { type: 'string' },
-
-},*/
 
 
 let trace = require('track-n-trace');
@@ -28,12 +27,8 @@ let db = require('../db');
 let classes = require('../../../config/classes').input;           // Links class codes to actual classes
 
 
-//let getRow = require('../get-row');
-//let getRows = require('../get-rows');
 
-
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, thisrecord) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, thisrecord) {
   trace.log(arguments);
 
   let results = '';
@@ -64,26 +59,25 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
     trace.log({model: source});
     // searching linked tble (the normal case)
     let tableData = tableDataFunction(source);
-    let displayFunction = false;
-    if (tableData.rowTitle) {
-      displayFunction = tableData.rowTitle;
-    }
-
+   
     let record = [];
     if (fieldValue) {
       fieldValue = parseInt(fieldValue);   //Must be a number
       record = await db.getRow(source, fieldValue);     // populate record from database
       if (record.err) {
-        title = `<span class="text-danger">${record.errmsg}</span>`;
+        errorMsg = `<span class="text-danger">${record.errmsg}</span>`;
       }
       else {
         if (display) {
           title = record[display];
         }
         else {
-          if (displayFunction) {
-            title = displayFunction(record);
-          }
+            if (typeof (tableData.rowTitle) == 'string') {
+              title = record[tableData.rowTitle];
+            }
+            else {
+              title = tableData.rowTitle(record);
+            }
         }
       }
     }
@@ -178,5 +172,6 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
 
 }
 
-
+exports.documentation=documentation;
+exports.fn=fn;
 

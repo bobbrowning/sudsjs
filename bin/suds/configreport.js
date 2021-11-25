@@ -9,12 +9,11 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db=require('./db');
+let db = require('./db');
 
 let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let sendView = require('./send-view');
-
 
 
 
@@ -143,12 +142,14 @@ module.exports = async function (req, res) {
      </tr>
     </thead>
     <tbody>
-    <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
-    <tr><td>Route to the login</td><td>${suds.validate.page}</td></tr>
-    <tr><td>Route to the configuration validate program</td><td>${suds.login.page}</td></tr>
+    <tr><td>Listening on port</td><td>${suds.port}</td></tr>
+   <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
+   <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
+   <tr><td>Route to the configuration validate program</td><td>${suds.validate.page}</td></tr>
+   <tr><td>Route to the login</td><td>${suds.login.page}</td></tr>
+    <tr><td>Route to logout</td><td>${suds.logout.page}</td></tr>
     <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
-    <tr><td>Route to the register pawssword program</td><td>${suds.register.page}</td></tr>
-    <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
+    <tr><td>Route to the register program</td><td>${suds.register.page}</td></tr>
     <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
     <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
     <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
@@ -295,8 +296,9 @@ module.exports = async function (req, res) {
     </thead>
     <tbody>
  `;
-  for (let js of suds.inputTypes) {
-    docs = await require(`./input/${js}`)('documentation');
+  trace.log(suds.inputTypeHandlers);
+  for (let js of suds.inputTypeHandlers) {
+    docs = await require(`./input/${js}`).documentation;
     output += `
          <tr><td>${js}</td><td>${docs.friendlyName}</td><td>${docs.description}</td></tr> `;
   }
@@ -591,10 +593,12 @@ module.exports = async function (req, res) {
         output += `
           </td>
           <td>`;
-        let cols = groupData.columns;
-        for (let i = 0; i < cols.length; i++) {
-          if (i > 0) { output += ', ' }
-          output += cols[i];
+        if (groupData.columns) {
+          let cols = groupData.columns;
+          for (let i = 0; i < cols.length; i++) {
+            if (i > 0) { output += ', ' }
+            output += cols[i];
+          }
         }
         output += `
           </td>
@@ -692,7 +696,7 @@ module.exports = async function (req, res) {
           }
         }
 
-          if (prop == 'type') {
+        if (prop == 'type') {
           line = `Data type: ${value}`;
         }
 
@@ -790,7 +794,7 @@ module.exports = async function (req, res) {
   output += `
     </div> <!-- sudsReport -->`;
 
-  let result = sendView(res, 'admin',output);
+  let result = sendView(res, 'admin', output);
   return result;
 
 }

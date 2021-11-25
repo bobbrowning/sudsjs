@@ -9,7 +9,8 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db=require('./db');
+let db = require('./db');
+const { register } = require('../../config/suds');
 
 
 
@@ -63,12 +64,23 @@ module.exports = async function (req, res) {
         'versionHistory',
         'database',
         'tables',
+        'port',
+        'get',
+        'post',
+        'validate',
         'mainPage',
         'validatePage',
-        'reportPage',
+        'login',
+        'logout',
+        'changepw',
+        'register',
+        'report',
+        'forgotten',
         'pageLength',
         'superuser',
         'defaultInputFieldWidth',
+        'forgottenPasswordExpire',
+        'rememberPasswordExpire',
         'audit',
         'currency',
         'fixWhere',
@@ -77,6 +89,13 @@ module.exports = async function (req, res) {
         'permissionSets',
         'inputFieldTypes',
         'inputTypes',
+        'inputTypeHandlers',
+        'viewEngine',
+        'views',
+        'emailTransport',
+        'documentation',
+        'headerTags',
+
     ];
     for (let key of Object.keys(suds)) {
         console.log('checking suds: ', key);
@@ -100,11 +119,11 @@ module.exports = async function (req, res) {
 
     }
 
-/**
- * 
- * Check home page setup
- * 
- */
+    /**
+     * 
+     * Check home page setup
+     * 
+     */
 
 
     let hometypes = [
@@ -124,7 +143,7 @@ module.exports = async function (req, res) {
                         type = key;
                     }
                 }
-                 if (!type) {
+                if (!type) {
                     seterror(`In home.js: 
                 Section ${section} 
                 link  ${i + 1} does not have a type.`)
@@ -169,7 +188,10 @@ module.exports = async function (req, res) {
         'via',
         'example',
         'annotate',
-   
+        'values',
+        'helpText',
+        'recordTypeColumn',
+
     ];
     let validTableData = [
         'friendlyName',
@@ -184,6 +206,8 @@ module.exports = async function (req, res) {
         'parentData',
         'edit',
         'open',
+        'recordTypeColumn',
+        'demoRow',
     ];
     let validChildData = [
         'tab',
@@ -199,8 +223,13 @@ module.exports = async function (req, res) {
         'hideEdit',
         'hideDetails',
         'addChildTip',
+        'derive',
+        'sort',
     ];
     let validPermissions = Object.keys(suds.permissionSets);
+    validPermissions.push('all');
+    validPermissions.push('#guest#');
+    validPermissions.push('#superuser#');
 
     // Start with the list of field types in suds.js then add the helpers that produce fields.
     /* clone the input field types to start */
@@ -250,7 +279,6 @@ module.exports = async function (req, res) {
                 for (let i = 0; i < sets.length; i++) {
                     if (!validPermissions.includes(sets[i])) {
                         seterror(`
-          In project ${project}:
           Table: ${table}  
           Permission: ${sets[i]} is not  valid permission set
           `);
@@ -338,6 +366,21 @@ module.exports = async function (req, res) {
 
         }
 
+        if (tableObject.recordTypeColumn) {
+            let recordTypeColumn = tableObject.recordTypeColumn;
+            if (!tableObject.attributes[recordTypeColumn]) {
+                seterror(`
+                Table: ${table} 
+                Record type column ${recordTypeColumn} is not a valid attribute
+                `);
+
+            }
+
+        }
+
+
+
+
 
         /* ****************************************
           *
@@ -381,7 +424,7 @@ module.exports = async function (req, res) {
                   *
                   **************************************** */
                 if (attributes[attribute].input && attributes[attribute].input.type) {
-         
+
                     /* ****************************************
                      *
                      *  Only one summernote field
@@ -432,7 +475,6 @@ module.exports = async function (req, res) {
                     for (key of Object.keys(attributes[attribute].collectionList)) {
                         if (!validChildData.includes(key)) {
                             seterror(`
-              In project ${project}:
               Table: ${table}  
               Column: ${attribute} 
               ${key} is not  valid

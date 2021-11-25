@@ -57,7 +57,19 @@ let createField = require('./create-field');             // Creates an input fie
 let displayField = require('./display-field');           // displays a column value
 let fs = require('fs');
 
-module.exports = async function (permission, table, id, mode, record, loggedInUser, open, openGroup, files) {
+module.exports = async function (
+  permission,
+  table,
+  id,
+  mode,
+  record,
+  loggedInUser,
+  open,
+  openGroup,
+  files,
+  auditId,
+  csrf,
+) {
   if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
 
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
@@ -71,8 +83,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   if (!mainPage) { mainPage = '/'; }
   let tableData = tableDataFunction(table, permission);
 
-  let tableName = table;                    // clear nameof table
-  if (tableData.friendlyName) { tableName = tableData.friendlyName; }
+  tableName = tableData.friendlyName;
 
   const attributes = mergeAttributes(table, permission);  // attributes and extraattributes merged plus permissions
 
@@ -86,8 +97,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   /** Stop from editing if no permission
    *        One exception - this row is a demonstration row and this is a guest user
    */
-  if (!tableData.canEdit 
-    && !(tableData.demoRow && tableData.demoRow == id &&  permission=='#guest#')) {
+  if (!tableData.canEdit
+    && !(tableData.demoRow && tableData.demoRow == id && permission == '#guest#')) {
     return `<p>Sorry - you don't have permission to edit ${tableData.friendlyName} (${table})`;
   }
 
@@ -154,17 +165,6 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       console.log(`Can\'t find record ${id} on ${table}`, err);
       return exits.success(`<h1>Unexpected error ${record.errmsg}</h1><p>More info on console</p>`);
     }
-
-    /*
-    //  If the database structure has been changed and a new column added
-    // this might be null  which is a bad idea.
-    // so check 
-    for (let key of Object.keys(attributes)) {
-      if (record[key] == null) {
-        if (attributes[key].type == 'number') { record[key] = 0 } else { record[key] = '' }
-      }
-    }
-    */
   }
 
 
@@ -266,7 +266,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   }
 
 
-  delete record.mode;                                     // but remove item we don't want
+  // delete record.mode;                                     // but remove item we don't want
 
 
   trace.log({
@@ -294,7 +294,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
   if (mode == 'update' && errCount == 0) {
     trace.log('update processing', mode);
-    if (tableData.edit.preProcess) { record = await tableData.edit.preProcess(record) }
+    if (tableData.edit.preProcess) { await tableData.edit.preProcess(record) }
     var message = '';
     let operation;
     let rec = {};
@@ -346,6 +346,9 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       try {
         let created = await db.createRow(table, rec);
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
+        if (auditId) {
+          await db.updateRow('audit', { id: auditId, mode: 'new', row: id });
+        }
       }
       catch (err) {
         console.log(`Database error creating record on ${table}`, err);
@@ -403,7 +406,7 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       || attributes[key].process.updatedBy
     ) { continue; }
     if (attributes[key].collection) { continue; }  // not intersted in collections
-    if (!attributes[key].canEdit) { continue; }
+    if (!(attributes[key].canEdit || attributes[key].canView)) { continue; }
     if (attributes[key].input.hidden) { continue; }
     formList.push(key);
   }
@@ -427,13 +430,20 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
   let openTab = '';
   let columnGroup = {};
   let visibleGroup = {};
+  let hideGroup = {};
 
+  let tabs = [];
   if (tableData.groups) {
     let incl = [];
-    let tabs = [];
     trace.log({ formgroups: tableData.groups });
     for (let group of Object.keys(tableData.groups)) {
       trace.log({ group: group })
+      if (tableData.groups[group].recordTypes
+        &&
+        !tableData.groups[group].recordTypes.includes(record[tableData.recordTypeColumn])
+      ) {
+        hideGroup[group] = true;
+      }
       if (!tableData.groups[group].static) { tabs.push(group) }      // Not static so we will need a tab function
       if (!tableData.groups[group].columns) {
         tableData.groups[group].columns = [];
@@ -454,7 +464,6 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
         tableData.groups.other.columns.push(key);
       }
     }
-    trace.log({ tabs: tabs, groups: tableData.groups })
 
 
     let first = true;
@@ -478,7 +487,10 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       }
     }
 
-    trace.log(visibleGroup);
+    /** visibkeGroup just means that there is at least one field in the group that it not hidden 
+     * hiddenGroup means that we are just bot showing that group so has priority. 
+    */
+    trace.log({ tabs: tabs, groups: tableData.groups, visible: visibleGroup, hide: hideGroup })
 
 
 
@@ -488,6 +500,8 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
       function tabclick (tab) { 
         console.log('tabclick:',tab); `;
       for (let tab of tabs) {
+        trace.log(tab, hideGroup[tab]);
+        if (hideGroup[tab]) { continue; }
         if (!visibleGroup[tab]) { continue; }
         form += `
         if (tab == '${tab}') {
@@ -598,13 +612,22 @@ module.exports = async function (permission, table, id, mode, record, loggedInUs
 
 
     }
-
+    let result = '';
     if (attributes[key].input.type == 'hidden') {
       formField += `
         <input type="hidden" name="${key}" value="${fieldValue}">`;
     }
     else {
-      let result = await createField(key, fieldValue, attributes, errorMsg, 'update', record, tableData);
+      if (attributes[key].canEdit) {
+        result = await createField(key, fieldValue, attributes, errorMsg, 'update', record, tableData, tabs);
+      }
+      else {
+        if (attributes[key].canView) {
+          result = [await displayField(attributes[key], fieldValue), ''];
+          trace.log(result);
+        }
+
+      }
       formField += result[0];
       if (!headerTags.includes(result[1])) {
         headerTags += result[1];
@@ -871,7 +894,7 @@ ${attributes[key].helpText}`;
         autocomplete="off"
         enctype="multipart/form-data"
     >
-      <input type="hidden" name="_csrf" value="" id="csrf" />`;
+      <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />`;
   //   <input type="hidden" name="table" value="${table}">`;
   //  <input type="hidden" name="#parent#" value="${parent}" >
   //  <input type="hidden" name="#parentkey#" value="${parentKey}" >
@@ -922,9 +945,11 @@ ${attributes[key].helpText}`;
 
 
   trace.log(groups);
-  let tabs = [];
+  tabs = [];
   groupform = [];
-  for (let group of Object.keys(groups)) {                   // run through the groups (there may only be one...)
+  for (let group of Object.keys(groups)) {                 // run through the groups (there may only be one...)
+    if (hideGroup[group]) { continue; }
+
     trace.log(group);
     if (groups[group].static) {                              //   if the group is static, 
       for (let key of groups[group].columns) {
@@ -997,8 +1022,8 @@ ${attributes[key].helpText}`;
     <div class="${classes.input.buttons}">
    
     `;
-  if (permission == '#guest#' ) {
-    form+=`<button class="${classes.output.links.danger}" type="button" title="Guest users are not allowed to submit changes">
+  if (permission == '#guest#') {
+    form += `<button class="${classes.output.links.danger}" type="button" title="Guest users are not allowed to submit changes">
     ${lang.submit}
   </button>`;
   }

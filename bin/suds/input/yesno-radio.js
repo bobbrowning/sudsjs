@@ -9,24 +9,25 @@
 },*/
 
 let suds = require('../../../config/suds');
-friendlyName='Yes-No radio buttons.';
-description=`Radio buttons alternative to checkbox.`
+let documentation = {
+  friendlyName: 'Yes-No radio buttons.',
+  description: `Radio buttons alternative to checkbox.`,
+}
 
 let lang = require('../../../config/language')['EN'];
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-  trace = require('track-n-trace');
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
+   trace = require('track-n-trace');
   trace.log(arguments);
   let results = '';
-  let button1='';
-  let button2='';
-  let value1='false';
-  let value2='false';
-  if (fieldValue) {button1='checked';} else {button2='checked'; }
-    
-     results = `
+  let button1 = '';
+  let button2 = '';
+  let value1 = 'false';
+  let value2 = 'false';
+  if (fieldValue) { button1 = 'checked'; } else { button2 = 'checked'; }
+
+  results = `
         <div class="form-check-inline" id="${fieldName}" style="margin-right: 20px">  
           <input type="radio" 
             name="${fieldName}"  
@@ -55,4 +56,5 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
   return (results);
 }
 
-
+exports.documentation = documentation;
+exports.fn = fn;

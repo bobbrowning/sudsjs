@@ -4,11 +4,11 @@
   */
 
  let db = require('../bin/suds/db');
-
+  let stock=require('../bin/custom/stock');
 module.exports = {
   description: 'Purchase Order lines',
   friendlyName: 'Purchase Order Lines',
-  permission: { all: ['purchasing', 'admin'], view: ['sales'] },
+  permission: { all: ['purchasing', 'admin','demo'], view: ['sales'] },
 
   edit: {
 
@@ -24,9 +24,10 @@ module.exports = {
     },
 
     /*  After the form is submitted, this routine works out the total cost.        */
-    preProcess: function (record) {
+    preProcess: async function (record) {
       record.total = record.units * record.unitprice;
-      return record;
+      await stock('purchaseorderlines',record);
+      return;
     },
 
     /*  After the database has been updated, update the purchase order with the     */

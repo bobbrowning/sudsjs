@@ -58,12 +58,7 @@ module.exports = async function (
       description: `Only applies when the routine is called from  the row listing as a child. This is the 
                      table that is being listed that this is a child of.`,
     */,
-  limit  /*
-      type: 'number',
-      description: 'Max rows to be listed',
-    */
 ) {
-
 
   const sanitizeHtml = require('sanitize-html');
   trace.log({ break: '#', inputs: arguments, level: 'min' });
@@ -112,15 +107,15 @@ module.exports = async function (
     for (let i = 0; i < reportData.search.searches.length; i++) {
       trace.log(reportData.search.searches[i]);
       searchSpec.searches[i] = reportData.search.searches[i];  // normal case
-/*
-      if (typeof reportData.search.searches[i][2] == 'string'
-        && reportData.search.searches[i][2].substring(0, 1) == '#') {
-        term = reportData.search.searches[i][2].substring(1);
-        if (term == 'loggedInUser' || term.substring(0, 5) == 'today') { continue }
-        trace.log(term);
-        searchSpec.searches[i][2] = reportData.search[term];
-      }
-*/
+      /*
+            if (typeof reportData.search.searches[i][2] == 'string'
+              && reportData.search.searches[i][2].substring(0, 1) == '#') {
+              term = reportData.search.searches[i][2].substring(1);
+              if (term == 'loggedInUser' || term.substring(0, 5) == 'today') { continue }
+              trace.log(term);
+              searchSpec.searches[i][2] = reportData.search[term];
+            }
+      */
     }
     trace.log(searchSpec)
   }
@@ -205,13 +200,23 @@ module.exports = async function (
   let virtuals = {};
   if (tableData.virtuals) { virtuals = tableData.virtuals; }
 
-  // pagination   
+  /** pagination -note thst if there is a parent parameter 
+   * there is no pagination, but limit wll be provided.
+   * Limit of -1 = no limit
+   * */
+
+
   const pageLength = suds.pageLength;
   page = parseInt(page);
-  if (!page) { page = 1 }                         // current page number
-  if (!limit) limit = pageLength;                          // number of records to print
-  let offset = (page - 1) * limit;               // number of records to offset
-  trace.log({ page: page, limit: limit, offset: offset })
+  let limit = -1;   //default all data.
+  let offset = 0;   // starting at beginning
+  if (reportData && reportData.limit) { limit = reportData.limit; }
+  if (!parent) {
+    if (!page) { page = 1 }                         // current page number
+    limit = pageLength;                          // number of records to print
+    offset = (page - 1) * limit;               // number of records to offset
+  }
+  trace.log({ table: table, page: page, limit: limit, offset: offset })
 
   //  Get field names and attributes
   let fieldList = [];
@@ -299,6 +304,12 @@ module.exports = async function (
 
   }
   if (searchText) { searchText += '.<br />' };
+
+  // number of rows in the table
+  let count = await db.countRows(table, searchSpec);
+  trace.log({ count: count, heading: heading });
+
+
   if (!defaultSort) {
     let dir = lang.asc;
     if (direction == 'DESC') { dir = lang.desc }
@@ -306,6 +317,13 @@ module.exports = async function (
     searchText += `
           ${lang.sortedBy} ${attributes[sortKey].friendlyName} - ${dir}.`;
   }
+  if (parent && limit && limit != -1) {
+    searchText += ` ${lang.limit} ${limit} ${lang.rows}`;
+  }
+  if (parent && limit != -1 && count > limit) {
+    searchText += ` <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.fullList}</a>`;
+  }
+
 
   if (headingText) {
     searchText += `<br />
@@ -319,9 +337,9 @@ module.exports = async function (
   // Create output
   let output = '';
 
-  // number of rows in the table
-  let count = await db.countRows(table, searchSpec);
-  trace.log({ count: count, heading: heading });
+
+
+
 
   output = `
         <h1>${heading}</h1>`;
@@ -413,13 +431,13 @@ module.exports = async function (
         attributes[key].input.type = 'text';
         attributes[key].input.width = suds.search.fieldWidth;
         if (attributes[key].type == 'number') {
-          attributes[key].input.placeholder=lang.enterNumber;
+          attributes[key].input.placeholder = lang.enterNumber;
         }
         else {
-           delete attributes[key].input.placeholder;
+          delete attributes[key].input.placeholder;
         }
       }
-      trace.log(key,  attributes[key].input.type);
+      trace.log(key, attributes[key].input.type);
 
       // compare select depends on field type. defaults to text
       let comp = `
@@ -866,7 +884,7 @@ module.exports = async function (
       .offset(offset)
       .sort(sortdirection)
       .eachRecord(async (record) => {
-*/
+  */
 
 
     trace.log({ offset: offset, page: page, records: records });
@@ -960,8 +978,11 @@ module.exports = async function (
     let prev = '';
     let next = '';
     trace.log({ page: page, type: typeof page, count: count, limit: limit });
-    if (parent && count > limit) {
-      next = `<a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.more}</a>`;
+    /** No pagination for child lists */
+    if (parent) {
+      if (limit != -1 && count > limit) {
+        next = `<a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.more}</a>`;
+      }
     }
     else {
       if (page > 1) {   // Not the first page, can't be a child listing
@@ -1016,7 +1037,7 @@ module.exports = async function (
   let link = `${suds.mainPage}?table=${table}&mode=new`;
   output += `
          <p>`;
-  if (!parent) {
+  if (!parent && tableData.canEdit) {
     output += `
           <button onclick="document.location='${link}'" type="button" class="${classes.output.links.button}">
           ${addRow} 

@@ -8,8 +8,9 @@
 
 module.exports = {
   description: 'Customer orders',
-   permission: { all: ['sales', 'admin'], view: ['purchasing'] },
+   permission: { all: ['sales', 'admin','demo'], view: ['purchasing'] },
   friendlyName: 'Sales orders',   // text in the link to add a new row  
+
   rowTitle: function (record) {
     return `Order no:${record.id} - Value: £${record.totalValue}`;
   },

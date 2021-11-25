@@ -133,3 +133,15 @@ h1  {
 .dropdown:hover .dropdown-content {
   display: block;
 }
+
+ .button{   text-align: center;}
+
+ .button a {
+  background-color: blue; 
+  color: white; 
+  padding: 10px; 
+  border: 10px;
+  width: 200px;
+  text-decoration: none;
+
+}

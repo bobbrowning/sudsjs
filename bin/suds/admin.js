@@ -3,6 +3,7 @@ let listRow = require('./list-row');
 let deleteRow = require('./delete-row');
 let sendView = require('./send-view');
 let updateForm = require('./update-form');
+let checkRecordType = require('./check-record-type').fn;
 let home = require('./home');
 let suds = require('../../config/suds');
 let reports = require('../../config/reports');
@@ -38,7 +39,7 @@ let description = `
 
 module.exports = async function (req, res) {
     if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-    trace.log(req.connection);
+    //   trace.log(req.connection);
     trace.log({
         ip: req.ip,
         start: 'admin',
@@ -47,6 +48,8 @@ module.exports = async function (req, res) {
         files: req.files,
         break: '#',
         level: 'min',
+        csrf: req.csrfToken,
+
     });
 
     trace.log({
@@ -75,6 +78,10 @@ module.exports = async function (req, res) {
         user = await db.getRow('user', req.session.userId);
         if (user.isSuperAdmin) { permission = '#superuser#' } else { permission = user.permission; }
         if (suds.superuser == user.emailAddress) { permission = '#superuser#' }
+        /** Last seen at */
+        let now = Date.now();
+        await db.updateRow('user', { id: req.session.userId, lastSeenAt: now });
+
         trace.log({ 'User record': user, level: 'verbose' });
     }
 
@@ -128,7 +135,7 @@ User ${user.emailAddress} is blocked and being treated as a guest.
 
 
     /* *********************************************
-      *
+    *
       *  If there is no reference to a table or report then output the main menu.
       *  
       * A session variable contains an object defining the 'current'
@@ -254,6 +261,9 @@ User ${user.emailAddress} is blocked and being treated as a guest.
 
     }
 
+
+
+
     /* *********************************************
     *  Audit trail
     * ******************************************** */
@@ -262,8 +272,12 @@ User ${user.emailAddress} is blocked and being treated as a guest.
     let allParms = {};
     allParms = { ...req.query, ...req.body };
 
-
-    if (suds.audit.include) {
+    let auditId = 0;
+    if (suds.audit.include
+        && (
+            !suds.audit.operations
+            || suds.audit.operations.includes(mode)
+        )) {
 
         let requestData = {};
         for (let item of suds.audit.log) { requestData[item] = req[item]; }
@@ -277,11 +291,14 @@ User ${user.emailAddress} is blocked and being treated as a guest.
                 row: id,
                 data: JSON.stringify(requestData),
             }
-            await db.createRow('audit', rec);
+            rec = await db.createRow('audit', rec);
+            auditId = rec.id;
+            trace.log(rec);
         }
 
         if (suds.audit.include && suds.audit.trim) {
             let count = await db.countRows('audit');
+            trace.log(count, suds.audit.trim[1]);
             if (count > suds.audit.trim[1]) {
                 let old = await db.getRows('audit', {}, suds.audit.trim[0], 1, 'createdAt', 'DESC');
                 trace.log({ trimfrom: old });
@@ -535,35 +552,52 @@ User ${user.emailAddress} is blocked and being treated as a guest.
     *  
     * ******************************************** */
 
-    if (mode == 'new' || mode == 'populate') {
-        let record = {};
-
-        /*       if (req.query.parent) {
-                   record[req.query.searchfield] = req.query[req.query.searchfield];
-               } */
-
-
-        if (req.query.prepopulate) {
-            let fieldName = req.query.prepopulate;
-            let value = req.query[fieldName];
-            if (attributes[fieldName].type == 'number') {
-                value = Number(value);
-            }
-            record[fieldName] = value;
-        }
-        trace.log(mode);
-        output = await updateForm(
+    if (mode == 'new'
+        && tableData.recordTypeColumn
+        && !req.body[tableData.recordTypeColumn]) {
+        output = await checkRecordType(
             permission,
             table,
-            id,
-            mode,
-            record,
-            req.session.userId,
-            open,
-            openGroup,
+            req.query,
+            req.csrfToken(),
+
         );
     }
+    else {
 
+        if (mode == 'new' || mode == 'populate') {
+            let record = {};
+
+            /*       if (req.query.parent) {
+                       record[req.query.searchfield] = req.query[req.query.searchfield];
+                   } */
+
+
+            if (req.query.prepopulate) {
+                let fieldName = req.query.prepopulate;
+                let value = req.query[fieldName];
+                if (req.body[fieldName]) { value = req.body[fieldName] }
+                if (attributes[fieldName].type == 'number') {
+                    value = Number(value);
+                }
+                record[fieldName] = value;
+            }
+            trace.log(mode);
+            output = await updateForm(
+                permission,
+                table,
+                id,
+                mode,
+                record,
+                req.session.userId,
+                open,
+                openGroup,
+                req.files,
+                auditId,
+                req.csrfToken(),
+            );
+        }
+    }
     /** *********************************************
     *
     *           U P D A T E
@@ -585,6 +619,8 @@ User ${user.emailAddress} is blocked and being treated as a guest.
             open,
             openGroup,
             req.files,
+            auditId,
+            req.csrfToken(),
         );
     }
 

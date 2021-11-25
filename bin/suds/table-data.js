@@ -23,7 +23,7 @@ module.exports = function (table, permission) {
     // loop through fields (columns) in the table
     if (key != 'attributes') {
       merged[key] = tableData[key]
-      trace.log(merged[key], {level: 'verbose'});
+      trace.log(merged[key], { level: 'verbose' });
     }
   }
 
@@ -31,7 +31,12 @@ module.exports = function (table, permission) {
   for (let key of Object.keys(tableData.attributes)) {
     if (tableData.attributes[key].primaryKey) {
       merged.primaryKey = key;
-      break;
+    }
+    if (tableData.attributes[key].process && tableData.attributes[key].process.createdAt) {
+      merged.createdAt=key;
+    }
+    if (tableData.attributes[key].process && tableData.attributes[key].process.updatedAt) {
+      merged.updatedAt=key;
     }
   }
   /* If we haven't found one then use the first autoincrement field we find */
@@ -51,6 +56,7 @@ module.exports = function (table, permission) {
   if (!merged.description) { merged.description = table; }
   if (!merged.edit) { merged.edit = {}; }
   if (!merged.list) { merged.list = {}; }
+  if (!merged.groups) { merged.groups = {}; }
 
   /* Superused can do anything.  If there is no permission for the table then */
   /* eveyone can do anything - so in either case - all done.                  */
@@ -98,7 +104,7 @@ module.exports = function (table, permission) {
     }
   }
 
-  trace.log({ canedit: merged.canEdit, permission: permission, mergedpermission: merged.permission, tableData: merged, maxdepth: 3, level: 'verbose' });
+  trace.log({ table:table, canedit: merged.canEdit,canView: merged.canView, permission: permission, mergedpermission: merged.permission, tableData: merged, maxdepth: 3, level: 'verbose' });
   // trace.log({edit:merged, level: 'bob'});
 
   return (merged);

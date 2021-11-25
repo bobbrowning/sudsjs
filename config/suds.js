@@ -19,6 +19,58 @@ module.exports = {
 
   /** **********************************************
    * 
+   *           Routes
+   *           ------
+   * 
+   * Note that the CMS route (/page/[slug]) is not handled with this
+   * list. The route for this is handled in bin/routes.js so that
+   * the slug can be forwared to the program.
+   * 
+   *********************************************** */
+
+  port: 3000,
+  mainPage: '/admin',                          // e.g. http://localhost:3000/admin
+
+  /**  routes -> module */
+  /**  GET requests  */
+  get: {
+    admin: '../bin/suds/admin',
+    validateconfig: '../bin/suds/validateconfig',
+    configreport: '../bin/suds/configreport',
+    login: '../bin/suds/login',                      // e.g. http://localhost:3000/login results in bin/suds/login.js being run.
+    changepw: '../bin/suds/change-password',
+    resetpw: '../bin/suds/reset-password',
+    auto: '../bin/suds/api/autocomplete',
+    lookup: '../bin/suds/api/lookup',
+    unique: '../bin/suds/api/unique',
+    createtable: '../bin/suds/create-table',
+    register: '../bin/suds/register',
+    logout: '../bin/suds/logout',
+    forgotten: '../bin/suds/forgotten',
+  },
+  /** POST requests */
+  post: {
+    changepw: '../bin/suds/change-password-process',
+    register: '../bin/suds/register-process',
+    login: '../bin/suds/login-process',
+    admin: '../bin/suds/admin',
+
+  },
+
+
+
+  /** These map home page user functions (config/home.js) to routes */
+  validate: { page: '/validateconfig', permission: ['admin'], },
+  report: { page: '/configreport', permission: ['admin', 'demo', '#guest#'], },
+  login: { page: '/login', },
+  logout: { page: '/logout', },
+  changepw: { page: '/changepw', },
+  register: { page: '/register', },
+  forgotten: { page: '/forgotten', },
+
+
+  /** **********************************************
+   * 
    *           Database
    *           --------
    *********************************************** */
@@ -47,6 +99,7 @@ module.exports = {
     useNullAsDefault: true,
   },
 
+  /** List of tables in the database.. */
   tables: [
     'user',
     'audit',
@@ -61,54 +114,42 @@ module.exports = {
     'fieldtypes',
   ],
 
-  /** **********************************************
-   * 
-   *           Routes
-   *           ------
-   *********************************************** */
 
-  port: 3000,
-  mainPage: '/admin',                          // e.g. http://localhost:3000/admin
+  /* ****************************************************
+  *
+  *                    Security
+  *                    --------
+  *
+  ***************************************************** */
+  superuser: 'admin@admin.com',                //  This person is always superuser.
 
- 
-  /**  routes -> module */
-  /**  GET requests  */
-  get: {                
-    login: '../bin/suds/login',                      // e.g. http://localhost:3000/login results in bin/suds.login.js being run.
-    admin: '../bin/suds/admin',
-    changepw: '../bin/suds/change-password',
-    resetpw: '../bin/suds/reset-password',
-    auto: '../bin/suds/api/autocomplete',
-    lookup: '../bin/suds/api/lookup',
-    unique: '../bin/suds/api/unique',
-    validateconfig: '../bin/suds/validateconfig',
-    configreport: '../bin/suds/configreport',
-    createtable: '../bin/suds/create-table',
-    register: '../bin/suds/register',
-    logout: '../bin/suds/logout',
-    forgotten: '../bin/suds/forgotten',
-  },
-  /** POST requests */
-  post: {
-    changepw: '../bin/suds/change-password-process',
-    register: '../bin/suds/register-process',
-    login: '../bin/suds/login-process',
-    admin: '../bin/suds/admin',
-
+  forgottenPasswordExpire: 600,                //  Token sent in forgotten password email expires after this
+  rememberPasswordExpire: 600,                   // cookie set by remember is this number of days to expire. 
+  
+  permissionSets: {
+    /*   all: 'Built-in permission meaning everyone',  */
+    /*  none: 'Buit-in permission meaning no-one',  */
+    admin: 'General Manager / support.',
+    sales: 'Sales department',
+    purchasing: 'Purchasing department',
+    web: 'Web developers',
+    demo: 'Demonstration users',
   },
 
 
+  audit: {                                    // Audit trail file - logs every operation
+    include: true,
+    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
+    log: ['ip', 'method', 'query', 'body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
+    /** If omitted al operations are logged.  */
+    operations: ['new', 'update', 'populate', 'delete', 'login', 'changepw'],  // can include 'list' and listrow'
+  },
 
-   /** These map home page user functions (config/home.js) to routes */
-   validate: { page: '/validateconfig', permission: ['admin'], },
-   report: { page: '/configreport', permission: ['admin'], },
-   login: { page: '/login', },
-   logout: { page: '/logout', },
-   changepw: { page: '/changepw', },
-   register: { page: '/register', },
-   forgotten: { page: '/forgotten', },
- 
- 
+
+  /** You can block specific IPs or emails from using the system... A bit basic at present... 
+   *   Blocked users are trwated as guest users.  */
+  // blockIp: ['::ffff:192.168.0.56'],
+  // blockEmail: ['admin@admin.com'],
 
   /** **********************************************
    * 
@@ -144,7 +185,7 @@ module.exports = {
    * To add new input types simply add a new source file
    * to the directory bin/suds/input anf add to this list.
    */
-  inputTypes: [
+  inputTypeHandlers: [
     'autocomplete',              //  e.g. an autocomplete input field ig generated by bin/suds/input/automomplete.js
     'checkbox',
     'checkboxes',
@@ -152,8 +193,8 @@ module.exports = {
     'readonly',
     'select',
     'summernote',
-    'ckeditor4',
-    'ckeditor5',
+    'ckeditor-4',
+    'ckeditor-5',
     'textarea',
     'upload-file',
     'yesno-radio',
@@ -321,23 +362,23 @@ bottom bar.`,
       /** styles apply to marked text. Formats apply to the whole block the cursor is in */
       styles: [
         {
-          name: 'Block floating right',
-          element: 'div',
-          attributes: { style: 'float: right' }
+          name: 'Button',
+          element: 'p',
+          attributes: { class: 'button' }
         },
         {
           name: 'Hover image 200px',
           element: 'img',
           attributes: { class: 'himage200' }
         },
-       ],
+      ],
 
       formats: [
         'p',    // shortcut for {name: 'p', element: 'p'}
-        'h1', 
-        'h2',  
+        'h1',
+        'h2',
         /** example of custom style */
-        {   
+        {
           name: 'Divright',
           element: 'div',
           attributes: { style: 'float: right;' }
@@ -346,20 +387,21 @@ bottom bar.`,
 
 
     },
-
-  },
-
-  /** 
-   * 
-   *                            Ckeditor 5
-   *                            ----------
-   *     This is a basic implementation
-   * 
-   */
-  ckeditor5: {
-    headerTags: `
+    /** 
+ * 
+ *                            Ckeditor 5
+ *                            ----------
+ *     This is a basic implementation
+ * 
+ */
+    ckeditor5: {
+      headerTags: `
     <script src="https://cdn.ckeditor.com/ckeditor5/30.0.0/classic/ckeditor.js"></script>`,
+    },
+
   },
+
+
 
 
   /** **********************************************
@@ -372,7 +414,7 @@ bottom bar.`,
    *********************************************** */
 
   pageLength: 10,                              //  Number of rows per page on a table list
- 
+
   currency: {
     currency: 'GBP',                          // British pounds
     locale: 'en-GB',
@@ -414,36 +456,11 @@ bottom bar.`,
       'summernote',
       'ckeditor4',
       'ckeditor5',
-      'unique',
-      'recordTypeSelect'],
+      'unique'
+    ],
   },
 
 
-  /* ****************************************************
-  *
-  *                    Security
-  *                    --------
-  *
-  ***************************************************** */
-  superuser: 'admin@admin.com',                //  This person is always superuser.
-
-  forgottenPasswordExpire: 600,                //  Token sent in forgotten password emasil
-
-  permissionSets: {
-    /*   all: 'Built-in permission meaning everyone',  */
-    /*  none: 'Buit-in permission meaning no-one',  */
-    admin: 'General Manager.',
-    support: 'Customer support',
-    sales: 'Sales department',
-    purchasing: 'Purchasing department',
-    web: 'Web developers',
-  },
-
-
-/** You can block specific IPs or emails from using the system... A bit basic at present... 
- *   Blocked users are trwated as guest users.  */
- // blockIp: ['::ffff:192.168.0.56'],
- // blockEmail: ['admin@admin.com'],
 
   /** **********************************************
    * 
@@ -451,11 +468,6 @@ bottom bar.`,
    *           ----------------------
    *********************************************** */
 
-  audit: {                                    // Audit trail file - logs every operation
-    include: true,
-    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
-    log: ['ip','method','query','body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
-  },
 
   emailTransport: {
     service: 'gmail',
@@ -490,12 +502,12 @@ bottom bar.`,
 
   documentation: 'documentation',
 
-    /**
-     *  Header tags required for all input/list functions.  You could put this 
-     * in the suds.ejs file instead, but it seemed safer to keep the 
-     * technical stuff here.  
-     * 
-     */
+  /**
+   *  Header tags required for all input/list functions.  You could put this 
+   * in the suds.ejs file instead, but it seemed safer to keep the 
+   * technical stuff here.  
+   * 
+   */
   headerTags: `
   <!-- ------------------ Bootstrap CSS start ------------------- -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -510,30 +522,6 @@ bottom bar.`,
   <script src="/javascripts/suds.js"></script>
    <!-- -------------------------------------------------------- -->
   `,
-
-  /** **********************************************
-   * 
-   *           Content Management System
-   *           -------------------------
-   * 
-   *   The CMS included here is a starter app so see how
-   *   the software can be used.
-   * 
-   *********************************************** */
-
-
-  homePage: 'index',     /* slug of the home page */
-  pageFile: {
-    table: 'webpages',
-    /* Columns in the page File */
-    id: 'pageno',
-    title: 'title',
-    status: 'status',
-    embargo: 'embargo',
-    expires: 'expires',
-    slug: 'slug',
-
-  },
 
 
 }

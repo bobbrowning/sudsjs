@@ -1,13 +1,13 @@
 let suds = require('../../config/suds');
-let generic = require('./input/generic');
+let generic = require('./input/generic').fn;
 
 
 
 
-module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record,tableData) {
+module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
 
   trace = require('track-n-trace');
-  trace.log({ inputs: arguments, maxdepth: 2 });
+  trace.log({ inputs: arguments, maxdepth: 3 });
   const inputFieldTypes = suds.inputFieldTypes;
 
 
@@ -22,8 +22,8 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
      * treat as 'text'
      * 
      ******************************************************  */
-  let formField='';
-  let headerTags='';
+  let formField = '';
+  let headerTags = '';
   let fieldType = 'text';                        // default
   if (attributes[key].input.type == 'boolean') {
     fieldType = 'checkbox';                 // but defaults to checkbox if this is a boolean
@@ -41,8 +41,14 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
     }
     fieldValue = fieldValue.split('T')[0];
   }
+
+
+  /** Special processing for process fields */
   if (
-    (attributes[key].primaryKey || key == 'createdAt' || key == 'updatedAt')
+    (attributes[key].primaryKey
+      || (attributes[key].process && attributes[key].process.createdAt)
+      || (attributes[key].process && attributes[key].process.updatedAt)
+    )
     && (mode != 'search')
   ) {
     if (Attributes[key].primaryKey) {
@@ -56,6 +62,7 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
   }
   else {
     let helperName = '';
+    let helperModule;
     let helper;
     trace.log({ fieldType: fieldType });
     //  if not a simple input tag or display - look for helper   
@@ -68,14 +75,31 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
         }
         helperName += fieldType.charAt(i).toLowerCase();
       }
-      trace.log({ helpername: helperName });
-      helper = require('./input/' + helperName);
+      helperModule = require('./input/' + helperName);
+      if (helperModule.fn) {
+        helper=helperModule.fn;
+      }
+      else {
+        helper=helperModule;
+      }
       if (!helper) {
         console.log(`*** invalid field type ${fieldType} in field ${key} ***`);
         fieldType = 'text';
         helperName = '';
       }
     }
+     
+    if (attributes[key].recordType && mode != 'checkRecordType' && attributes[key].input.recordTypeFix && permission !='#superuser#') {
+      helperName = 'readonly';
+      helperModule = require('./input/' + helperName);
+      if (helperModule.fn) {
+        helper=helperModule.fn;
+      }
+      else {
+        helper=helperModule;
+      }
+    }
+    trace.log({ helpername: helperName,helper:  typeof(helper)});
 
     let passedValue = fieldValue;
     let passedName = key;
@@ -88,13 +112,13 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
     else {
       if (helperName) {
         trace.log('calling helper', helperName);
-        let result = await helper(fieldType, passedName, passedValue, attributes[key], errorMsg,record,tableData);
+        let result = await helper(fieldType, passedName, passedValue, attributes[key], errorMsg, record, tableData, tabs);
         if (Array.isArray(result)) {
-          formField=result[0];
-          headerTags=result[1];
+          formField = result[0];
+          headerTags = result[1];
         }
         else {
-          formField=result;
+          formField = result;
         }
 
       }
@@ -103,7 +127,7 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
 
   trace.log({ field: formField });
 
-  return ([formField,headerTags]);
+  return ([formField, headerTags]);
 
 }
 

@@ -72,6 +72,14 @@ module.exports = async function (req, res) {
     trace.log(newData);
     await db.updateRow('user', newData);
     output += `<p>Password changed - <a href="${suds.mainPage}">Admin page</a></p>`;
+    if (suds.audit.include 
+        && (
+            !suds.audit.operations
+            || suds.audit.operations.includes('changepw')
+        )) {
+        await db.createRow('audit', {row: userRec.id, mode: 'changepw', tableName: 'user', updatedBy: userRec.id, notes: 'Change Password'});
+    }
+
     let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;

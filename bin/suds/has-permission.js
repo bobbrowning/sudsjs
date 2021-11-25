@@ -40,6 +40,7 @@ module.exports = function (permission, table, has) {
   } // end all
 
   if (has == 'any') {
+    trace.log(tablePermission.view,permission);
     if (
       (tablePermission.all && tablePermission.all.includes(permission))
       || (tablePermission.edit && tablePermission.edit.includes(permission))

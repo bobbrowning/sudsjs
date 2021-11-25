@@ -85,8 +85,8 @@ module.exports = {
     info: 'bi bi-info-circle',
     listRow: {
       col1: 'col-3',
-      col2: 'col-7',
-      col3: 'col-2 text-center',
+      col2: 'col-9',
+ //     col3: 'col-2 text-center',
     },
     groupLinks: {
       row: 'row sudsListRow',

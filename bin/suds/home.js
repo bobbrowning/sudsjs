@@ -78,7 +78,7 @@ module.exports = async function (req, permission) {
         description = home[section].description;
       }
     }
-    if (home[section].description == '#username#') { description = ''; }
+    if (permission == '#guest#') {description=lang.guest}
     output += `
                 <br />
                 <span class="breaktext">${description}</span>`;

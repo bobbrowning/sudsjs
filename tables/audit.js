@@ -9,7 +9,7 @@ module.exports = {
   description: 'Audit trail file',
   description: `This table is maintained by the system to record every action. The table can get very 
   large, so it can be automatically trimmed.  The trimming rules are set in the suds configuration file.`,
-  permission: {view: ['admin','support']},
+  permission: {view: ['admin','demo']},
  list: {
   columns: ['id','createdAt','tableName','mode','row'],
  },

@@ -1,7 +1,9 @@
 
 let suds = require('../../../config/suds');
-let friendlyName= 'Textarea';
- let  description= 'Creates a textarea field.';
+let documentation={
+  friendlyName: 'Textarea',
+   description: 'Creates a textarea field.',
+}
 
 
 
@@ -15,11 +17,10 @@ let friendlyName= 'Textarea';
 },*/
 
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
   trace = require('track-n-trace');
   trace.log(arguments);
 
@@ -46,5 +47,6 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
 
   }
 
-
+  exports.documentation=documentation;
+  exports.fn=fn;
 

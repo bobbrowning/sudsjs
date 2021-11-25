@@ -1,5 +1,6 @@
 let trace = require('track-n-trace');
 let sendView = require('./send-view');
+let suds = require('../../config/suds');
 
 
 
@@ -16,7 +17,8 @@ module.exports = async function (req, res) {
 
     req.session.userId = false;
     res.clearCookie('user');
-    output += '<p>You have logged out - <a href="/admin">Admin page</a></p?';
+    output += `<p>You have logged out - <a href="/admin">Admin page</a></p>
+    <script>document.location="${suds.mainPage}"</script>`;
     let result = await sendView(res, 'admin',output);
     trace.log(result);
     return;

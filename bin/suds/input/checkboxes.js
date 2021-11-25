@@ -1,11 +1,9 @@
 
-let friendlyName = 'Multiple Checkboxes';
-let description = `Create check boxes based on a list in the isIn attribute in the model or on a linked table. 
-In the latter case, the label or each checkbox is either the value given by the rowTitle 
-function for that table in the sudst ables config file, or just the ID.  Data is stored as a simple csv. 
-So for the database-driven function the resulk is '1,3,5,6...'   For the isIn version the result would be 
-'alpha,beta,delta ...'  This wouldn't work if the values contain commas. ` ;
-
+let documentation = {
+  friendlyName: 'Multiple Checkboxes',
+  description: `Create check boxes based on the values in the configuration file or a linked table. 
+ Data is stored in a text field  as an array in JSON format` ,
+};
 
 /*inputs: {
   fieldType: { type: 'string' },
@@ -17,21 +15,22 @@ So for the database-driven function the resulk is '1,3,5,6...'   For the isIn ve
 },*/
 
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
+let getLabelsValues = require('../get-labels-values');
 let suds = require('../../../config/suds');
 const trace = require('track-n-trace');
 
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
   trace.log(arguments);
   let results = '';
   let labels;
   let values;
   [values, labels] = await getLabelsValues(attributes, record);
-  let checked=[];
-  if (fieldValue) {checked=JSON.parse(fieldValue);}
+  let checked = [];
+  if (fieldValue) { checked = JSON.parse(fieldValue); }
+  trace.log(fieldValue);
+  if (!Array.isArray(checked)) { checked = [checked] };
   trace.log(checked);
   for (let i = 0; i < values.length; i++) {
     selected = '';
@@ -53,3 +52,6 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
       `;
   return (results);
 }
+
+exports.documentation = documentation;
+exports.fn = fn;

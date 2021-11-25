@@ -4,7 +4,6 @@ read appName
 pwd
 
 mv suds-express-demo-main $appName
-rm suds-express-demo-main.zip
 cd ./$appName
 pwd
 npm install 

@@ -9,14 +9,10 @@ let fileUpload = require('express-fileupload');
 
 var indexRouter = require('../bin/routes');
 //var adminRouter = require('./routes/admin');
-var csrf = require('csurf')
 var bodyParser = require('body-parser');
 
-console.log('starting app.js');
+console.log('SUDS-Express - starting app.js');
 var session = require('express-session')
-var csrfProtection = csrf()
-// var parseForm = bodyParser.urlencoded({ extended: false })
-
 
 var app = express();
 
@@ -34,7 +30,6 @@ app.use(session({
   saveUninitialized: true,
 }))
 
-// require('./config/passport')
 
 app.locals.config = {};
 app.locals.suds = require('../config/suds');

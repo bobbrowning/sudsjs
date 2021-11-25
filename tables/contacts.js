@@ -15,7 +15,7 @@ module.exports = {
   When the subsequent action takes place the earlier action is closed.  When the contacts are listed, 
   they are characterised by the first 40 characters of the notes.`,
   friendlyName: 'Notes from contacts',
-  permission: { all: ['sales', 'purchasing', 'admin'] },
+  permission: { all: ['sales', 'purchasing', 'admin','demo'] },
   addRow: 'Add a new contact',            // text in the link to add a new row  
 
   /* The list property has the specification for the table listing */
@@ -66,14 +66,12 @@ module.exports = {
     postProcessDescription: `This function is run immediately after the record is updated.   
     It sets the last contact and next action in the user's record.`,
     postProcess: async function (record, operation) {
-      if (operation == 'addNew') {
         await db.updateRow('user', {
           id: record.user,
           lastContact: record.id,
           nextActionDate: record.nextActionDate,
           nextAction: record.nextAction,
         });
-      }
       return;
     },
   },

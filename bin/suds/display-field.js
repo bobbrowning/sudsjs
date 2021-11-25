@@ -35,12 +35,6 @@ module.exports = async function (attributes, value, children, permission) {
   if (!value && !attributes.collection) return ('');
 
 
-  /** This field is something like customer type that determines how thendata is presented */
-  if (attributes.recordTypeColumn) {
-    display = attributes.recordTypes[value].friendlyName;
-    return (display);
-  }
-
   /** This is not a real field on the database, but itendifies a child column */
   trace.log(attributes.collection, children)
   if (attributes.collection) {
@@ -65,9 +59,12 @@ module.exports = async function (attributes, value, children, permission) {
     try {
       helper = require('./display/' + attributes.display.type);
     }
-    catch (err) { }
+    catch (err) {
+      trace.log(err)
+     }
     if (helper) {
-      return (helperName(attributes, value))
+      trace.log('using helper', attributes.display.type);
+      return (await helper(attributes, value))
     }
   }
 
@@ -94,7 +91,7 @@ module.exports = async function (attributes, value, children, permission) {
     return (display);
   }
 
- 
+
   trace.log(attributes.friendlyName, value);
   if (attributes.display && attributes.display.JSON) {
     let data = JSON.parse(value);
@@ -113,7 +110,13 @@ module.exports = async function (attributes, value, children, permission) {
 
   /** File upload */
   if (attributes.input && attributes.input.type == 'uploadFile') {
-    display = `<a href="/uploads/${value}" target="_blank">${value}</a>`;
+    display='';
+    if (attributes.display.type == 'image') { 
+      let width='100px';
+      if (attributes.display.width) {width=attributes.display.width}
+      display = `<a href="/uploads/${value}" target="_blank"><img src="/uploads/${value}" style="width: ${width};"></a>&nbsp;`;
+    }
+      display += `<a href="/uploads/${value}" target="_blank">${value}</a>`;
     return (display);
   }
 

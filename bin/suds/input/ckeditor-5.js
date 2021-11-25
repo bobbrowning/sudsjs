@@ -1,11 +1,12 @@
 
 let suds = require('../../../config/suds');
 
-let friendlyName = 'Summernote WYSIWYG rich text input field';
-let description = `A very simple and light input field which creats HTML. There are many such text editors on the market, but this one is (a) Free an (b) very easy to set up.  
+let documentation = {
+  friendlyName: 'Summernote WYSIWYG rich text input field',
+  description: `A very simple and light input field which creats HTML. There are many such text editors on the market, but this one is (a) Free an (b) very easy to set up.  
   However if you want to use one of the more sophisticated products available then you
-  might ue this as a starting point for writing a helper for it.`;
-
+  might ue this as a starting point for writing a helper for it.`,
+}
 
 
 /*inputs: {
@@ -18,26 +19,25 @@ let description = `A very simple and light input field which creats HTML. There 
 },*/
 
 let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('./get-labels-values');
+let getLabelsValues = require('../get-labels-values');
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-   trace = require('track-n-trace');
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
+  trace = require('track-n-trace');
   trace.log(arguments);
 
   let results = '';
-  let headerTags=suds.inputTypes.ckeditor5.headerTags; 
-  
+  let headerTags = suds.inputTypes.ckeditor5.headerTags;
+
   let height = 100;
   let placeholder = '';
   if (attributes.input.height) { height = attributes.input.height }
   if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
-  let toolbar='';
+  let toolbar = '';
   if (attributes.input.toolbar) {
-      toolbar='toolbar: [';
-      for (let item of attributes.input.toolbar) { toolbar+=`'${item}', `;}
-      toolbar+=']';
+    toolbar = 'toolbar: [';
+    for (let item of attributes.input.toolbar) { toolbar += `'${item}', `; }
+    toolbar += ']';
   }
   results = `
   <textarea name="${fieldName}" id="${fieldName}"  placeholder="${placeholder}">
@@ -58,10 +58,11 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
                    
           `;
 
-   return ([results,headerTags]);
+  return ([results, headerTags]);
 
 }
 
-
+exports.documentation=documentation;
+exports.fn=fn;
 
 

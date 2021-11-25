@@ -1,16 +1,14 @@
-/**
- * PurchaseOrders.js
- *
- * @description :: A model definition represents a database table/collection.
- * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
- */
+
+
+const stock=require('../bin/custom/stock');
 
 module.exports = {
   description: 'Purchase orders',
   friendlyName: 'Purchase Orders',
-  permission: { all: ['purchasing', 'admin'] , view: ['sales']},
-  addRow: 'Add new purchase order',   // text in the link to add a new row  
-  open: 'purchaseorderlines',
+  permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
+ addRow: 'Add new purchase order',   // text in the link to add a new row  
+ columns: ['id','supplier','date','status','total'],
+ open: 'purchaseorderlines',
   attributes: {
     id: {
       friendlyName: 'Order No',                            // Visible name 

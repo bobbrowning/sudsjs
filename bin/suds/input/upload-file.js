@@ -1,7 +1,9 @@
 
   let suds = require('../../../config/suds');
-  let friendlyName= 'File upload';
-  let  description= 'Not working - do not use';
+  let documentation={
+    friendlyName: 'File upload',
+    description: '',
+  };
 
 
 
@@ -18,8 +20,7 @@ let lang = require('../../../config/language')['EN'];
 
 
 
-module.exports = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
+let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
   trace = require('track-n-trace');
   trace.log(arguments);
   let message='';
@@ -41,5 +42,6 @@ module.exports = async function (fieldType, fieldName, fieldValue, attributes, e
   }
 
 
-
+  exports.documentation=documentation;
+  exports.fn=fn;
 

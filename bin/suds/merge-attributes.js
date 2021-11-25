@@ -26,6 +26,7 @@ module.exports = function (table, permission) {
   trace.log(groupLookup, { level: 'verbose' });
 
   let merged = {};
+
   for (const key of Object.keys(attributes)) {
     // merged is a merge of the attributes in the model with the extra attributes in the 
     // suds config file.  These give field properties for things like the input type 
@@ -36,8 +37,9 @@ module.exports = function (table, permission) {
     trace.log({ key: key }, { level: 'verbose' });
 
 
-    merged[key] = attributes[key]
+    merged[key] = attributes[key];
 
+    
     /** 
      * 
      * Guarantee that certain sub-object/values are there with default values 
@@ -178,6 +180,12 @@ module.exports = function (table, permission) {
     trace.log({ text: 'end loop', key: key, merged: merged[key], level: key })
 
   }
+
+  if (tableData.recordTypeColumn && merged[tableData.recordTypeColumn]) {
+     merged[tableData.recordTypeColumn].recordType=true;
+    if (tableData.recordTypeFix) {merged[tableData.recordTypeColumn].recordTypeFix=true;}
+  }
+ 
   trace.log({ merged: merged, level: 'verbose' });
   return (merged);
 }

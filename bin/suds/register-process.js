@@ -3,8 +3,9 @@ let sendView = require('./send-view');
 //let getRow = require('./get-row');
 //let createRow = require('./create-row');
 //let updateRow = require('./update-row');
-let db=require('./db');
+let db = require('./db');
 let crypto = require('crypto');
+const suds = require('../../config/suds');
 
 
 module.exports = async function (req, res) {
@@ -29,17 +30,33 @@ module.exports = async function (req, res) {
     let oldRec = await db.getRow('user', allParms.emailAddress, 'emailAddress');
     trace.log(oldRec);
     if (oldRec.err) {
-        await db.createRow('user', userRec);
+        let rec = await db.createRow('user', userRec);
+        if (suds.audit.include 
+            && (
+                !suds.audit.operations
+                || suds.audit.operations.includes('new')
+            )) {
+            await db.createRow('audit', {row: rec.id, mode: 'new', tableName: 'user', updatedBy: rec.id, notes: 'User Registration'});
+        }
+
     }
     else {
         if (allParms.update) {
-            userRec.id=oldRec.id;
-            userRec.permission=null;
+            userRec.id = oldRec.id;
+            userRec.permission = null;
             await db.updateRow('user', userRec);
+            if (suds.audit.include 
+                && (
+                    !suds.audit.operations
+                    || suds.audit.operations.includes('new')
+                )) {
+                await db.createRow('audit', {row: userRec.id, mode: 'update', tableName: 'user', updatedBy: userRec.id, notes: 'Change Password'});
+            }
+    
         }
         else {
             output += `<p>Email address ${allParms.emailAddress} is already registered</p>`
-            let result = await sendView(res, 'admin',output);
+            let result = await sendView(res, 'admin', output);
             trace.log(result);
             return;
         }
@@ -48,7 +65,7 @@ module.exports = async function (req, res) {
     }
 
     output += '<p>Regstration complete - <a href="/login">Log in</a></p?';
-    let result = await sendView(res, 'admin',output);
+    let result = await sendView(res, 'admin', output);
     trace.log(result);
     return;
 

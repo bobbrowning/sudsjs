@@ -6,6 +6,7 @@ let tableDataFunction = require('./table-data');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let db = require('./db');
+let evalPermission = require('./eval-permission');
 
 let createField = require('./create-field');
 //let countRows = require('./count-rows');
@@ -57,6 +58,15 @@ module.exports = async function (permission, table, id, open, openGroup) {
   let mainPage = suds.mainPage;
   if (!mainPage) { mainPage = '/'; }
   let tableData = tableDataFunction(table, permission);
+
+  if (tableData.demoRows && tableData.demoRows.includes(id)) {
+        console.log(`Table: ${table} row ${id} not checked for permission - this is a demonstration page.`)
+    }
+    else {
+    if (!tableData.canView) {
+      return `<p>Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). <a href="${suds.mainPage}">Please log in</a> and retry`;
+    }
+  }
   let message = '';
   let attributes = await mergeAttributes(table, permission);  // Merve field attributes in model with config.suds tables
   trace.log({ attributes: attributes, level: 'verbose' })
@@ -65,10 +75,17 @@ module.exports = async function (permission, table, id, open, openGroup) {
     return (`<h1>Unexpected error ${record.errmsg}/h1>`);
   }
   let output = '';
-  tableName = tableData.friendlyName;
+  let tableName = tableData.friendlyName;
+
+
   let rowTitle = `Row: ${id}`;              //  Row title defailts to Row: x  
   if (tableData.rowTitle) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
-    rowTitle = tableData.rowTitle(record);
+    if (typeof (tableData.rowTitle) == 'string') {
+      rowTitle = record[tableData.rowTitle];
+    }
+    else {
+      rowTitle = tableData.rowTitle(record);
+    }
   }
   let parent;
   let parentKey;
@@ -107,7 +124,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
       let via = attributes[key].via;
       let childCount = await db.countRows(child, { searches: [[via, 'eq', id]] });
       children[key] = childCount;
-      if (childCount > 0) {
+      if (childCount > 0 && child != 'audit') {
         totalChild += childCount;
         hasRows += child + ', ';
       }
@@ -144,6 +161,120 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
 
 
+  /** Creat ativity log.  There is a ore elegant way of doing this but I just read
+   * the 10 (say) most recent child records from each child table and put them in an array, 
+   * then sort by date and take the first 10. 
+   */
+  let activityLogRequired = false;
+  let activityDiv = '';
+  let activityGroup = {};
+  let activityLimit = 10;
+  for (let group of Object.keys(tableData.groups)) {
+    if (tableData.groups[group].activityLog) {
+      if (tableData.groups[group].permission
+        && !evalPermission(permission, tableData.groups[group].permission, 'view')) { break; }
+      activityLogRequired = true;
+      activityGroup = tableData.groups[group];
+      if (activityGroup.limit) { activityLimit = activityGroup.limit; }
+      break;
+    }
+  }
+  trace.log({ activityLogRequired: activityLogRequired });
+  if (activityLogRequired) {
+    primaryKeys = {};
+    sortField = {};
+    let activityLog = [];
+    tableInfo = {};
+    tableInfo[table] = tableData;
+    let i = 0;
+    for (let key of Object.keys(attributes)) {
+      if (attributes[key].collection) {
+        let child = attributes[key].collection;
+        if (child == 'audit') { continue }
+        if (activityGroup.activities && !activityGroup.activities.includes(child)) { continue }
+        let via = attributes[key].via;
+        let tableData;
+        if (tableInfo[child]) { tableData = tableInfo[child] }
+        else {
+          tableData = tableInfo[child] = tableDataFunction(child, permission);
+        }
+        trace.log(child, tableData.canView);
+        let primaryKey = tableData.primaryKey;
+        let sortField = tableData.createdAt;
+        trace.log(tableData);
+        let records = await db.getRows(child, { searches: [[via, 'eq', id]] }, 0, activityLimit, sortField, 'DESC');
+        for (let record of records) {
+          let rowTitle = ''
+          if (tableData.rowTitle) {
+            rowTitle = await tableData.rowTitle(record);
+          }
+          activityLog[i++] = [child, tableData.friendlyName, record[primaryKey], record[sortField], rowTitle, attributes[key].friendlyName]
+        }
+      }
+    }
+    let searches = {
+      andor: 'and',
+      searches: [
+        ['tableName', 'eq', table],
+        ['row', 'eq', id],
+        ['mode','ne','populate']
+      ]
+    };
+    let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
+    trace.log(auditRecords);
+    for (let record of auditRecords) {
+      let rowTitle = `${tableData.friendlyName} row ${id}`;
+      let reason = lang[record.mode];
+      //   if (record.createdAt==record.updatedAt) {reason=lang.new}
+      activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, rowTitle, reason]
+    }
+
+
+
+    /** Now assemble the array into some HTML. */
+    if (activityLog.length) {
+      activityLog.sort(function (a, b) { return b[3] - a[3] })
+      trace.log(activityLog);
+      activityDiv = `
+  <h2>${lang.activityLog}</h2>
+  <table class="${classes.output.table.table}">   
+  <thead> 
+  <tr >
+      <th scope="col" class="${classes.output.table.th}">${lang.table}</th>
+      <th scope="col" class="${classes.output.table.th}">${lang.reason}</th>
+      <th scope="col" class="${classes.output.table.th} ">${lang.date}</th>
+      <th scope="col" class="${classes.output.table.th} ">${lang.description}</th>
+    </tr>
+    </thead>
+    <tbody>
+ `;
+      trace.log(permission);
+      for (let i = 0; i < activityLog.length; i++) {
+        if (i + 1 > activityLimit) { break };
+        item = activityLog[i];
+        trace.log(item);
+        let date = new Date(item[3]);
+        let desc = `${lang.rowNumber} ${item[2]} - ${item[1]}`;
+        if (item[4]) { desc = item[4] }
+        if (permission == '#superuser#' || (item[0] != 'audit' && tableInfo[item[0]].canView)) {
+          desc = `<a href="${suds.mainPage}?table=${item[0]}&mode=listrow&id=${item[2]}">${desc}</a>`
+        }
+        activityDiv += `
+      <tr >
+        <td>${item[1]}</td>
+        <td>${item[5]}</td>
+        <td >${date.toDateString()}</td>
+        <td>${desc}</td>
+    </tr>`;
+      }
+      activityDiv += `
+    </tbody>
+    </table> 
+  `;
+    }
+  }
+  trace.log(activityDiv);
+
 
   /* *******************************************************
       * 
@@ -157,21 +288,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
       * submenu work that allows users to select the group they
       * want to see.
       * 
+      * The tabs array includes the groups that are to be listed 
+      * for the user to switch between grouos. 
+      * 
       ****************************************************** */
 
-  let omit = [];
-  if (tableData.recordTypeColumn) {
-    trace.log({
-      recordTypeColumn: tableData.recordTypes,
-      recordType: record[tableData.recordTypeColumn],
-      recordtypedata: tableData.recordTypes[record[tableData.recordTypeColumn]],
-      omit: tableData.recordTypes[record[tableData.recordTypeColumn]].omit,
-    });
-    if (tableData.recordTypes[record[tableData.recordTypeColumn]].omit) {
-      omit = tableData.recordTypes[record[tableData.recordTypeColumn]].omit;
-    }
-  }
-  trace.log(omit);
+
+  let hideGroup = {};
   let groupList = ['other'];
   let openTab = '';
   let staticList = [];  // list of groups with static first
@@ -187,22 +310,45 @@ module.exports = async function (permission, table, id, open, openGroup) {
   if (tableData.groups) {
     trace.log({ formgroups: tableData.groups });
 
-    // loop through the groups
+    /**  loop through the groups    */
     for (let group of Object.keys(tableData.groups)) {
       trace.log({ group: group, cols: tableData.groups[group].columns })
       if (group == 'other') { continue }                          // deal with this later - will be the last tab
-      if (!tableData.groups[group].columns) { continue; }    // If there are no columns then will not be shown
-      if (omit.includes(group)) { continue }
-      let count = 0;                                         // how many viewable columns?
-      for (const key of tableData.groups[group].columns) {
-        if (attributes[key] && attributes[key].canView) {
-          count++
-          incl.push(key);
-        };
-      }
-      if (!count) { continue }                                // If no viewable fields then the group will not be shown. 
 
-      /* make a list of static groups - they will listed first. */
+      /**  Is this group being shown for this record type? */
+      if (tableData.groups[group].recordTypes
+        &&
+        !tableData.groups[group].recordTypes.includes(record[tableData.recordTypeColumn])
+      ) {
+        hideGroup[group] = true;
+      }
+
+      /** Does this user have permission to see it... */
+      trace.log(tableData.groups[group].permission);
+      if (tableData.groups[group].permission) {
+        if (!evalPermission(permission, tableData.groups[group].permission, 'view'))
+          hideGroup[group] = true;
+      }
+
+      /** Make sure that there are any fields to show that this user has permission to see. 
+       *  but not for the activity log ...
+       */
+      if (!tableData.groups[group].activityLog) {
+        let count = 0;                                         // how many viewable columns?
+        for (const key of tableData.groups[group].columns) {
+          if (attributes[key] && attributes[key].canView) {
+            count++
+            incl.push(key);
+          };
+        }
+        if (!count) { continue }
+      }                                // If no viewable fields then the group will not be shown. 
+
+
+
+      /**
+       * Add to the tabs array
+       *  make a list of static groups - they will listed first. */
       if (tableData.groups[group].static) {
         staticList.push(group);
       }
@@ -211,16 +357,18 @@ module.exports = async function (permission, table, id, open, openGroup) {
       }
     }
 
-    /* Now fill up the 'other' array     */
+    /** Now fill up the 'other' array     */
     if (!tableData.groups.other) { tableData.groups.other = {} }
     if (!tableData.groups.other.columns) { tableData.groups.other.columns = [] }
     let all = fieldList;
-    /* need to remove the items in 'all' that are also in 'incl' and store result in  */
-    /*     tableData.groups.other.columns                                             */
-    /*     tableData.groups.other.columns = all.filter(item => !incl.includes(item)); */
+    /**
+     * Start with a list of all the fields that this user has permission to see (fieldList)
+     * then remove the items  that are in othe groups (incl) and store result in  
+     *  tableData.groups.other.columns  
+     * */
     let count = 0;
     for (let key of all) {
-      if (tableData.groups.other.columns.includes(key)) {
+      if (tableData.groups.other.columns.includes(key)) {    // might already be in Other
         count++;
         continue;
       }
@@ -230,25 +378,36 @@ module.exports = async function (permission, table, id, open, openGroup) {
       }
     }
     if (count) {
-      tabs.push('other');
+      tabs.push('other');                                 // goes to the end of the list of tabs
     }
 
     // List of the groups with static groups first
     groupList = staticList.concat(tabs);
 
 
+    trace.log({
+      tabs: tabs,
+      static: staticList,
+      groupList: groupList,
+      groups: tableData.groups.Date,
+      hideGroup: hideGroup,
+    })
 
-    trace.log({ tabs: tabs, static: staticList, groups: tableData.groups })
-
-    /*  Figure out which child list should be open for each group */
+    /**  Figure out
+     *   which group should be open and...
+     *   which child list should be open for each group 
+     * */
     let first = true;
     let openList = '{';
     for (let group of groupList) {
-      let open = '';
+      if (hideGroup[group]) { continue }
+      let open = 'none';
       if (tableData.groups[group].open) {
         open = tableData.groups[group].open;
-        openList += `${group}: '${open}',`;
       }
+      openList += `${group}: '${open}',`;
+
+      trace.log(group, openList);
       if (first && !tableData.groups[group].static) {
         openTab = group
         first = false;
@@ -259,11 +418,15 @@ module.exports = async function (permission, table, id, open, openGroup) {
         }
       }
     }
+
     if (openGroup) { openTab = openGroup }
 
 
     openList += '}';
-    trace.log({ columnGroup: columnGroup, openTab: openTab });
+    trace.log({ columnGroup: columnGroup, openTab: openTab, hideGroup: hideGroup, openlist:openList });
+
+    //   tabs=['activitylog'].concat(tabs);
+
     if (tabs) {
       output += `
       <script>
@@ -271,6 +434,8 @@ module.exports = async function (permission, table, id, open, openGroup) {
           console.log('tabclickgroup:',tab); 
           const openList=${openList};`;
       for (let tab of tabs) {
+        trace.log(tab, hideGroup[tab]);
+        if (hideGroup[tab]) { continue }
         output += `
           document.getElementById('group_${tab}').style.display="none";
           document.getElementById('tab_${tab}').style.fontWeight="normal";`;
@@ -336,13 +501,16 @@ module.exports = async function (permission, table, id, open, openGroup) {
     groupRows[group] = '';
     if (tableData.groups[group].columns) {
       for (const key of tableData.groups[group].columns) {
+        trace.log(key);
         trace.log(group, key, attributes[key].canView, children[key]);
         if (!attributes[key]) {
           console.log(`column ${key} in group ${group} does not exist.`);
           continue
         };
+        trace.log(attributes[key].canView);
         if (!attributes[key].canView) { continue };
         let display = await displayField(attributes[key], record[key], children[key], permission);
+        trace.log(display);
         let title = attributes[key].friendlyName;
         let description = '';
         if (attributes[key].description) {
@@ -418,12 +586,9 @@ module.exports = async function (permission, table, id, open, openGroup) {
                 </span>
               </th>
               <td  class="${classes.output.listRow.col2}">
-                ${display}
+                ${display}${col3}
               </td>
-              <td class="${classes.output.listRow.col3}">
-                ${col3}
-              </td>
-            </tr>`;
+                 </tr>`;
       }
     }
     trace.log({ group: group, rows: groupRows[group], level: 'verbose' })
@@ -437,7 +602,6 @@ module.exports = async function (permission, table, id, open, openGroup) {
             <tr class="${classes.output.table.tr}">
               <th scope="col" class="${classes.output.table.th} ${classes.output.listRow.col1}">${lang.field}</th>
               <th scope="col" class="${classes.output.table.th} ${classes.output.listRow.col2}">${lang.value}</th>
-              <th scope="col" class="${classes.output.table.th} ${classes.output.listRow.col3}"></th>
             </tr>
           </thead>
           <tbody>`;
@@ -459,6 +623,8 @@ module.exports = async function (permission, table, id, open, openGroup) {
         <div class="${classes.output.groupLinks.envelope}"> <!-- Envelope -->
           <span class="${classes.output.groupLinks.spacing}">${lang.formGroup}</span>`;
     for (let group of tabs) {                              // run through the tabs
+      if (hideGroup[group]) { continue }
+
       trace.log(openTab, group);
       let friendlyName = group;
       if (groups[group].friendlyName) { friendlyName = groups[group].friendlyName; }
@@ -475,20 +641,29 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
   let disp;
   for (let group of tabs) {                               // then go through the non-statiuc groups
+    if (hideGroup[group]) { continue }
     if (openTab == group) { disp = 'block'; } else { disp = 'none' }   // the first will be shown the rest hidden
     output += `
        <!--  --------------------------- ${group} ---------------------- -->
       <div id="group_${group}" style="display: ${disp}">  <!-- Group ${group} -->`;
-    if (groupRows[group]) {
-      output += `
+
+    if (tableData.groups[group].activityLog) {
+      output += activityDiv;
+    }
+    else {
+
+
+      if (groupRows[group]) {
+        output += `
         <div class="${classes.output.table.envelope}">  <!-- envelope -->
           <table class="${classes.output.table.table} ${classes.output.listRow.spacing}" >
             <tbody>`;
-      output += groupRows[group];
-      output += `
+        output += groupRows[group];
+        output += `
            </tbody> 
           </table>
         </div>   <!-- envelope -->`;
+      }
     }
     output += `
       </div>   <!--  group ${group}  -->`;
@@ -557,24 +732,6 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
 
 
-  /* 
-   for (let key of Object.keys(attributes)) {
-     if (attributes[key].model) {
-       let linkTable = attributes[key].model;
-       let linkData = sails.helpers.sudsTableData(linkTable);
-       // If the linked tables lists this as a child in the config file?
-       // some tables may be linked but not necessarily intersting links
-       if (linkData.associations
-         && linkData.associations[table]
-         && record[key]) {
-         trace.log(key, attributes[key]);
-         output += `
-       <span style="margin-right: 10px; margin-left: 10px;"><a class="btn btn-primary btn-sm" href="${mainPage}?table=${linkTable}&mode=listrow&id=${record[key]}&open=${table}">${lang.linkTo} ${attributes[key].friendlyName}</a>
-         `;
-       }
-     }
-   }
-*/
   /* ************************************************
   *
   *   List table / Back to home page
@@ -622,7 +779,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
       }
     }
-    let limit = 10;
+    let limit = -1;  // ist all children
     let heading;   // Listing program wil generate a sensible heading
     trace.log(child, attributes[child], attributes[child].collection,);
 

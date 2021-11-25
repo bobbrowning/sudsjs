@@ -22,17 +22,22 @@ module.exports = {
   description: `This table includes a row for each person or organisation that 
   the system needs to process. This may be a customer, supplier, or in-house staff. 
   Rows can be linked so it can indicate which organisation a customer works for.`,
+
   permission: {                                           // Permission sets who can see this file 
-    all: ['sales', 'purchasing', 'admin'], view: ['all']
+    all: ['sales', 'purchasing', 'admin', 'demo'], view: ['all']
   },
-  addRow: 'Add a new user',                               // Words that appear in the add button
+  
+  /** Words that appear in the add button */
+  addRow: 'Add a new user',   
 
   /* This function provides a text string that in some way identifies the   */
   /*  row to people. In this case it is the full name with the row number   */
-  /* brackets                                                               */
-  rowTitle: function (record) {
-    return `${record.fullName} (User no:${record.id})`
-  },
+  /* brackets.                                                               */
+  rowTitle: 'fullName',
+
+
+  /**  This allows you to vary the input form depending on the record type.  */
+   recordTypeColumn: 'userType',
 
   /* Columns on the table listing. All columns are in the detail page       */
   /* This can be over-ridden in a report.                                   */
@@ -40,78 +45,65 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
   },
 
-  /* The columns can be split into groups for editing and display purposes   */
-  /* Once the edit page is loaded then user can switch between groups with   */
-  /* a menu. Any columns not listed here are automatically included in a     */
-  /* group called 'other'                                                    */
-  /* Note that in the test database we added a number of fields to the table */
-  /* But the only field that it is essential to add is 'permission'.         */
+  /** The columns can be split into groups for editing and display purposes   
+  * Once the edit page is loaded then user can switch between groups with   
+  * a menu. Any columns not listed here are automatically included in a    
+  * group called 'other' */
   groups: {
     basics: {
       static: true,
       open: 'none',
       columns: ['fullName', 'emailAddress', 'userType', 'isOrg'],
     },
-    profile: {
-      friendlyName: 'profile',
-      open: 'none',
-      columns: ['organisation', 'business', 'picture', 'notes'],
+    activityLog: {
+      friendlyName: 'Activity Log',
+      activityLog: true,                                                       // This is the activity log
+      limit: 15,                                                               // Maximum entries shown (defaults to 10)
+      activities: ['contacts', 'salesorders', 'salesorderlines'],              // These shild records are included
+      permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
     },
-    location: {
-      friendlyName: 'How to contact',
-      open: 'none',
-      columns: ['streetAddress', 'zip', 'country', 'region', 'mainPhone', 'mobilePhone'],
+    profile: {
+      friendlyName: 'Profile',
+      columns: ['picture', 'streetAddress', 'zip', 'province','country', 'mainPhone', 'mobilePhone','notes','business', 'organisation', 'people',],
     },
     contacts: {
       friendlyName: 'Contacts',
-      open: 'contacts',
-      columns: ['people', 'contacts', 'lastContact', 'nextAction', 'nextActionDate',],
+      open: 'contacts',                                                      // When this group is shown, these child records are shown
+      permission: { all: ['sales', 'purchasing', 'admin', 'demo'] },
+      columns: ['contacts', 'lastContact', 'nextAction', 'nextActionDate',],
     },
     sales: {
       friendlyName: 'Sales',
       open: 'salesorders',
       columns: ['salesorders', 'lastSale', 'salesorderlines'],
-      permission: { all: ['admin', 'sales'] },
+      permission: { all: ['admin', 'sales', 'demo'] },
+      recordTypes: ['L', 'C', 'P'],                                          // Only shown for Leads, prospects and customers
     },
     products: {
       friendlyName: 'Products supplied',
       open: 'products',
       columns: ['products', 'purchaseorders'],
-      permission: { all: ['admin', 'purchasing'], view: ['sales'] },
+      permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
+      recordTypes: ['S'],                                                    // Only shown for suppliers
     },
     website: {
       friendlyName: 'Website',
-      open: 'website',
+      open: 'website',                                                       // List web pages authored by this user
       columns: ['webpages'],
-      permission: { all: ['admin', 'web'] },
-    },
+      permission: { all: ['admin', 'web','demo'] },
+      recordTypes: ['W'],                                                    // Only shown for web developers
+     },
     security: {
       friendlyName: 'Security',
       permission: { all: ['admin'] },
-      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission']
+      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission', 'audit'],
     },
     other: {                                        // This is a *special* name. 
       friendlyName: 'Other',                         // This will scoop up the rest
     },
   },
 
-
-  recordTypeColumn: 'userType',
-  recordTypes: {
-    L: { friendlyName: 'Sales lead', omit: ['products', 'website'] },
-    P: { friendlyName: 'Prospect', omit: ['products', 'website'] },
-    C: { friendlyName: 'Customer', omit: ['products', 'website'] },
-    S: { friendlyName: 'Supplier', omit: ['sales', 'website'] },
-    W: { friendlyName: 'Website support', omit: ['products', 'sales'] },
-    I: { friendlyName: 'In-house staff' },
-    N: { friendlyName: 'No longer considered a prospect', omit: ['products'] },
-    O: { friendlyName: 'Other' },
-  },
-
-  /* These sections extend the information in the model files with processing     */
-  /* rules.  Should be read alongside the model.                                  */
-
-
+  
   /*  If a column is not included here. The defaults are:                          */
   /*    input: type= text for string columns, number for numbers                   */
   /*                  and checkbox for boolean,                                    */
@@ -119,7 +111,7 @@ module.exports = {
 
   attributes: {
     id: {
-      friendlyName: 'User No',                            // Visible name 
+      friendlyName: 'User No',   
       type: 'number',
       primaryKey: true,
       autoincrement: true,
@@ -127,12 +119,12 @@ module.exports = {
     createdAt: {
       friendlyName: 'Date created',
       type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
+      display: { type: 'datetime', truncateForTableList: 16 },   // For the table list only show date not time.
       database: { type: 'biginteger' },
       process: { createdAt: true }
-    },                                      // You don't actually enter these
-    updatedAt: {                            // but if you did they would be dates. 
-      friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
+    },                                                         // You don't actually enter these
+    updatedAt: {                                               // but if you did they would be dates. 
+      friendlyName: 'Date last updated',                       // so this also governs how they are diaplayed
       type: 'number',
       display: { type: 'datetime', truncateForTableList: 16 },
       database: { type: 'biginteger' },
@@ -152,7 +144,7 @@ module.exports = {
       example: 'Mary Sue van der McHenst',
       input: {
         required: true,
-        placeholder: 'Please enter the persons full name' // Placeholder text in the input field
+        placeholder: 'Please enter the persons full name'      // Placeholder text in the input field
       },
     },
     emailAddress: {
@@ -163,6 +155,7 @@ module.exports = {
       type: 'string',
       input: { type: 'uploadFile' },
       process: { uploadFile: true },
+      display: { type: 'image', width: '100px' },
     },
 
 
@@ -190,7 +183,7 @@ module.exports = {
     },
     isSuperAdmin: {
       type: 'boolean',
-      permission: { view: ['all'], edit: ['admin'] },
+      permission: { view: ['all'], edit: ['#superuser#'] },
       description: 'Whether this user is a "super admin" with extra permissions, etc.',
     },
     lastSeenAt: {
@@ -214,6 +207,10 @@ module.exports = {
     zip: {
       type: 'string',
     },
+    province: {
+      friendlyName: 'State/Province/County',
+      type: 'string',
+    },
     country: {
       type: 'string',
       input: {
@@ -223,14 +220,7 @@ module.exports = {
       values: 'countries',       // values are in /config/countries.js
 
     },
-    region: {
-      description: 'This is an example of a select using the data in the isIn attribute.',
-      type: 'string',
-      values: ['Europe', 'Middle East', 'Africa', 'South Asia', 'East', 'N America', 'S America'],
-      input: {
-        type: 'select',
-      }
-    },
+ 
 
     permission: {
       friendlyName: 'Permission set',
@@ -286,7 +276,7 @@ module.exports = {
     organisation: {
       friendlyName: 'Organisation',
       model: 'user',
-      description: 'The organsation this user belongs to (or holding group if this is an organisation)',
+      description: 'The organisation this user belongs to (or holding group if this is an organisation)',
       input: {
         type: 'select',
         search: {
@@ -302,8 +292,20 @@ module.exports = {
       description: 'The type of user.  Customer/Supplier or in-house.',
       type: 'string',
       input: {
-        type: 'recordTypeSelect',
+        type: 'select',
         required: true,
+        recordTypeFix: true,
+      },
+      values: {
+        L: 'Sales lead',
+        P: 'Prospect',
+        C: 'Customer',
+        S: 'Supplier',
+        W: 'Website support',
+        I: 'In-house staff',
+        N: 'No longer considered a prospect',
+        O: 'Other',
+
       },
     },
 
@@ -425,7 +427,7 @@ module.exports = {
           sales: { type: 'total', column: 'total', friendlyName: 'Total sales', display: { currency: true } },
           ave: { type: 'average', column: 'total', friendlyName: 'Average value per product line', display: { currency: true } },
           units: { type: 'total', column: 'units', friendlyName: 'No of units', },
-          aveunits: { type: 'composite', divide: ['sales','units'] , display: { currency: true }, friendlyName: 'Average unit price', },
+          aveunits: { type: 'composite', divide: ['sales', 'units'], display: { currency: true }, friendlyName: 'Average unit price', },
         }
 
       }
@@ -450,7 +452,7 @@ module.exports = {
     },
 
     people: {
-      friendlyName: 'Associated people',
+      friendlyName: 'Staff / Subsidiary',
       collection: 'user',
       via: 'organisation',
       collectionList: {
@@ -458,7 +460,14 @@ module.exports = {
       }
     },
 
-
+    audit: {
+      collection: 'audit',
+      via: 'row',
+      collectionList: {
+        columns: ['id', 'createdAt', 'tableName', 'mode'],
+      },
+      permission: { all: ['admin'] },
+    },
 
 
   }

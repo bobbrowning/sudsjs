@@ -22,16 +22,16 @@ module.exports = {
     return `${record.name} (No: ${record.id}) Guide retail price: ${price}`
   },
   list: {
-    columns: ['id', 'updatedAt', 'id', 'name','class', 'supplier', 'price'],
+    columns: ['id', 'updatedAt', 'id', 'name', 'class', 'supplier', 'price'],
   },
-  permission: { all: ['admin', 'purchasing'], view: ['sales'] },
+  permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
   groups: {
     basic: {
       static: true,
       columns: ['id', 'name', 'price'],
     },
     details: {
-      columns: ['supplier', 'vatable', 'class', 'overview','image'],
+      columns: ['supplier', 'vatable', 'stockLevel','class', 'overview', 'image'],
     },
     transactions: {
       columns: ['purchases', 'sales'],
@@ -109,22 +109,25 @@ module.exports = {
       type: 'boolean',
       description: 'Whether subject to VAT',
     },
+    stockLevel: {type: 'number'},
     class: {
       type: 'string',
+      friendlyName: 'Market(s)',
+      description: 'Check those that apply',
       values: {
-        H:'houshold', 
-        S: 'sports', 
-        T:'toys', 
-        A:'auto', 
-        HW:'hardware',
+        H: 'Houshold',
+        S: 'Sports',
+        T: 'Toys',
+        A: 'Auto',
+        HW: 'Hardware',
         AG: 'Agricultural',
         O: 'Other'
       },
-    input: {
+      input: {
         type: 'checkboxes',
-       },
-      process: {JSON: true},
-      display: {JSON: true},
+      },
+      process: { JSON: true },
+      display: { type: 'checkboxes' },
     },
     overview: {
       type: 'string',
@@ -135,16 +138,16 @@ module.exports = {
       },
     },
     image: {
-       type: 'text',
-       input: { type: 'uploadFile' },
-  },
+      type: 'text',
+      input: { type: 'uploadFile' },
+    },
     description: {
       type: 'string',
       input: {
         format: 'col',
-        type: 'summernote',
+        type: 'ckeditor4',
         height: 300,
-        placeholder: 'Please enter page content'
+        placeholder: 'Please enter product description'
       },
       display: { truncateForTableList: 50 },
     },
@@ -153,7 +156,7 @@ module.exports = {
       via: 'subproduct',
       friendlyName: 'Parent products ',
       collectionList: {
-        columns: ['type','mainproduct'],                       // Heading to the listing Default to table name
+        columns: ['type', 'mainproduct'],                       // Heading to the listing Default to table name
         heading: 'Parent products / Spare for',                         // Heading to the listing Default to table name
         hideEdit: true,
         hideDetails: true,
@@ -165,7 +168,7 @@ module.exports = {
       friendlyName: 'Sub products / Spare parts',
       collectionList: {
         open: true,
-        columns: ['type','subproduct'],                       // Heading to the listing Default to table name
+        columns: ['type', 'subproduct'],                       // Heading to the listing Default to table name
         hideEdit: true,
         hideDetails: true,
       },

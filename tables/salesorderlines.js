@@ -4,23 +4,26 @@
   */
 
  let db = require('../bin/suds/db');
+ let stock=require('../bin/custom/stock');
 
 
 module.exports = {
   description: 'Order lines',
    friendlyName: 'Sales Order Lines',
   permission: {
-    all: ['sales', 'admin'],
+    all: ['sales', 'admin','demo'],
     view: ['purchasing'],
   },
   list: {
     columns: ['updatedAt', 'id', 'orderNo','customer', 'product', 'total'],
   },
+  rowTitle: async function(record) {
+    let product=await db.getRow('products',record.product);
+    let customer=await db.getRow('user',record.customer);
+     return `${record.units} X ${product.name} for ${customer.fullName}`;
+   },
+
   edit: {
-    preProcess: function (record) {
-      record.total = record.units * record.price;
-      return record;
-    },
     preForm: async function (record, mode) {
       if (record.orderNo) {
         console.log(record);
@@ -29,7 +32,11 @@ module.exports = {
       }
       return;
     },
-
+  preProcess: function (record) {
+      record.total = record.units * record.price;
+      stock('salesorderlines',record);
+      return;
+    },
     /** Add up the 'total' field in each sales order line in thie order and update the parent sales order */
     postProcess: async function (record, operation) {
       let total = await db.totalRows(

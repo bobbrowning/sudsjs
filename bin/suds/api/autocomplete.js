@@ -83,7 +83,13 @@ module.exports = async function (req, res) {
       show = records[i][display];
     }
     else {
-      show = displayFunction(records[i]);
+      if (typeof (tableData.rowTitle) == 'string') {
+        show = records[i][tableData.rowTitle];
+      }
+      else {
+        show = tableData.rowTitle(records[i]);
+      }
+ //     show = displayFunction(records[i]);
     }
     trace.log('34', i, display, records[i]);
     /*
@@ -103,7 +109,13 @@ module.exports = async function (req, res) {
         show = record[display];
       }
       else {
-        show = await displayFunction(record);
+        if (typeof (tableData.rowTitle) == 'string') {
+          show = record[tableData.rowTitle];
+        }
+        else {
+          show = tableData.rowTitle(record);
+        }
+//          show = await displayFunction(record);
       }
       trace.log('34', i, display, record);
 /*
