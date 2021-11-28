@@ -17,33 +17,6 @@ let description = 'Creates update form  from the model and processes submitted f
  *        Node.js  v 12.18
  */
 
-// Data Division 
-/*
-  inputs: {
-    permission: {
-      type: 'string',
-      description: 'The permission set of the logged-in user',
-    },
-    table: {
-      type: 'string',
-      description: 'The table being listed',
-    },
-    id: {
-      type: 'number',
-      description: 'The key of the row being listed',
-    },
-    mode: {
-      type: 'string',
-      description: 'Typ[e of operation (new, populate, update',
-    },
-    record: {
-      type: 'ref',
-      description: 'All of the input parameters. For mode new or populate will be missing',
-    },
-    loggedInUser: { type: 'string' }
-  },
- 
-  */
 
 let suds = require('../../config/suds');                 // Primary configuration file
 let trace = require('track-n-trace');                    // Debug tool
@@ -57,6 +30,7 @@ let createField = require('./create-field');             // Creates an input fie
 let displayField = require('./display-field');           // displays a column value
 let fs = require('fs');
 
+/** Data Division */
 module.exports = async function (
   permission,
   table,
@@ -70,6 +44,8 @@ module.exports = async function (
   auditId,
   csrf,
 ) {
+
+  /** Procedure division */
   if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
 
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
@@ -185,7 +161,7 @@ module.exports = async function (
       if (attributes[key].process && attributes[key].process.createdAt) { continue; }  // can't validate auto updated fields
       if (attributes[key].process && attributes[key].process.updatedAt) { continue; }  // can't validate auto updated fields
       if (attributes[key].process && attributes[key].process.updatedBy) { continue; }  // can't validate auto updated fields
-
+      trace.log({key: key,value: record[key]});
       /* Bug in Summernote - intermittently doubles up the input!   */
       /* You might look for an alternative for serious production  */
       if (attributes[key].input.type == 'summernote' && Array.isArray(record[key])) {

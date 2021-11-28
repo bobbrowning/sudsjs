@@ -225,7 +225,7 @@ module.exports = {
    *                      Input type configuration
    *                      ------------------------
    * 
-   * You can use this to add help text that is added to the column 
+   * You can use this section to add help text that is added to the column 
    * description in the tooltip you get by hovering over the field 
    * name.
    * 
@@ -241,7 +241,7 @@ module.exports = {
    *   * Ckeditor 5: A rewrite of the editor and the implementation here
    *     is very basic. To confure it properly you would need to download 
    *     it and configure your installation. You might want to fork the
-   *     handletr as well,
+   *     handler as well,
    * 
    * In all cases I have used and tested the cdn versions so I didn't need
    * to download the software. You might get better and more configurable
@@ -446,17 +446,18 @@ bottom bar.`,
     fieldWidth: '250px',                       // Size of search text fields
     maxConditions: '7',                        // This number can be increased if you need more conditiona
     /* These are always equals search types. Less than & greater than have no meaning */
-    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox'],
+    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox','autocomplete'],
     /* These input types always have a simple input text field in the search      */
     /* whatever the input type on forms                                           */
     allwaysText: [
       'text',
-      'autocomplete',
+//      'autocomplete',
       'textarea',
       'summernote',
       'ckeditor4',
       'ckeditor5',
-      'unique'
+      'unique',
+      'uploadFile',
     ],
   },
 

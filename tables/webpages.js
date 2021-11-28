@@ -33,8 +33,7 @@ module.exports = {
     /** This determines how each row is to be described in things like links. 
      *  In this case the title column. */
     rowTitle: 'title',
-
-
+ 
     /** The columns are split into groups for the row listing and the edit form */
     groups: {
         basic: {
@@ -44,6 +43,8 @@ module.exports = {
         settings: {
             friendlyName: 'Settings',
             columns: ['status', 'onMenu', 'expires', 'embargo', 'view', 'parent', 'subpages',],
+            /** When the group is loaded, these child records will be visible */
+            open: 'subpages',
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -98,7 +99,7 @@ module.exports = {
             description: `The person who last updated the row.`,
             type: 'number',
             model: 'user',                                             // This is a foreign key linking to the user table
-            process: { updatedBy: true }                               // The link is made automatically
+            process: { updatedBy: true },                              // The link is made automatically
         },
 
         title: {
@@ -158,7 +159,7 @@ module.exports = {
                 type: 'autocomplete',                                // user starts typing the name and a short list of candidates is given
                 search: 'title',                                     // the input might be the id (always) or part of the title
                 placeholder: 'Start typing page title (case sensitive)',
-                width: '80%',                                         // To allow for the delete function 
+                width: '80%',                                         // To allow for the clear symbol 
             },
         },
 
@@ -223,15 +224,15 @@ module.exports = {
         /**   HTML page  only  */
         pageContent: {
             type: 'string',
-            description: `This is the main content of the page.  
+            description: `This is the main content of the page. 
             If you want to include images, you can go to the images section 
-            and upload an image. Shen submit.  Go back to edit / images. 
+            and upload an image. Then submit.  Go back to edit / images. 
             The image you upload will have a link. Click with the right 
             mouse button and copy the link. Then use the image function 
             on this page and paste the URL. `,
             input: {
                 format: 'col',
-                type: 'ckeditor4',
+                type: 'ckeditor4',                          // Other rich text editors are available see config & notes in suds.js
                 height: 300,
                 placeholder: 'Please enter page content',
             },
@@ -276,7 +277,6 @@ module.exports = {
             collection: 'webpages',                      // Tbe collection is the child table
             via: 'parent',                               // The column in the child record that links to this
             collectionList: {                            // How child records are to be displayed
-                open: true,                              // Open this automatically
                 heading: 'Sub pages',                    //Heading to the listing 
                 columns: ['pageno', 'title', 'slug', 'pagetype', 'status', 'onMenu'],
                 sort: ['onMenu', 'ASC'],

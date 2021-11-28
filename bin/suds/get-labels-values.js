@@ -49,7 +49,12 @@ module.exports = async function (attributes, record) {
     for (let i = 0; i < records.length; i++) {
       trace.log(records[i]);
       values[i] = records[i][pk];
+      if (typeof(rowTitle) == 'function') {
       labels[i] = rowTitle(records[i]);
+      }
+      else {
+        labels[i] = records[i][rowTitle];       
+      }
     }
   }
   else {

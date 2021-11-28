@@ -7,7 +7,8 @@ let generic = require('./input/generic').fn;
 module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
 
   trace = require('track-n-trace');
-  trace.log({ inputs: arguments, maxdepth: 3 });
+  trace.log({ inputs: arguments, maxdepth: 2 });
+  trace.log({ attributes: attributes[key] })
   const inputFieldTypes = suds.inputFieldTypes;
 
 
@@ -77,10 +78,10 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
       }
       helperModule = require('./input/' + helperName);
       if (helperModule.fn) {
-        helper=helperModule.fn;
+        helper = helperModule.fn;
       }
       else {
-        helper=helperModule;
+        helper = helperModule;
       }
       if (!helper) {
         console.log(`*** invalid field type ${fieldType} in field ${key} ***`);
@@ -88,18 +89,24 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
         helperName = '';
       }
     }
-     
-    if (attributes[key].recordType && mode != 'checkRecordType' && attributes[key].input.recordTypeFix && permission !='#superuser#') {
+
+    if (
+      attributes[key].recordType
+      && mode != 'checkRecordType'
+      && attributes[key].input.recordTypeFix
+      && permission != '#superuser#'
+      && (mode != 'search')
+    ) {
       helperName = 'readonly';
       helperModule = require('./input/' + helperName);
       if (helperModule.fn) {
-        helper=helperModule.fn;
+        helper = helperModule.fn;
       }
       else {
-        helper=helperModule;
+        helper = helperModule;
       }
     }
-    trace.log({ helpername: helperName,helper:  typeof(helper)});
+    trace.log({ helpername: helperName, helper: typeof (helper) });
 
     let passedValue = fieldValue;
     let passedName = key;

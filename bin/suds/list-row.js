@@ -58,14 +58,8 @@ module.exports = async function (permission, table, id, open, openGroup) {
   let mainPage = suds.mainPage;
   if (!mainPage) { mainPage = '/'; }
   let tableData = tableDataFunction(table, permission);
-
-  if (tableData.demoRows && tableData.demoRows.includes(id)) {
-        console.log(`Table: ${table} row ${id} not checked for permission - this is a demonstration page.`)
-    }
-    else {
-    if (!tableData.canView) {
-      return `<p>Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). <a href="${suds.mainPage}">Please log in</a> and retry`;
-    }
+  if (!tableData.canView) {
+    return `<p>Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). <a href="${suds.mainPage}">Please log in</a> and retry`;
   }
   let message = '';
   let attributes = await mergeAttributes(table, permission);  // Merve field attributes in model with config.suds tables
@@ -98,7 +92,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
     parentKey: parentKey,
   });
 
-
+  /** **********************************************
+   * 
+   * The open value is the child list that is open when the page is loaded. 
+   * It can be passed as a parameter (because it is specified in a report)
+   * Or in the table configuration.
+   * 
+   ************************************************ */
 
   if (!open && tableData.list && tableData.list.open) {
     open = tableData.list.open;
@@ -108,11 +108,11 @@ module.exports = async function (permission, table, id, open, openGroup) {
     openLink = `&open=${open}`;
   }
 
-  /* ************************************************
+  /** ************************************************
     *
-    *   Find out the number of child records. We
-    *   shouldn't delete records if their are outstanding child
-    *   records
+    * Find out the number of records for each child table. (childCount).
+    * We shouldn't delete records if their are outstanding child
+    * records
     * 
     ************************************************ */
   let hasRows = '';
@@ -132,39 +132,15 @@ module.exports = async function (permission, table, id, open, openGroup) {
   }
   trace.log({ children: children, total: totalChild });
 
-  output += `
-      <script>
-        let opentab='';
-        function tabclick (tab) { 
-          console.log(tab); `;
-  for (let child of Object.keys(children)) {
-    if (children[child]) {
-      output += `
-          document.getElementById('childdata_${child}').style.display="none";`;
-    }
-
-  }
-  output += `
-          if (opentab != tab) { 
-            childdata='childdata_' + tab;
-            console.log(childdata);
-            document.getElementById(childdata).style.display="block"; 
-            console.log(childdata,document.getElementById(childdata).style.display); 
-            opentab=tab;
-          }
-          else {
-            opentab='';
-          }
-        }
-  
-      </script>`;
 
 
-
-  /** Creat ativity log.  There is a ore elegant way of doing this but I just read
+  /** ********************************************
+   * 
+   * Creat ativity log.  There is a more elegant way of doing this but I just read
    * the 10 (say) most recent child records from each child table and put them in an array, 
    * then sort by date and take the first 10. 
-   */
+   * 
+   ********************************************** */
   let activityLogRequired = false;
   let activityDiv = '';
   let activityGroup = {};
@@ -217,7 +193,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
       searches: [
         ['tableName', 'eq', table],
         ['row', 'eq', id],
-        ['mode','ne','populate']
+        ['mode', 'ne', 'populate']
       ]
     };
     let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
@@ -296,7 +272,6 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
   let hideGroup = {};
   let groupList = ['other'];
-  let openTab = '';
   let staticList = [];  // list of groups with static first
   let fieldList = [];
   // make a list of all the fields that can be included
@@ -307,6 +282,15 @@ module.exports = async function (permission, table, id, open, openGroup) {
   let columnGroup = {};
   let incl = [];
   let tabs = [];
+  let openTab = '';
+
+
+  /** *****************************************************
+   * 
+   * If there are groups 
+   * 
+   * ******************************************************   */
+
   if (tableData.groups) {
     trace.log({ formgroups: tableData.groups });
 
@@ -392,24 +376,31 @@ module.exports = async function (permission, table, id, open, openGroup) {
       groups: tableData.groups.Date,
       hideGroup: hideGroup,
     })
+    trace.log(open);
 
-    /**  Figure out
-     *   which group should be open and...
-     *   which child list should be open for each group 
-     * */
+    /**  **********************************************
+     * 
+     * Figure out which group should be open (openGroup) andwhich child list 
+     * should be open for each group.  Store this in a string that will be 
+     * included in the client javascript (openList).
+     * 
+     * OpenTab is the link that is in bold and corresponds to the open group.
+     * 
+     *************************************************** */
     let first = true;
     let openList = '{';
     for (let group of groupList) {
       if (hideGroup[group]) { continue }
-      let open = 'none';
+      let thisGroupChildOpen = 'none';
       if (tableData.groups[group].open) {
-        open = tableData.groups[group].open;
+        thisGroupChildOpen = tableData.groups[group].open;
       }
-      openList += `${group}: '${open}',`;
+      openList += `${group}: '${thisGroupChildOpen}',`;
 
       trace.log(group, openList);
       if (first && !tableData.groups[group].static) {
-        openTab = group
+        openTab = group                                             // by default the first group is open
+        if (!open && thisGroupChildOpen) { open = thisGroupChildOpen }
         first = false;
       };
       if (tableData.groups[group].columns) {
@@ -418,20 +409,66 @@ module.exports = async function (permission, table, id, open, openGroup) {
         }
       }
     }
-
-    if (openGroup) { openTab = openGroup }
-
-
     openList += '}';
-    trace.log({ columnGroup: columnGroup, openTab: openTab, hideGroup: hideGroup, openlist:openList });
+
+    if (openGroup) {
+      openTab = openGroup;
+    }
+
+
+
+    trace.log({ columnGroup: columnGroup, openTab: openTab, hideGroup: hideGroup, openlist: openList });
 
     //   tabs=['activitylog'].concat(tabs);
+
+    /** ***************************************************
+     * 
+     * Create client-side javascript routines.  
+     * 
+     * tabclick is called by tabclickgroup below.   It closes al the child listings 
+     * and then opens the one requoired.
+     * 
+     * ************************************************** */
+    output += `
+    <script>
+       let debug=false;
+      let opentab='';   
+
+      function tabclick (tab) { 
+        if (debug) {console.log('tabclick: ', tab, ' openbtab: ',opentab);} `;
+    for (let child of Object.keys(children)) {
+      if (children[child]) {
+        output += `
+        document.getElementById('childdata_${child}').style.display="none";`;
+      }
+
+    }
+    output += `
+        if (opentab != tab) { 
+          childdata='childdata_' + tab;
+          if (debug) {console.log(childdata);}
+          document.getElementById(childdata).style.display="block"; 
+          if (debug) { console.log(childdata,document.getElementById(childdata).style.display); }
+          opentab=tab;
+        }
+        else {
+          opentab='';
+        }
+      }
+
+    </script>`;
+
+
+    /** This function is called whenever a tab is clicked It first closes all of the 
+    * groups.  Then opens the clicked group.  If these is an open child list for this group
+    * it calls tabclick above to open this. 
+    */
 
     if (tabs) {
       output += `
       <script>
         function tabclickGroup (tab) { 
-          console.log('tabclickgroup:',tab); 
+          if (debug) {  console.log('tabclickgroup:',tab); }
           const openList=${openList};`;
       for (let tab of tabs) {
         trace.log(tab, hideGroup[tab]);
@@ -443,7 +480,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
       output += `
           let tabdata='group_' + tab;
           let tabitem='tab_' + tab;
-          console.log('tab:',tab,' opening:',tabdata);
+          if (debug) {   console.log('tab:',tab,' opening:',tabdata);}
           document.getElementById(tabdata).style.display="block"; 
           document.getElementById(tabitem).style.fontWeight="bold"; 
           if (openList[tab]) {tabclick(openList[tab])}
@@ -452,6 +489,13 @@ module.exports = async function (permission, table, id, open, openGroup) {
     }
 
   }
+
+  /** *****************************************************
+   * 
+   * If there are no groups 
+   * 
+   * ******************************************************   */
+
   else {
     tableData.groups = { other: { static: true, } };
     staticList = ['other'];
@@ -495,7 +539,8 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
     /* ************************************************
     *
-    *   Loop through fields in group
+    * Loop through fields in group crweating the HTML for thast group
+    * and store in groupRows
     *
     ************************************************ */
     groupRows[group] = '';
@@ -594,7 +639,11 @@ module.exports = async function (permission, table, id, open, openGroup) {
     trace.log({ group: group, rows: groupRows[group], level: 'verbose' })
   }
 
-  // Now put it all together
+  /** ************************************************
+   * 
+   * Now put it all together
+   * 
+   * ************************************************** */
   output += `
       <div class="${classes.output.table.envelope}">  <!--  Static Data -->
         <table class="${classes.output.table.table}">   
@@ -744,34 +793,29 @@ module.exports = async function (permission, table, id, open, openGroup) {
    </div> <!-- buttons -->
 `;
 
+  trace.log(open)
 
 
-
-  /* ************************************************
+  /** ************************************************
   *
-  *  List first few child records
-  *  The child tables to list, the order, and the 
-  *  number to be listed are specified in the suds tables 
-  *  config file. 
+  * Child listings
+  * 
+  * List first few child records
+  * The child tables to list, the order, and the 
+  * number to be listed are specified in the suds tables 
+  * config file. 
   *
   * Pass over children that this user doesn't have permission to see
   * and any that are markled in suds tables.js is not to be listed.
   * 
   ************************************************ */
+
+  /** Dummy for none */
+  output += `<div class="sudschilddata" id="childdata_none"></div>`;
   childnames = Object.keys(children);
   // delete any names that the user can't see
   for (let i = 0; i < childnames.length; i++) {
-    trace.log({ i: i, childname: childnames[i], });
     let child = childnames[i];
-    if (!attributes[child].canView) {
-      output += `
-    <div class="sudschilddata" id="childdata_${child}"  style="display: none"> <!--  childData / ${child} --> 
-    </div> <!--  childData / ${child} -->   
-        `;
-      continue
-    }
-    if (!children[child]) { continue }
-
     let style = 'display: none';
     if (open) {
       if (child == open) {
@@ -779,6 +823,17 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
       }
     }
+    trace.log({ i: i, childname: child, style: style, open: open });
+
+    if (!attributes[child].canView) {
+      output += `
+    <div class="sudschilddata" id="childdata_${child}"  style="${style}"> <!--  childData / ${child} --> 
+    </div> <!--  childData / ${child} -->   
+        `;
+      continue
+    }
+    if (!children[child]) { continue }
+
     let limit = -1;  // ist all children
     let heading;   // Listing program wil generate a sensible heading
     trace.log(child, attributes[child], attributes[child].collection,);

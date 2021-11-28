@@ -49,7 +49,7 @@ module.exports = function (table, permission) {
     if (!merged[key].database) { merged[key].database = {}; }
     if (!merged[key].process) { merged[key].process = {}; }
     if (!merged[key].display) { merged[key].display = {}; }
-
+  
     if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
 
     /** field type */
@@ -68,6 +68,9 @@ module.exports = function (table, permission) {
     if (!merged[key].input.validations) { merged[key].input.validations = {} }   // guarantee that there is an validations object.
     if (!merged[key].input.class) { merged[key].input.class = suds.input.class; }  // Default class for input fields.
 
+
+    /** display type */
+    if (!merged[key].display.type) { merged[key].display.type = ''; }
 
     /** Description  */
 

@@ -146,7 +146,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
         <input 
           class="form-control" 
           style="width: ${attributes.input.width}; float: left;" 
-          id="auto_${fieldName}" 
+          id="${fieldName}" 
           name="${fieldName}disp"
           value="${title}"
           placeholder="${placeholder}" 
@@ -161,7 +161,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
           class="${classes.autoRemove}"
           onclick="document.forms['mainform']['${fieldName}'].value=''; document.forms['mainform']['${fieldName}disp'].value='';"
           >
-            ${lang.deleteIcon} Remove
+            ${lang.deleteIcon} ${lang.clear}
           </span>
 
     </div>  <!--  autcomplete container end -->

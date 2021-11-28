@@ -7,13 +7,13 @@ module.exports = async function (req, res) {
     let csrf=req.csrfToken();
     trace.log('login form' );
     let next='';
-    let login='';
+    let log='';
     let pass='';
     if (req.query.next) {next=req.query.next}
     if (req.query.l) {log=req.query.l}
     if (req.query.p) {pass=req.query.p}
-    $go='';
-    if (req.query.next) {
+    let go='';
+    if (req.query.l) {
       go=`
       <script>
       document.getElementById("login").submit();

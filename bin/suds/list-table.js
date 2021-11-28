@@ -448,12 +448,12 @@ module.exports = async function (
          <option value="gt">Higher</option>
         </select>`;
 
-      if (attributes[key].type == 'number') {
+      if (attributes[key].type == 'number' || attributes[key].input.type == 'number') {
         comp = `
           <select name="{{compare}}" class="${classes.output.search.select}" >
             <option value="lt">Less than</option>
             <option value="le">Less than or equals</option>
-            <option value="eq">Equals</option>
+            <option value="eq" selected>Equals</option>
             <option value="ge">Greater than or equals</option>
             <option value="gt">Greater than</option>
           </select>`;
@@ -478,14 +478,24 @@ module.exports = async function (
           </select>`;
       }
       // can't have equals because this is to the millisecond...
-      if (key == 'createdAt' || key == 'updatedAt') {
+      if (attributes[key].type = 'number'
+        && (
+          attributes[key].input.type == 'date' 
+          || attributes[key].process.createdAt
+          || attributes[key].process.updatedAt
+        )
+      ) {
         comp = `
           <select name="{{compare}}" class="${classes.output.search.select}" >
             <option value="lt">Before</option>
             <option value="gt">After</option>
           </select>`;
-      }
-
+          attributes[key].input.type = 'date'; 
+        }
+        if (saved_type == 'uploadFile') {
+          attributes[key].input.placeholder='Please enter a file name ';
+        }
+  
       // Better than a checkbox...
       if (attributes[key].type == 'boolean') {
         attributes[key].input.type = 'yesnoRadio';
@@ -494,8 +504,13 @@ module.exports = async function (
         attributes[key].input.type = 'number';
         attributes[key].input.width = suds.search.fieldWidth;
       }
-
-      // some types do not require a compare option 
+      if (attributes[key].process.updatedBy) {
+        attributes[key].input.type='autocomplete';
+        attributes[key].input.width='80%';
+        attributes[key].input.search='fullName';
+        attributes[key].input.placeholder='Number or type name';
+      }
+       // some types do not require a compare option 
       if (suds.search.allwaysEquals.includes(attributes[key].input.type)) {
         comp = `<input type="hidden" name="{{compare}}" value="eq">is`;
       }
@@ -548,13 +563,14 @@ module.exports = async function (
     output += `
 
     function createField(select) {
+      let debug=false;
       document.getElementById("filterbutton2").style.display='block';
       document.getElementById("backupbutton").style.display='block';
       document.getElementById("filterbutton").style.display='none';
       document.getElementById("filtergo").style.display="block";
       let i=select.selectedIndex-1; 
       let key=keys[i]; 
-      console.log(key);
+      if (debug) {console.log(key);}
       if (i== -1) {
           document.getElementById("search"+"_"+num).innerHTML=""; 
       } 
@@ -568,14 +584,14 @@ module.exports = async function (
           \${comp}\`;          
         let fieldname='value_'+num;
         let field=filterspec[1];
-        console.log(fieldname);
+        if (debug) {console.log(fieldname);}
         re=/{{fieldname}}/gi;
         field=field.replace(re,fieldname);
-        console.log(field);
+        if (debug) {console.log(field);}
         document.getElementById("search"+"_"+num).innerHTML=\`          
         \${field}\`;
       } 
-      console.log(document.getElementById("search"+"_"+num).innerHTML);
+      if (debug) { console.log(document.getElementById("search"+"_"+num).innerHTML);}
     } `;
 
 
@@ -608,14 +624,15 @@ module.exports = async function (
     output += `
 
     function anyDataCheck () {
+      let debug=false;
       let errmsg;
-      console.log("value_"+num,);
+      if (debug) {console.log("value_"+num,);}
       let currentIndex=document.getElementById("searchfield_"+num).selectedIndex;
       let currentValue='';
       if(document.getElementById("value_"+num)) {
          currentValue=document.getElementById("value_"+num).value;
       }
-      console.log(currentIndex,currentValue);
+      if (debug) {console.log('current value: ',currentValue,'  current index: ',currentIndex, );}
      
       let anyData=true;
       if (currentIndex == 0) {
@@ -638,9 +655,11 @@ module.exports = async function (
           }
         } 
         else { 
+          if (debug) {console.log('curreent value: ',currentValue);}
           if (!currentValue) {anyData=false;}
         }
       }
+      if (debug) { console.log("anydata: ",anyData);}
       if (!anyData) {document.getElementById('msg').innerHTML=errmsg;}
       return (anyData);
     }`;
@@ -653,7 +672,8 @@ module.exports = async function (
     output += `
 
     function createFieldSelect() {
-      console.log('createFieldSelect',num);
+      debug=false;
+      if (debug) {console.log('createFieldSelect',num);}
       if (num >0) {
         let anyData=anyDataCheck();  // check that the last condition has been entered
        if (!anyData) {return }
@@ -704,7 +724,7 @@ module.exports = async function (
 
     output += `
 
-        <form action="${suds.mainPage}"  onsubmit="return anyDataCheck()">         
+        <form action="${suds.mainPage}" id="mainform" name="mainform"  onsubmit="return anyDataCheck()">         
           <input type="hidden" name="table" value="${table}">
           <input type="hidden" name="mode" value="list">
           <input type="hidden" name="sortkey" value="${sortKey}">

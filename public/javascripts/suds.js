@@ -1,8 +1,9 @@
 
  function clicked (fieldName,label,value) {
     document.getElementById(`autoid_${fieldName}`).value=value;
-    document.getElementById(`auto_${fieldName}`).value=label;
+    document.getElementById(`${fieldName}`).value=label;
     document.getElementById(`${fieldName}-autocomplete-list`).remove();
+    console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
 
  }
 
@@ -10,10 +11,10 @@
 function auto(route,fieldName, linkedTable, display, limit, searchparm) {
     /*the autocomplete function takes two arguments,
     the text field element and an array of possible autocompleted values:*/
-    let debug = true;
+    let debug = false;
     if (debug) { console.log('auto',fieldName); }
     var currentFocus;
-    var thisField = inp = document.getElementById('auto_' + fieldName);
+    var thisField = inp = document.getElementById(fieldName);
     var keyfield = document.getElementById('autoid_' + fieldName);
     /*execute a function when someone writes in the text field:*/
     if (debug) { console.log(fieldName, thisField); }
@@ -65,8 +66,7 @@ function auto(route,fieldName, linkedTable, display, limit, searchparm) {
             a.appendChild(b);
 
         };
-        console.log(document.getElementById(`auto_container_${fieldName}`).innerHTML)
-
+  
         /*execute a function presses a key on the keyboard:*/
         inp.addEventListener("keydown", function (e) {
             var x = document.getElementById(this.id + "autocomplete-list");

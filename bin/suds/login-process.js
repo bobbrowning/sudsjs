@@ -14,6 +14,9 @@ module.exports = async function (req, res) {
     let next = '';
     if (allParms.next) {
         next = allParms.next
+        if (next=='home') {
+            
+        }
         next = next.replace(/:/g, '=');
         next = next.replace(/;/g, '&');
         next='?'+next;

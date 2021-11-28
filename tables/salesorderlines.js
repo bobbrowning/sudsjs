@@ -1,5 +1,5 @@
 /**
- * Orderlines.js
+ * Sales order Orderlines
  *
   */
 
