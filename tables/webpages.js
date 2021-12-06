@@ -42,9 +42,7 @@ module.exports = {
         },
         settings: {
             friendlyName: 'Settings',
-            columns: ['status', 'onMenu', 'expires', 'embargo', 'view', 'parent', 'subpages',],
-            /** When the group is loaded, these child records will be visible */
-            open: 'subpages',
+            columns: ['status', 'onMenu', 'expires', 'embargo', 'view',],
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -60,6 +58,12 @@ module.exports = {
             friendlyName: 'Images/Files',
             columns: ['image1', 'image2', 'image3', 'image4', 'image5'],
             recordTypes: ['H'],
+        },
+        subpages: {
+            friendlyName: 'Sub pages',
+            columns: ['parent', 'subpages',],
+            /** When the group is loaded, these child records will be visible */
+            open: 'subpages',
         },
 
     },

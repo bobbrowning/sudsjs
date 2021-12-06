@@ -3,25 +3,28 @@
  *
   */
 
- let db = require('../bin/suds/db');
- let stock=require('../bin/custom/stock');
+let db = require('../bin/suds/db');
+let stock = require('../bin/custom/stock');
 
 
 module.exports = {
   description: 'Order lines',
-   friendlyName: 'Sales Order Lines',
+  friendlyName: 'Sales Order Lines',
   permission: {
-    all: ['sales', 'admin','demo'],
+    all: ['sales', 'admin', 'demo'],
     view: ['purchasing'],
   },
   list: {
-    columns: ['updatedAt', 'id', 'orderNo','customer', 'product', 'total'],
+    columns: ['id', 'orderNo', 'customer', 'product', 'variant', 'total'],
   },
-  rowTitle: async function(record) {
-    let product=await db.getRow('products',record.product);
-    let customer=await db.getRow('user',record.customer);
-     return `${record.units} X ${product.name} for ${customer.fullName}`;
-   },
+  rowTitle: async function (record) {
+    let product = await db.getRow('products', record.product);
+    let customer = await db.getRow('user', record.customer);
+    return `${record.units} X ${product.name} for ${customer.fullName}`;
+  },
+ /**  This allows you to vary the input form depending on the record type.  */
+ recordTypeColumn: 'product',
+
 
   edit: {
     preForm: async function (record, mode) {
@@ -32,18 +35,18 @@ module.exports = {
       }
       return;
     },
-  preProcess: function (record) {
+    preProcess: function (record) {
       record.total = record.units * record.price;
-      stock('salesorderlines',record);
+      stock('salesorderlines', record);
       return;
     },
     /** Add up the 'total' field in each sales order line in thie order and update the parent sales order */
     postProcess: async function (record, operation) {
       let total = await db.totalRows(
         'salesorderlines',
-        {searches: [['orderNo','eq',record.orderNo]]},
+        { searches: [['orderNo', 'eq', record.orderNo]] },
         'total');
-      await db.updateRow('salesorders', {id: record.orderNo, totalValue: total });
+      await db.updateRow('salesorders', { id: record.orderNo, totalValue: total });
       return;
     },
 
@@ -80,7 +83,10 @@ module.exports = {
     orderNo: {
       description: 'Order',
       model: 'salesorders',
-      input: {required: true,},
+      input: {
+        required: true,
+        placeholder: 'To avoid errors we strongly recommend going via the sales order page.',
+      },
       friendlyName: 'Order number',
     },
     product: {
@@ -110,36 +116,44 @@ module.exports = {
         linkedTable: 'products',      // if omitted will be picked up from the model
         makeLink: true,             // hypertext link to the linked table
       },
-  },
+    },
+    variant: {
+      model: 'productvariant',
+      input: {
+        type: 'select',
+        search: { searches: [['product', 'eq', '$product']] },
+
+      }
+    },
     units: {
       type: 'number',
       //     required: true,
       description: 'Number of units ordered',
-       friendlyName: 'Number of units',
+      friendlyName: 'Number of units',
       input: {
         type: 'number',
         step: 1,
-  
+
         max: 100,
-       },
- },
+      },
+    },
     price: {
       friendlyName: 'Unit price',
       type: 'number',
       input: { step: .01, },
       display: { currency: true },
-   },
+    },
     total: {
       type: 'number',
       input: { hidden: true },
       display: { currency: true },
- },
- customer: {
-   model: 'user',
-   type: 'number',
-   input: {type: 'hidden'}
-   
- }
+    },
+    customer: {
+      model: 'user',
+      type: 'number',
+      input: { type: 'hidden' }
+
+    }
 
   },
 

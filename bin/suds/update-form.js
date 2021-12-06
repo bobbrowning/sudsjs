@@ -50,6 +50,8 @@ module.exports = async function (
 
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
 
+  trace.log({ openGroup: openGroup, });
+
   /** ************************************************
   *
   *   set up the data
@@ -161,7 +163,7 @@ module.exports = async function (
       if (attributes[key].process && attributes[key].process.createdAt) { continue; }  // can't validate auto updated fields
       if (attributes[key].process && attributes[key].process.updatedAt) { continue; }  // can't validate auto updated fields
       if (attributes[key].process && attributes[key].process.updatedBy) { continue; }  // can't validate auto updated fields
-      trace.log({key: key,value: record[key]});
+      trace.log({ key: key, value: record[key] });
       /* Bug in Summernote - intermittently doubles up the input!   */
       /* You might look for an alternative for serious production  */
       if (attributes[key].input.type == 'summernote' && Array.isArray(record[key])) {
@@ -252,6 +254,7 @@ module.exports = async function (
     record: record,
     errors: errors,
     errCount: errCount,
+    openGroup: openGroup,
   });
 
 
@@ -356,6 +359,7 @@ module.exports = async function (
     mode: mode,
     columns: Object.keys(attributes),
     record: record,
+    openGroup: openGroup,
   });
 
   /* *******************************************************
@@ -373,8 +377,8 @@ module.exports = async function (
   if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
 
   let form = '';
-
   let formList = [];
+
   for (const key of Object.keys(attributes)) {
     if (attributes[key].primaryKey
       || attributes[key].process.createdAt
@@ -382,11 +386,12 @@ module.exports = async function (
       || attributes[key].process.updatedBy
     ) { continue; }
     if (attributes[key].collection) { continue; }  // not intersted in collections
-    if (!(attributes[key].canEdit || attributes[key].canView)) { continue; }
+    if (!(attributes[key].canEdit)) { continue; }
     if (attributes[key].input.hidden) { continue; }
     formList.push(key);
   }
 
+  trace.log({ formList: formList });
 
   /* *******************************************************
       * 
@@ -662,7 +667,8 @@ ${attributes[key].helpText}`;
   form += `
     <script>
       function validateForm() {
-        console.log(614, '*******validateForm******');
+        let debug=false;
+        if (debug) {console.log(614, '*******validateForm******');}
         let errCount=0;
         let value='';
         let columnError;
@@ -678,7 +684,7 @@ ${attributes[key].helpText}`;
     trace.log({ attributes: attributes[key], level: 'verbose' });
     form += `
       // ********** Start of validation for ${attributes[key].friendlyName}  ***************
- 
+      if (debug) {console.log('${key}',' ','${attributes[key].input.type}')}
       columnError=false;`;
     //  Has an api left an error message
     if (attributes[key].input.validations.api) {
@@ -694,14 +700,23 @@ ${attributes[key].helpText}`;
 
     trace.log(key, record[key], attributes[key]);
     let vals = 0;
-    if (attributes[key].type == 'number') {
+    if (attributes[key].input.type == 'autocomplete') {
       form += `
-      value=Number(mainform.${key}.value);`;
+      value=Number(mainform.autoid_${key}.value);`;
     }
     else {
-      form += `
-        value=mainform.${key}.value;`;
+      if (attributes[key].type == 'number') {
+        form += `
+      value=Number(mainform.${key}.value);`;
+      }
+      else {
+        form += `
+      value=mainform.${key}.value;`;
+      }
+
     }
+    form += `
+    if (debug) {console.log('${key}',' ',value)}`;
     if (attributes[key].required || attributes[key].input.required) {       // Required
       form += `
         if (true) {          // Start of validation for ${key} `;
@@ -810,7 +825,7 @@ ${attributes[key].helpText}`;
     }
     else {
       trace.log({ key: key, group: columnGroup[key] });
-      if (columnGroup[key]) {
+      if (columnGroup[key] && tabs.length > 1) {
         form += `
             if (columnError) {tabclick('${columnGroup[key]}')}`;
       }
@@ -893,7 +908,15 @@ ${attributes[key].helpText}`;
     trace.log(linkRec);
     let linkTableData = tableDataFunction(link, permission);
     let linkName = link;
-    if (linkTableData.rowTitle) { linkName = linkTableData.rowTitle(linkRec); }
+    if (linkTableData.rowTitle) {
+      if (typeof (linkTableData.rowTitle) == 'string') {
+        linkName = linkRec[linkTableData.rowTitle];
+
+      }
+      else {
+        linkName = linkTableData.rowTitle(linkRec);
+      }
+    }
     form += `
     <div class="${classes.parentData}">
     <h3>${linkName}</h3>`;
@@ -969,6 +992,8 @@ ${attributes[key].helpText}`;
         </div> <!-- group links envelope end -->
         `;
     }
+    trace.log(openTab, tabs);
+    if (!tabs.includes(openTab)) { openTab = tabs[0]; }
     let disp;
     for (let group of tabs) {                               // then go through the non-statiuc groups
       if (openTab == group) { disp = 'block'; } else { disp = 'none' }   // the first will be shown the rest hidden

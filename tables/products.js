@@ -3,14 +3,13 @@
  *
   */
 
-const { textContent } = require('domutils');
-
 module.exports = {
   description: 'Products',
   extendedDescription: `One record for each product that the organisation deals in.`,
   friendlyName: 'Products',
   rowTitle: function (record) {
     let suds = require('../config/suds')
+    if (record.price) {
     let formatter = new Intl.NumberFormat(
       suds.currency.locale,
       {
@@ -19,6 +18,10 @@ module.exports = {
         minimumFractionDigits: suds.currency.digits,
       })
     price = formatter.format(record.price);
+    }
+    else {
+      price='See variants';
+    }
     return `${record.name} (No: ${record.id}) Guide retail price: ${price}`
   },
   list: {
@@ -30,16 +33,25 @@ module.exports = {
       static: true,
       columns: ['id', 'name', 'price'],
     },
+    activityLog: {
+      friendlyName: 'Activity Log',
+      activityLog: true,                                                       // This is the activity log
+      limit: 10,                                                               // Maximum entries shown (defaults to 10)
+      activities: ['salesorderlines','purchaseorderlines'],              // These shild records are included
+      permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
+    },
     details: {
+      friendlyName: 'Details',
       columns: ['supplier', 'vatable', 'stockLevel','class', 'overview', 'image'],
     },
     transactions: {
+      friendlyName: 'Transactions',
       columns: ['purchases', 'sales'],
       open: 'sales',
     },
     related: {
       friendlyName: 'Related Products',
-      columns: ['subproductOf', 'subproducts',],
+      columns: ['subproductOf', 'subproducts','variants'],
     },
     description: {
       friendlyName: 'Full description',
@@ -101,8 +113,8 @@ module.exports = {
       input: {
         width: '150px',
         step: .01,
-        required: true,
-      },
+
+       },
       display: { currency: true },
     },
     vatable: {
@@ -110,6 +122,7 @@ module.exports = {
       description: 'Whether subject to VAT',
     },
     stockLevel: {type: 'number'},
+
     class: {
       type: 'string',
       friendlyName: 'Market(s)',
@@ -173,13 +186,26 @@ module.exports = {
         hideDetails: true,
       },
     },
+    variants: {
+      collection: 'productvariant',
+      via: 'product',
+      friendlyName: 'Product variants',
+      collectionList: {
+        open: true,
+        columns: ['name', 'price' ],                       
+        hideEdit: true,
+        hideDetails: true,
+      },
+    },
     purchases: {
       collection: 'purchaseorderlines',
       via: 'product',
-    },
+      addRow: false,
+     },
     sales: {
       collection: 'salesorderlines',
       via: 'product',
+      addRow: false,
       annotate: {
         total: {
           type: 'count',

@@ -574,15 +574,24 @@ User ${user.emailAddress} is blocked and being treated as a guest.
 
 
             if (req.query.prepopulate) {
-                let fieldName = req.query.prepopulate;
-                let value = req.query[fieldName];
-                if (req.body[fieldName]) { value = req.body[fieldName] }
-                if (attributes[fieldName].type == 'number') {
-                    value = Number(value);
+                let fieldNames;
+                if (Array.isArray(req.query.prepopulate)) {
+                    fieldNames = req.query.prepopulate;
                 }
-                record[fieldName] = value;
+                else {
+                    fieldNames = [req.query.prepopulate];
+                }
+                trace.log(req.query.prepopulate,fieldNames);
+                for (fieldName of fieldNames) {
+                    let value = req.query[fieldName];
+                    if (req.body[fieldName]) { value = req.body[fieldName] }
+                    if (attributes[fieldName].type == 'number') {
+                        value = Number(value);
+                    }
+                    record[fieldName] = value;
+                }
             }
-            trace.log(mode);
+            trace.log(mode,record);
             output = await updateForm(
                 permission,
                 table,

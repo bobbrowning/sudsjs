@@ -112,6 +112,7 @@ module.exports = {
     'productjoin',
     'purchaseorderlines',
     'fieldtypes',
+    'productvariant',
   ],
 
 
@@ -138,7 +139,7 @@ module.exports = {
 
 
   audit: {                                    // Audit trail file - logs every operation
-    include: true,
+    include: false,
     trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
     log: ['ip', 'method', 'query', 'body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
     /** If omitted al operations are logged.  */

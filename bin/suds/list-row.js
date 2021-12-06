@@ -78,9 +78,10 @@ module.exports = async function (permission, table, id, open, openGroup) {
       rowTitle = record[tableData.rowTitle];
     }
     else {
-      rowTitle = tableData.rowTitle(record);
+      rowTitle = await tableData.rowTitle(record);
     }
   }
+
   let parent;
   let parentKey;
   trace.log({
@@ -90,6 +91,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
     tableName: tableName,
     parent: parent,
     parentKey: parentKey,
+    rowTitleType: typeof (tableData.rowTitle),
   });
 
   /** **********************************************
@@ -199,8 +201,9 @@ module.exports = async function (permission, table, id, open, openGroup) {
     let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
     trace.log(auditRecords);
     for (let record of auditRecords) {
-      let rowTitle = `${tableData.friendlyName} row ${id}`;
-      let reason = lang[record.mode];
+      let rowTitle = lang[record.mode];
+      let reason = '';
+
       //   if (record.createdAt==record.updatedAt) {reason=lang.new}
       activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, rowTitle, reason]
     }
@@ -446,9 +449,10 @@ module.exports = async function (permission, table, id, open, openGroup) {
     output += `
         if (opentab != tab) { 
           childdata='childdata_' + tab;
-          if (debug) {console.log(childdata);}
-          document.getElementById(childdata).style.display="block"; 
-          if (debug) { console.log(childdata,document.getElementById(childdata).style.display); }
+          if (document.getElementById(childdata) ){
+              if (debug) {console.log('showing ',childdata);}
+              document.getElementById(childdata).style.display="block"; 
+          }
           opentab=tab;
         }
         else {
@@ -539,7 +543,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
     /* ************************************************
     *
-    * Loop through fields in group crweating the HTML for thast group
+    * Loop through fields in group creating the HTML for thast group
     * and store in groupRows
     *
     ************************************************ */
@@ -614,8 +618,10 @@ module.exports = async function (permission, table, id, open, openGroup) {
           if (attributes[key].collectionList && attributes[key].collectionList.addChildTip) {
             tip = attributes[key].collectionList.addChildTip
           };
+          let canAddRow = await hasPermissionFunction(permission, child, 'edit');
+          if (attributes[key].addRow === false) { canAddRow = false; }
 
-          if (await hasPermissionFunction(permission, child, 'edit')) {
+          if (canAddRow) {
             let link = `${suds.mainPage}?table=${child}&mode=new&prepopulate=${via}&${via}=${id}`;
             col3 = `<button onclick="document.location='${link}'" type="button" class="btn btn-primary btn-sm  sudsAddChild" title="${tip}" >
              ${lang.addIcon} ${lang.addRow}
@@ -700,8 +706,6 @@ module.exports = async function (permission, table, id, open, openGroup) {
       output += activityDiv;
     }
     else {
-
-
       if (groupRows[group]) {
         output += `
         <div class="${classes.output.table.envelope}">  <!-- envelope -->
@@ -724,74 +728,6 @@ module.exports = async function (permission, table, id, open, openGroup) {
   // ******************************************
 
 
-
-
-  /* ************************************************
-  *
-  *   Links
-  *
-  ************************************************ */
-  output += `<div class="${classes.output.buttons}">`;
-  /* ************************************************
-  *
-  *   Edit
-  *
-  ************************************************ */
-
-  let hasPermission = await hasPermissionFunction(permission, table, 'edit');
-  trace.log({ hasPermission: hasPermission });
-  if (hasPermission) {
-    let link = `${suds.mainPage}?table=${table}&id=${id}&mode=populate`;
-    output += `
-  
-      <button onclick="window.location='${link}'"  class="${classes.output.links.button}">
-        ${lang.edit}
-      </button>`;
-  }
-
-  /* ************************************************
-  *
-  *   Delete button
-  *
-  ************************************************ */
-
-  hasPermission = await hasPermissionFunction(permission, table, 'delete');
-  trace.log({ hasPermission: hasPermission });
-  if (hasPermission) {
-    if (totalChild && permission != '#superuser#') {
-      output += `
-        <button type="button" class="${classes.output.links.danger}" title="Need to delete related data first: : ${hasRows} ">${lang.deleteRow}</button>`;
-    }
-    else {
-      let parentLink = '';
-      if (parent) {
-        parentLink = `&parent=${parent}&parentkey=${parentKey}`;
-      }
-      link = `${suds.mainPage}?table=${table}&id=${id}&mode=delete${parentLink}`;
-      //     <script>
-      //     </script>
-      output += `
-      <button class="${classes.output.links.button}" onclick="var result=confirm('are you sure'); if (result) {window.location='${link}'}">
-          ${lang.deleteRow}  
-      </button>
- 
- `;
-    }
-  }
-
-
-
-  /* ************************************************
-  *
-  *   List table / Back to home page
-  *
-  ************************************************ */
-
-  output += `
-      <button class="${classes.output.links.button}" onclick="window.location='${mainPage}?table=${table}&mode=list${openLink}'">${lang.tableList}</button>
-      <button class="${classes.output.links.button}" onclick="window.location='${mainPage}'">${lang.backToTables}</button>
-   </div> <!-- buttons -->
-`;
 
   trace.log(open)
 
@@ -874,22 +810,26 @@ module.exports = async function (permission, table, id, open, openGroup) {
         let total = {};
         for (let key of Object.keys(attributes[child].collectionList.derive)) {
           let spec = attributes[child].collectionList.derive[key];
-          if (spec.type == 'count') { total[key] = children[child]; }
-          if (spec.type == 'total') { total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column); }
-          if (spec.type == 'average') {
-            total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column);
-            total[key] /= children[child];
+          if (spec.type == 'function') {
+            let display = await spec.fn(record)
+            reportData.headingText += display;
+            continue;
           }
-          if (spec.type == 'composite') {
-            if (spec.divide) { total[key] = total[spec.divide[0]] / total[spec.divide[1]] }
-            if (spec.add) { total[key] = total[spec.divide[0]] + total[spec.divide[1]] }
-            if (spec.subtract) { total[key] = total[spec.divide[0]] - total[spec.divide[1]] }
+            if (spec.type == 'count') { total[key] = children[child]; }
+            if (spec.type == 'total') { total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column); }
+            if (spec.type == 'average') {
+              total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column);
+              total[key] /= children[child];
+            }
+            if (spec.type == 'composite') {
+              if (spec.divide) { total[key] = total[spec.divide[0]] / total[spec.divide[1]] }
+              if (spec.add) { total[key] = total[spec.divide[0]] + total[spec.divide[1]] }
+              if (spec.subtract) { total[key] = total[spec.divide[0]] - total[spec.divide[1]] }
+            }
+            let display = total[key];
+            if (spec.display) { display = await displayField(spec, display) }
+            reportData.headingText += `<br />${spec.friendlyName}: ${display}`;
           }
-          let display = total[key];
-          if (spec.display) { display = await displayField(spec, display) }
-          reportData.headingText += ` ${spec.friendlyName}: ${display}`;
-
-        }
       }
     }
 
@@ -913,6 +853,74 @@ module.exports = async function (permission, table, id, open, openGroup) {
      `;
 
   }
+
+
+  /* ************************************************
+  *
+  *   Links
+  *
+  ************************************************ */
+  output += `<div class="${classes.output.buttons}">`;
+  /* ************************************************
+  *
+  *   Edit
+  *
+  ************************************************ */
+
+  let hasPermission = await hasPermissionFunction(permission, table, 'edit');
+  trace.log({ hasPermission: hasPermission });
+  if (hasPermission) {
+    let link = `${suds.mainPage}?table=${table}&id=${id}&mode=populate`;
+    output += `
+  
+      <button onclick="window.location='${link}'"  class="${classes.output.links.button}">
+        ${lang.edit}
+      </button>`;
+  }
+
+  /* ************************************************
+  *
+  *   Delete button
+  *
+  ************************************************ */
+
+  hasPermission = await hasPermissionFunction(permission, table, 'delete');
+  trace.log({ hasPermission: hasPermission });
+  if (hasPermission) {
+    if (totalChild && permission != '#superuser#') {
+      output += `
+        <button type="button" class="${classes.output.links.danger}" title="Need to delete related data first: : ${hasRows} ">${lang.deleteRow}</button>`;
+    }
+    else {
+      let parentLink = '';
+      if (parent) {
+        parentLink = `&parent=${parent}&parentkey=${parentKey}`;
+      }
+      link = `${suds.mainPage}?table=${table}&id=${id}&mode=delete${parentLink}`;
+      //     <script>
+      //     </script>
+      output += `
+      <button class="${classes.output.links.button}" onclick="var result=confirm('are you sure'); if (result) {window.location='${link}'}">
+          ${lang.deleteRow}  
+      </button>
+ 
+ `;
+    }
+  }
+
+
+
+  /* ************************************************
+  *
+  *   List table / Back to home page
+  *
+  ************************************************ */
+
+  output += `
+      <button class="${classes.output.links.button}" onclick="window.location='${mainPage}?table=${table}&mode=list${openLink}'">${lang.tableList}</button>
+      <button class="${classes.output.links.button}" onclick="window.location='${mainPage}'">${lang.backToTables}</button>
+   </div> <!-- buttons -->
+`;
 
   trace.log({ output: output, level: 'silly' });
   let created = new Date(record['createdAt']).toDateString();

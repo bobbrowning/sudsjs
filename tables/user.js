@@ -26,9 +26,9 @@ module.exports = {
   permission: {                                           // Permission sets who can see this file 
     all: ['sales', 'purchasing', 'admin', 'demo'], view: ['all']
   },
-  
+
   /** Words that appear in the add button */
-  addRow: 'Add a new user',   
+  addRow: 'Add a new user',
 
   /* This function provides a text string that in some way identifies the   */
   /*  row to people. In this case it is the full name with the row number   */
@@ -37,7 +37,7 @@ module.exports = {
 
 
   /**  This allows you to vary the input form depending on the record type.  */
-   recordTypeColumn: 'userType',
+  recordTypeColumn: 'userType',
 
   /* Columns on the table listing. All columns are in the detail page       */
   /* This can be over-ridden in a report.                                   */
@@ -64,13 +64,13 @@ module.exports = {
     },
     profile: {
       friendlyName: 'Profile',
-      columns: ['picture', 'streetAddress', 'zip', 'province','country', 'mainPhone', 'mobilePhone','notes','business', 'organisation', 'people',],
+      columns: ['picture', 'streetAddress', 'zip', 'province', 'country', 'mainPhone', 'mobilePhone', 'notes', 'business', 'organisation', 'people',],
     },
     contacts: {
       friendlyName: 'Contacts',
       open: 'contacts',                                                      // When this group is shown, these child records are shown
       permission: { all: ['sales', 'purchasing', 'admin', 'demo'] },
-      columns: ['contacts', 'lastContact', 'nextAction', 'nextActionDate',],
+      columns: ['contacts',],
     },
     sales: {
       friendlyName: 'Sales',
@@ -90,9 +90,9 @@ module.exports = {
       friendlyName: 'Website',
       open: 'website',                                                       // List web pages authored by this user
       columns: ['webpages'],
-      permission: { all: ['admin', 'web','demo'] },
+      permission: { all: ['admin', 'web', 'demo'] },
       recordTypes: ['W'],                                                    // Only shown for web developers
-     },
+    },
     security: {
       friendlyName: 'Security',
       permission: { all: ['admin'] },
@@ -103,7 +103,7 @@ module.exports = {
     },
   },
 
-  
+
   /*  If a column is not included here. The defaults are:                          */
   /*    input: type= text for string columns, number for numbers                   */
   /*                  and checkbox for boolean,                                    */
@@ -111,7 +111,7 @@ module.exports = {
 
   attributes: {
     id: {
-      friendlyName: 'User No',   
+      friendlyName: 'User No',
       type: 'number',
       primaryKey: true,
       autoincrement: true,
@@ -220,7 +220,7 @@ module.exports = {
       values: 'countries',       // values are in /config/countries.js
 
     },
- 
+
 
     permission: {
       friendlyName: 'Permission set',
@@ -311,41 +311,7 @@ module.exports = {
 
 
 
-
-    /* These columns represent data which is set up autorically by various actions     */
-    /* They are marked as hidden because it is not shown on the form (it will          */
-    /* be a hidden field).                                                             */
-    /*                                                                                 */
-    /* Normally a link to anothet table is shown as a parent, however this can be      */
-    /* suppressed wih the 'child: false' entry. The effect is cosmetic only.           */
-    lastContact: {
-      model: 'contacts',
-      child: false,
-      friendlyName: 'Last contact',
-      input: { hidden: true },
-    },
-
-    /*  Also set by when a contact is logged                                          */
-    nextActionDate: {
-      friendlyName: 'Next action date',
-      type: 'string',
-      description: 'When a contact is entered, this is updated.',
-      extendedDescription: `Created automatically with the date the user should be contacted next.  
-        This is set up when a contact is registered that has a next action.`,
-      input: {
-        type: 'date',
-        hidden: true,
-      }
-    },
-
-    nextAction: {
-      friendlyName: 'Next action',
-      type: 'string',
-      description: 'When a contact is entered, this is updated.',
-      extendedDescription: `Created automatically with the description of the next action required.
-        This is set up when a contact is registered that has a next action.`,
-      input: { hidden: true, }
-    },
+ 
     mobilePhone: {
       type: 'string',
     },
@@ -395,6 +361,15 @@ module.exports = {
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
         columns: ['id', 'date', 'notes', 'closed'],
         addChildTip: 'Add a new contact for this user.',
+        derive: {
+          lines: { type: 'count', friendlyName: 'Number of contacts' },
+          last: {
+            type: 'function',
+            friendlyName: 'Last contact',
+            fn: require('../bin/custom/last-contact.js'),
+            
+          },
+        },
       },
     },
 
@@ -420,6 +395,7 @@ module.exports = {
       collection: 'salesorderlines',
       friendlyName: 'Products ordered',
       via: 'customer',
+      addRow: false,
       collectionList: {
         columns: ['orderNo', 'product', 'units', 'price', 'total'],
         derive: {
@@ -428,8 +404,7 @@ module.exports = {
           ave: { type: 'average', column: 'total', friendlyName: 'Average value per product line', display: { currency: true } },
           units: { type: 'total', column: 'units', friendlyName: 'No of units', },
           aveunits: { type: 'composite', divide: ['sales', 'units'], display: { currency: true }, friendlyName: 'Average unit price', },
-        }
-
+        },
       }
     },
 
@@ -454,6 +429,7 @@ module.exports = {
     people: {
       friendlyName: 'Staff / Subsidiary',
       collection: 'user',
+      addRow: false,
       via: 'organisation',
       collectionList: {
         columns: ['fullName', 'mobilePhone', 'lastContact'],

@@ -42,10 +42,8 @@ let fn= async function (permission, table, inputQuery,csrf) {
   if (inputQuery.prepopulate) {
     query += `&prepopulate=${inputQuery.prepopulate}&${inputQuery.prepopulate}=${inputQuery[inputQuery.prepopulate]}`;
   }
-  else {
-    query += `&prepopulate=${key}`;
-  }
-  let [formField, headerTags] = await createField(key, '', attributes, '', 'checkRecordType');
+     query += `&prepopulate=${key}`;
+   let [formField, headerTags] = await createField(key, '', attributes, '', 'checkRecordType');
   let format = suds.input.default;
   let groupClass;
   let labelClass;
@@ -78,9 +76,6 @@ ${attributes[key].helpText}`;
   name="mainform" 
   class="${classes.input.form}"
 >
-
-<input type="hidden" name="table" value="${table}" />
-<input type="hidden" name="mode"  value="new" />
 <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />
 <div class="${classes.input.group} ${groupClass}">    <!-- Form group for ${attributes[key].friendlyName} start -->
 <div class="${labelClass}">                      <!--  Names column start -->
