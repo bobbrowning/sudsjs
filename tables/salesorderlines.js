@@ -27,14 +27,15 @@ module.exports = {
 
 
   edit: {
+    /** This function reads the sales order data and fills out the customer number in the form */
     preForm: async function (record, mode) {
       if (record.orderNo) {
-        console.log(record);
         let so = await db.getRow('salesorders', record.orderNo,);
         record.customer = so.customer;
       }
       return;
     },
+    /** Before saving the row - extend units x price to give order line value */
     preProcess: function (record) {
       record.total = record.units * record.price;
       stock('salesorderlines', record);

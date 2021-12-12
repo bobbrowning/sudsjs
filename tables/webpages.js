@@ -13,8 +13,8 @@ module.exports = {
     friendlyName: 'Web pages',
     description: 'Web pages for the starter content management system',
 
-    /** Only the site administrator and web developer can edit this page. The demo user can view it */
-    permission: { all: ['admin', 'web'], view: ['demo'] },
+    /** Only the superuser can edit this page. */
+    permission: {view: ['admin','web','demo'] },
 
     /** One column can be assigned as the record  type. 
      *  Different record types may be able to view different groups of columns. 
@@ -42,7 +42,7 @@ module.exports = {
         },
         settings: {
             friendlyName: 'Settings',
-            columns: ['status', 'onMenu', 'expires', 'embargo', 'view',],
+            columns: ['status','parent', 'onMenu', 'expires', 'embargo', 'view',],
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -61,7 +61,7 @@ module.exports = {
         },
         subpages: {
             friendlyName: 'Sub pages',
-            columns: ['parent', 'subpages',],
+            columns: [ 'subpages',],
             /** When the group is loaded, these child records will be visible */
             open: 'subpages',
         },
