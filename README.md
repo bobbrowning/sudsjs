@@ -1,20 +1,21 @@
 
 # Overview / installation
 
-SUDSjs is a database management system based on node,js. No or minimal coding is required. 
+SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
+
+* List / filter / sort tables 
+* List / Edit / Delete rows. 
+* An extended permission system 
+* An administration page.
+* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content management system. 
+* This is all controlled by configuration files.
+
 This will:
 * give you a significant head-start for your project;
 * reduce overall development time;
 * provide a test-bed for your planned data structure before you commit resources;
 * provide a system for users to enter data while you are developing the application.
 
-It provides:
-
-* An administration page.
-* List / search / sort tables 
-* List / Edit / Delete rows. 
-* An extended permission system 
-* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content management system. 
 
 SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
 
@@ -22,7 +23,7 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 # Setup of the SUDS system plus test data.
 
 
-## Quick setup of the system plus test database
+## Quick setup of the system plus test database.
 
 
 
@@ -68,8 +69,6 @@ Alternative logins are
 
 The test system uses the same table for logged-in users (in-house), external customers, suppliers or companies. There is a user type that shows which is which.  There is also a radio button to identify people or organisations and a permissions selection list.  If you want to add new password-protected users, register them first via admin page, then go in and add this information to their record. 
 
-Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).
+Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
 
-The test system is set up to use port 3000, which is obviously not a final setup.  To change it set the PORT environment variable or change the default in suds.js (config directory). You 
-
-Google "apache proxypass nodejs"  for some tip on how to integrate with the apache server using mode-proxy.  Try "nodejs load balancing" for heavier loads.
+The test system is set up to use port 3000, which is obviously not a final setup.  To change it tempoarily set the PORT environment variable or change the default in suds.js (config directory). Google "apache proxypass nodejs"  for some tip on how to integrate with the apache server using mod-proxy.  Try Googling "nodejs load balancing" for heavier loads.
