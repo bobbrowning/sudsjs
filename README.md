@@ -1,7 +1,7 @@
 
 # Overview / installation
 
-Suds Express is a database management system based on node,js. No or minimal coding is required to create an in-house CRUD application (Create, Read, Update, Delete). 
+SUDSjs is a database management system based on node,js. No or minimal coding is required. 
 This will:
 * give you a significant head-start for your project;
 * reduce overall development time;
@@ -12,10 +12,11 @@ It provides:
 
 * An administration page.
 * List / search / sort tables 
-* List / Edit / Detete rows. 
+* List / Edit / Delete rows. 
 * An extended permission system 
+* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content management system. 
 
-SUDS Express is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
 
 
 # Setup of the SUDS system plus test data.
@@ -25,30 +26,37 @@ SUDS Express is new and is in beta testing.  The software plus test data only ta
 
 
 
-Download the zip file from https://github.com/bobbrowning/suds-express-demo (the green button 'Code' - last option) and place it in the root directory for your  applications. 
+Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications. 
 
-Unzip the file into the root ditectory for your applications. Run and run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
+Unzip the file into the root directory for your applications. Run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
 
 ```
-bash suds-express-demo-main/sudscopytest.sh
+bash sudsjs/sudscopytest.sh
+```
+
+To stop the application just ^C.  To start it: 
+```
 cd myapp
-node bin/www   or nodemon
+node bin/www
 ```
-nodemon needs installing but will restart the app every time you change a config file, whuch is a big time-saver during development. To restart when any file is changed use   
+Alternatively 
 ```
+cd myapp
 nodemon -e js,css, ejs
 ```
+nodemon needs installing but will restart the app every time you change a config file, whuch is a big time-saver during development. 
 
-Then in a browser:  http://localhost:3000/admin  
+Then in a browser:  http://localhost:3000  
 
-You will be asked to log in. The superuser is admin@admin.com password admin (not recommended for production use!)
+This will load a website that is managed by SUDSjs and runs on a test SQLite database. It has links to various functions. To go straight to the administration area:  http://localhost:3000/admin.  
+
+ou will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo (not recommended for production use!)
 
 Alternative logins are 
-* web@web.com password: web, permission set: web;
-* sales@sales.com password: sales, pemission set: sales; 
-* purchasing@purchasing.com password: purchasing, permission set: purchasing;
-* willy@sales.com password: willy, permission set: sales;
-* howard@wagner.com password howard, permission set admin.
+* gladys@loman.demo password: gladys, permission: purchasing;
+* howard@wagner.com password howard, permission: General manager
+* willy@loman.com password willy, permission: sales
+
 
 ## Get started
 
@@ -58,11 +66,10 @@ Alternative logins are
 1. Run http://localhost:3000/admin again and log in with the new email address you should see a setup menu
 1. Edit the user table, find your new record and set up the Uset type to 'in-house' and person/business to person.
 
-The test system uses the same table for logged-in users (in-house), external customers, suppliers or companies. There is a user type that shows which is which.  There is also a radio button to identify people or organisations.  If you want to add new password-protected users, register them first via the starter app, then go in and add this information to their record. 
+The test system uses the same table for logged-in users (in-house), external customers, suppliers or companies. There is a user type that shows which is which.  There is also a radio button to identify people or organisations and a permissions selection list.  If you want to add new password-protected users, register them first via admin page, then go in and add this information to their record. 
 
 Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).
 
+The test system is set up to use port 3000, which is obviously not a final setup.  To change it set the PORT environment variable or change the default in suds.js (config directory). You 
 
-
-
-
+Google "apache proxypass nodejs"  for some tip on how to integrate with the apache server using mode-proxy.  Try "nodejs load balancing" for heavier loads.

@@ -1,22 +1,12 @@
+
 /* **********************************************************************
 *
-*  These are tables that you must have in any SUDS system.
+*    Users - customers, suppliers and admin atrea users 
 *
-* ***********************************************************************/
-
+* ********************************************************************* */
 
 module.exports = {
 
-  /* ********************************************************************
-  *
-  *    Attributes common to all tables
-  *
-  * ******************************************************************** */
-  /* **********************************************************************
-  *
-  *    Users - customers, suppliers and admin atrea users 
-  *
-  * ********************************************************************* */
   friendlyName: 'User table',                                  // Name of the table
 
   description: `This table includes a row for each person or organisation that 
@@ -30,17 +20,16 @@ module.exports = {
   /** Words that appear in the add button */
   addRow: 'Add a new user',
 
-  /* This function provides a text string that in some way identifies the   */
-  /*  row to people. In this case it is the full name with the row number   */
-  /* brackets.                                                               */
+  /** This provides a text string that in some way identifies the  
+   *  row to people. In this case it is the full name  */
   rowTitle: 'fullName',
 
 
   /**  This allows you to vary the input form depending on the record type.  */
   recordTypeColumn: 'userType',
 
-  /* Columns on the table listing. All columns are in the detail page       */
-  /* This can be over-ridden in a report.                                   */
+  /** Columns on the table listing. All columns are in the detail page
+   *  This can be over-ridden in a report. */
   list: {
     columns: ['id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
   },
@@ -311,7 +300,7 @@ module.exports = {
 
 
 
- 
+
     mobilePhone: {
       type: 'string',
     },
@@ -367,7 +356,7 @@ module.exports = {
             type: 'function',
             friendlyName: 'Last contact',
             fn: require('../bin/custom/last-contact.js'),
-            
+
           },
         },
       },
