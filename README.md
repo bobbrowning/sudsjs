@@ -3,11 +3,11 @@
 
 SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
 
-* List / filter / sort tables 
+* List / filter / sort tables, 
 * List / Edit / Delete rows. 
-* An extended permission system 
-* An administration page.
-* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content management system. 
+* An extended permission system, 
+* An administration page,
+* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content, management system. 
 * This is all controlled by configuration files.
 
 This will:
