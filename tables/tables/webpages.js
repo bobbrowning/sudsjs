@@ -9,6 +9,7 @@
  * **************************************************** */
 
 
+
 module.exports = {
     friendlyName: 'Web pages',
     description: 'Web pages for the starter content management system',

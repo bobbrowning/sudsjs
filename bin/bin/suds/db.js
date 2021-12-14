@@ -17,6 +17,7 @@ const knex = require('knex')(suds.database);
 let lang = require('../../config/language')['EN'];
 
 
+
 /** ******************************************
  * 
  *        GET INSTRUCTION

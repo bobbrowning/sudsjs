@@ -27,12 +27,15 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 
 
 
-Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications. 
+Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
+```
+curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
+```
 
-Unzip the file into the root directory for your applications. Run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
+Unzip the file and run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides, so make sure it is suitable for this.
 
 ```
-bash sudsjs/sudscopytest.sh
+bash sudsjs-main/install.sh
 ```
 
 To stop the application just ^C.  To start it: 

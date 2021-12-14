@@ -16,6 +16,7 @@ module.exports = {
  * 
  ***************************************************** */
 
+ 
   contactManager: {
     title: 'Contact management',                         // Title of the section
     img: '/images/suds/contact.jpg',                     // Optional image 

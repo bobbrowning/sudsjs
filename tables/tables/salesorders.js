@@ -15,6 +15,7 @@ module.exports = {
     return `Order no:${record.id} - Value: £${record.totalValue}`;
   },
 
+  
   list: {
     columns: ['updatedAt', 'id', 'customer','status', 'date'],
     open: 'salesorderlines',

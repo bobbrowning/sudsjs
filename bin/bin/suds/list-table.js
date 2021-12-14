@@ -904,7 +904,7 @@ module.exports = async function (
    if (page == 1 && records.length==1) {
      return `<script>window.location="${suds.mainPage}?table=${table}&id=${records[0].id}&mode=listrow"</script>`;
    }
-
+  
  
     for (let i = 0; i < records.length; i++) {
       let record = records[i];

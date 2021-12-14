@@ -17,7 +17,7 @@ let displayField = require('./display-field');
 let humaniseFieldname = require('./humanise-fieldname');
 let hasPermissionFunction = require('./has-permission');
 let listTable = require('./list-table');
-
+ 
 /*
   friendlyName: 'List table row',
   description: 'List table row based on the model for that table.',

@@ -31,7 +31,6 @@ module.exports = {
   * **************************************************** */
 
 
-
   customerSearch: {
     table: 'user',
     friendlyName: 'Customer list',
