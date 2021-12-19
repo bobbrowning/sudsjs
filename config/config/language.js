@@ -48,10 +48,7 @@ module.exports = {
     filterSelect: 'Which field?',               // List table
     filterStart: 'Start search',                 // Filter button on table list
     footnoteText: 'SUDS Express version 1.0.0',
-    forgottenPasswordEmail: `A request was made for a new password for your account. 
-    If this was not you please ignore this email. 
-    To set up a new password, go to {{url}}?user={{user}}.
-    Enter this code {{token}} plus your new password.`,
+    forgottenPassword: 'Forgotten password (disabled)',
     formGroup: 'Click for further data: ',
     forTable: 'for table',
     fullList: 'Full listing',

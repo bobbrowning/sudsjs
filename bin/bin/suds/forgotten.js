@@ -2,7 +2,7 @@ let trace = require('track-n-trace');
 let sendView = require('./send-view');
 //let getRow = require('./get-row');
 //let updateRow = require('./update-row');
-let db=require('./db');
+let db = require('./db');
 
 //let createRow = require('./create-row');
 let crypto = require('crypto');
@@ -12,6 +12,8 @@ let lang = require('../../config/language')['EN'];
 
 module.exports = async function (req, res) {
     trace.log('register form');
+    let aut = suds.authorisation;
+
     let allParms = req.query;
     trace.log(allParms);
     output = `
@@ -20,11 +22,11 @@ module.exports = async function (req, res) {
 `;
 
 
-    let userRec = await db.getRow('user', allParms.emailAddress, 'emailAddress');
+    let userRec = await db.getRow(aut.table, allParms.emailAddress, aut.emailAddress);
     trace.log(userRec);
     if (userRec.err) {
         output += `<p>Email address ${allParms.emailAddress} is not registered</p>`
-        let result = await sendView(res, 'admin',output);
+        let result = await sendView(res, 'admin', output);
         trace.log(result);
         return;
     }
@@ -37,32 +39,56 @@ module.exports = async function (req, res) {
 
     trace.log(today, expire, suds.forgottenPasswordExpire);
 
-    let text = lang.forgottenPasswordEmail;
-    text = text.replace('{{url}}', suds.baseURL+'/resetpw');
+    let opts=suds.forgottenPasswordOptions;
+    let text = opts.text;
     text = text.replace('{{user}}', userRec.id);
     text = text.replace('{{token}}', token);
 
-    
-    var transporter = nodemailer.createTransport(suds.emailTransport);
     var mailOptions = {
-        from: 'sudsexpress21@gmail.com',
-        to: 'bob@bobbrowning.me.uk',
-        subject: 'Password Reset',
+        from: opts.from,
+        to: allParms.emailAddress,
+        subject: opts.subject,
         text: text,
     };
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Email sent: ' + info.response);
-        }
-    });
+    let errortext='';
+    async function wrappedSendMail(mailOptions) {
+        return new Promise((resolve, reject) => {
+            let transporter = nodemailer.createTransport(suds.emailTransport);
+            transporter.sendMail(mailOptions, async function (error, info) {
+                if (error) {
+                    console.log(error);
+                    resolve(false);
+                   errortext=error;
+                }
+                else {
+                    console.log('Email sent: ' + info.response);
+                    resolve(true);
+                }
 
-    await db.updateRow('user', { id: userRec.id, forgottenPasswordToken: token, forgottenPasswordExpire: expire });
+            });
+        });
 
-    output += '<p>An email has been sent to your email address.</p>';
-    let result = await sendView(res, 'admin',output);
-    trace.log(result);
+    }
+
+    let resp=await wrappedSendMail(mailOptions);
+    trace.log(resp);
+    if (resp) {
+        let record = {};
+        record[aut.primaryKey] = userRec[aut.primaryKey];
+        record[aut.forgottenPasswordToken] = token;
+        record[aut.forgottenPasswordExpire] = expire;
+        trace.log(record);
+        await db.updateRow(aut.table, record);
+
+        output += '<p>An email has been sent to your email address.</p>';
+        let result = await sendView(res, 'admin', output);
+        trace.log(result);
+    }
+    else {
+        trace.log(errortext);
+    output += `<p>Failed to send email.</p> ${errortext}`;
+    await sendView(res, 'admin', output);
+     }
     return;
 
 

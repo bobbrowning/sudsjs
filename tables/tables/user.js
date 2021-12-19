@@ -63,6 +63,7 @@ module.exports = {
     },
     sales: {
       friendlyName: 'Sales',
+      description: `Lists the sales orders and products ordered by the customer.  New sales orders can be added.`,
       open: 'salesorders',
       columns: ['salesorders', 'lastSale', 'salesorderlines'],
       permission: { all: ['admin', 'sales', 'demo'] },
@@ -138,6 +139,9 @@ module.exports = {
     },
     emailAddress: {
       type: 'string',
+      input: {
+        type: 'email',
+      }
     },
 
     picture: {
@@ -152,10 +156,13 @@ module.exports = {
       type: 'string',
       //      required: true,
       description: 'Securely hashed representation of the user\'s login password.',
+      extendedDescription: `This field is created by the login program, where the hashing 
+      takes place. Only the superuser can see this field.`,
       permission: { all: ['#superuser#'] },
       example: '2$28a8eabna301089103-13948134nad'
     },
     salt: {
+      description: 'Used to generate password hash.',
       type: 'string',
       permission: { all: ['#superuser#'] },
     },
@@ -178,7 +185,9 @@ module.exports = {
     lastSeenAt: {
       type: 'number',
       permission: { view: ['all'] },
-      description: 'A JS timestamp (epoch ms) representing the moment at which this user most recently interacted with the backend while logged in (or 0 if they have not interacted with the backend at all yet).',
+      extendedDescription: `A JS timestamp (epoch ms) representing the moment at which 
+      this user most recently interacted with the backend while logged in 
+      (or the creation date if they have not interacted with the backend at all yet).`,
       example: 1502844074211,
       input: { type: 'date', },
       display: { type: 'date' },

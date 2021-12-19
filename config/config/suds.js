@@ -31,7 +31,7 @@ module.exports = {
   
   port: 3000,
   mainPage: '/admin',                          // e.g. http://localhost:3000/admin
-
+  baseURL: 'http://www.sudsjs.com',
   /**  routes -> module */
   /**  GET requests  */
   get: {
@@ -125,9 +125,33 @@ module.exports = {
   ***************************************************** */
   superuser: 'admin@admin.com',                //  This person is always superuser.
 
+ authorisation: {
+   table: 'user',
+   /** Columns in authorisation table */
+   primaryKey: 'id',
+   passwordHash: 'password',
+   salt: 'salt',
+   permissionSet: 'permission',
+   superuser: 'isSuperAdmin',
+   emailAddress: 'emailAddress',
+   forgottenPasswordToken: 'forgottenPasswordToken',
+   forgottenPasswordExpire: 'forgottenPasswordExpire',
+ },
+ 
+ 
   forgottenPasswordExpire: 600,                //  Token sent in forgotten password email expires after this
   rememberPasswordExpire: 600,                   // cookie set by remember is this number of days to expire. 
   
+  forgottenPasswordOptions: {
+    from: 'info@sudsjs.com',
+    subject: 'Password Reset',
+    text: `A request was made for a new password for your account. 
+    If this was not you please ignore this email. 
+    To set up a new password, go to http://sudsjs.com/resetpw?user={{user}}.
+    Enter this code {{token}} plus your new password.`,
+  },
+
+
   permissionSets: {
     /*   all: 'Built-in permission meaning everyone',  */
     /*  none: 'Buit-in permission meaning no-one',  */
@@ -476,7 +500,7 @@ bottom bar.`,
     service: 'gmail',
     auth: {
       user: 'sudsexpress21@gmail.com',
-      pass: 'suds-2021&$'
+      pass: 'duwybmlwqfndzukh'          // This has been revoked. 
     }
 
   },
