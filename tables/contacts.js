@@ -6,6 +6,7 @@
 let db = require('../bin/suds/db');
 
 
+
 module.exports = {
   description: `A record should be created for all contacts with prospects, customers 
   or suppliers. It may be phone, email, text etc. When a contact is made, it may result in further 

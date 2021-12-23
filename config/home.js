@@ -16,6 +16,7 @@ module.exports = {
  * 
  ***************************************************** */
 
+ 
   contactManager: {
     title: 'Contact management',                         // Title of the section
     img: '/images/suds/contact.jpg',                     // Optional image 
@@ -74,18 +75,10 @@ module.exports = {
     permission: ['clerical', 'warehouse', 'admin','demo'],
     description: 'Shipping',
     links: [
-      {
-        report: 'customerSearch', title: 'Customer search',
-        input: {
-          fullName: {
-            type: 'text',
-            placeholder: 'Search customers',               // optional placeholder for the input field]
-          },
-        },
-      },
+      {report: 'outstandingOrders', title: 'Outstanding orders'},
+      { table: 'salesorders', title: 'All sales orders', },
       { table: 'products', },
       { report: 'customers', title: 'All customers' },
-      { table: 'salesorders', title: 'Sales Orders', },
     ],
   },
 

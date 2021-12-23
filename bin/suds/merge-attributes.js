@@ -91,14 +91,14 @@ module.exports = function (table, permission) {
     if (suds.inputTypes[intype] && suds.inputTypes[intype].helpText) { merged[key].helpText = suds.inputTypes[intype].helpText }
 
 
-    /** Record type and record type column = e.g. Customer type or product type. Special functiopns for this  */
+    /** Record type and record type column = e.g. Customer type or product type. Special functiopns for this  
     merged[key].recordTypeColumn = false;
     merged[key].recordTypes = {};
     if (key == tableData.recordTypeColumn) {
       merged[key].recordTypeColumn = true;
       merged[key].recordTypes = tableData.recordTypes;
     }
-
+*/
 
 
 

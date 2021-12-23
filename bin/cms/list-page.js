@@ -41,7 +41,8 @@ function checkPage(pageData) {
 module.exports = async function (req, res) {
 
   /* table and Fields used  */
-  
+  let headerTags='';
+  if (cms.headerTags) {headerTags=cms.headerTags}
 
 
   let html = `<p>Page ${req.params[slug]}</p>`;
@@ -107,7 +108,12 @@ module.exports = async function (req, res) {
   
 
 
-  let result = await sendView(res, 'pages', {navbar: navbar, headline: headline, body: html});
+  let result = await sendView(res, 'pages', {
+    navbar: navbar, 
+    headline: headline, 
+    body: html, 
+    headerTags:headerTags
+  });
   trace.log(result);
   return;
 

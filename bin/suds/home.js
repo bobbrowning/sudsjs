@@ -266,7 +266,7 @@ module.exports = async function (req, permission) {
           if (req.session.userId) { continue }
           output += `
       <li>
-        Forgotten password
+        ${lang.forgottenPassword} 
         <form action="${suds.forgotten.page}">
           <input name="emailAddress" 
             type="text"  

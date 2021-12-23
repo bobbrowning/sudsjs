@@ -31,7 +31,6 @@ module.exports = {
   * **************************************************** */
 
 
-
   customerSearch: {
     table: 'user',
     friendlyName: 'Customer list',
@@ -146,6 +145,20 @@ module.exports = {
       ]                                           // Filter field and value
     },
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'organisation',],        // Columns on the table listing. All columns are in the detail page
+  },
+
+  
+  outstandingOrders: {
+    table: 'salesorders',
+    title: 'Outstanding orders',
+    sort: ['updatedAt', 'DESC'],                          // Option sort field and direction. 
+    openGroup: 'salesorderlines',
+     search: {
+      andor: 'and',
+      searches: [
+        ['status', 'ne', 'D'],
+      ]                                           // Filter field and value
+    },
   },
 
   prospects: {

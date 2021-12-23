@@ -10,6 +10,7 @@ module.exports = async function (req, res) {
     <h1>Reset password</h1>
     <form name="cp" action="/changepw" method="post" style="width: 500px" onsubmit="return validateForm()">
     <input type="hidden" name="user" value="${req.query.user}">
+    <input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />
     <div class="form-group">
       <label for="token">The code that has been emailed to you</label>
       <input name="token" class="form-control" id="token" placeholder="Enter code" required>

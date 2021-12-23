@@ -309,7 +309,6 @@ module.exports = async function (
   let count = await db.countRows(table, searchSpec);
   trace.log({ count: count, heading: heading });
 
-
   if (!defaultSort) {
     let dir = lang.asc;
     if (direction == 'DESC') { dir = lang.desc }
@@ -900,15 +899,13 @@ module.exports = async function (
     ************************************************ */
 
     records = await db.getRows(table, searchSpec, offset, limit, sortKey, direction);
-    /* await sails.models[table].stream(instruction)
-      .offset(offset)
-      .sort(sortdirection)
-      .eachRecord(async (record) => {
-  */
-
-
     trace.log({ offset: offset, page: page, records: records });
-
+   
+   if (page == 1 && records.length==1) {
+     return `<script>window.location="${suds.mainPage}?table=${table}&id=${records[0].id}&mode=listrow"</script>`;
+   }
+  
+ 
     for (let i = 0; i < records.length; i++) {
       let record = records[i];
       trace.log(record);
@@ -994,7 +991,7 @@ module.exports = async function (
     *  with a search for the parent..
     *
     ************************************************ */
-
+     
     let prev = '';
     let next = '';
     trace.log({ page: page, type: typeof page, count: count, limit: limit });

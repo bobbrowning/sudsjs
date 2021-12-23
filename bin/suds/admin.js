@@ -74,13 +74,14 @@ module.exports = async function (req, res) {
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
     }
+    let aut=suds.authorisation;
     if (req.session.userId) {
-        user = await db.getRow('user', req.session.userId);
-        if (user.isSuperAdmin) { permission = '#superuser#' } else { permission = user.permission; }
-        if (suds.superuser == user.emailAddress) { permission = '#superuser#' }
+        user = await db.getRow(aut.table, req.session.userId);
+        if (user[aut.superuser]) { permission = '#superuser#' } else { permission = user[aut.permissionSet]; }
+        if (suds.superuser == user[aut.emailAddress]) { permission = '#superuser#' }
         /** Last seen at */
         let now = Date.now();
-        await db.updateRow('user', { id: req.session.userId, lastSeenAt: now });
+        await db.updateRow(aut.table, { id: req.session.userId, lastSeenAt: now });
 
         trace.log({ 'User record': user, level: 'verbose' });
     }
@@ -93,7 +94,7 @@ module.exports = async function (req, res) {
         )
     ) {
         let note = `
-User has non-standard permission: ${user.emailAddress} ${permission}
+User has non-standard permission: ${user[aut.emailAddress]} ${permission}
 The user is being treated as a guest.
         `;
         console.log(note);
@@ -117,10 +118,10 @@ User ${req.ip} is blocked and being treated as a guest.
     }
 
 
-    if (req.session.userId && user.emailAddress) {
-        if (suds.blockEmail && suds.blockEmail.includes(user.emailAddress)) {
+    if (req.session.userId && user[aut.emailAddress]) {
+        if (suds.blockEmail && suds.blockEmail.includes(user[aut.emailAddress])) {
             let notes = `
-User ${user.emailAddress} is blocked and being treated as a guest.
+User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 `;
             logNotes += notes;
             console.log(notes);

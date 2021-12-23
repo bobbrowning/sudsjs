@@ -4,17 +4,17 @@
  * Web Pages configuration file
  * Webpages.js
  * 
- * One row for each web page 
  *
  * **************************************************** */
+
 
 
 module.exports = {
     friendlyName: 'Web pages',
     description: 'Web pages for the starter content management system',
 
-    /** Only the superuser can edit this page. */
-    permission: {view: ['admin','web','demo'] },
+    /** Only the superuser can edit this table. */
+    permission: { view: ['admin', 'web', 'demo'] },
 
     /** One column can be assigned as the record  type. 
      *  Different record types may be able to view different groups of columns. 
@@ -33,7 +33,7 @@ module.exports = {
     /** This determines how each row is to be described in things like links. 
      *  In this case the title column. */
     rowTitle: 'title',
- 
+
     /** The columns are split into groups for the row listing and the edit form */
     groups: {
         basic: {
@@ -42,7 +42,7 @@ module.exports = {
         },
         settings: {
             friendlyName: 'Settings',
-            columns: ['status','parent', 'onMenu', 'expires', 'embargo', 'view',],
+            columns: ['status', 'parent', 'onMenu', 'expires', 'embargo', 'view',],
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -61,7 +61,7 @@ module.exports = {
         },
         subpages: {
             friendlyName: 'Sub pages',
-            columns: [ 'subpages',],
+            columns: ['subpages',],
             /** When the group is loaded, these child records will be visible */
             open: 'subpages',
         },
@@ -111,7 +111,6 @@ module.exports = {
             description: 'This is to identify the page. Note that this is used on the menu.',
         },
 
-
         pagetype: {
             friendlyName: 'Page type',
             description: 'Cannot be changed once set',
@@ -126,8 +125,8 @@ module.exports = {
                 R: 'Redirect',
             },
         },
-
-        slug: {                                                      // Used to create the URL of the page. Must be unique
+        /** Used to create the URL of the page. Must be unique  */
+        slug: {
             type: 'string',
             input: {
                 required: true,
@@ -140,7 +139,8 @@ module.exports = {
 
             },
         },
-
+        /** Dates can be type number or string. If it is a number it is the mumber of milliseconds since 1/1/70
+         * If it is string it is ISO format.      */
         embargo: {
             type: 'string',
             description: 'Embargo Date (ISO Format)',
@@ -160,8 +160,8 @@ module.exports = {
             description: 'The page above this one in the hierarchy',
             friendlyName: 'Parent page',
             input: {
-                type: 'autocomplete',                                // user starts typing the name and a short list of candidates is given
-                search: 'title',                                     // the input might be the id (always) or part of the title
+                type: 'autocomplete',                                // user starts typing the name and a limited number of candidates is given
+                search: 'title',                                     // Field searched - if the input is numeric it is also tested against the id 
                 placeholder: 'Start typing page title (case sensitive)',
                 width: '80%',                                         // To allow for the clear symbol 
             },
@@ -180,7 +180,6 @@ module.exports = {
                 'D': 'Draft',
                 'P': 'Published',
                 'H': 'On hold',
-
             },
             input: {
                 required: true,
@@ -188,8 +187,9 @@ module.exports = {
             }
         },
 
-        headline: { type: 'string', },
-
+        headline: {
+            type: 'string',
+        },
 
         author: {
             model: 'user',                                          // This is a foreign key of the user table 
@@ -236,7 +236,7 @@ module.exports = {
             on this page and paste the URL. `,
             input: {
                 format: 'col',
-                type: 'ckeditor4',                          // Other rich text editors are available see config & notes in suds.js
+                type: 'ckeditor4',                          // Other rich text editors are available see notes in suds.js
                 height: 300,
                 placeholder: 'Please enter page content',
             },

@@ -6,7 +6,7 @@
  ***************************************************** */
 
 module.exports=  async function (record) {
-    let db = require('../suds/db.js')
+    let db = require('../suds/db.js') 
 
  /** Read the most recent contact for this user in the contacts file 
   * This will be stored in last[0] = the first (and only row) read 

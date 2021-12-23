@@ -3,11 +3,12 @@ let sendView = require('./send-view');
 
 
 module.exports = async function (req, res) {
-    console.log(__dirname);
-    trace.log('register form' );
-    output=`
+  console.log(__dirname);
+  trace.log('register form');
+  output = `
     <h1>Register</h1>
     <form action="/register" method="post">
+    <input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />
     <div class="form-group">
       <label for="InputName">Name</label>
       <input name="fullName" type="text" class="form-control" id="Inputname" placeholder="Enter your full name" required>
@@ -30,9 +31,9 @@ module.exports = async function (req, res) {
 </form>
 `;
 
-    let result = await sendView(res, 'admin',output);
-    trace.log(result);
-    return;
+  let result = await sendView(res, 'admin', output);
+  trace.log(result);
+  return;
 
 
 

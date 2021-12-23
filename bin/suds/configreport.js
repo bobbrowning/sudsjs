@@ -14,6 +14,7 @@ let db = require('./db');
 let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let sendView = require('./send-view');
+let humaniseFieldName = require('./humanise-fieldname');
 
 
 
@@ -83,7 +84,7 @@ module.exports = async function (req, res) {
           <a href="#sp">Searches</a><br />
           <a href="#ps">Permission sets</a><br />
           <a href="#it">Input Types</a><br />
-          <a href="#ds">Database structure</a><br />
+          <a href="#ds">Database</a><br />
         </p>
         <p>
           <b>Tables</b><br />`;
@@ -146,57 +147,11 @@ module.exports = async function (req, res) {
    <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
    <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
    <tr><td>Route to the configuration validate program</td><td>${suds.validate.page}</td></tr>
-   <tr><td>Route to the login</td><td>${suds.login.page}</td></tr>
-    <tr><td>Route to logout</td><td>${suds.logout.page}</td></tr>
-    <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
-    <tr><td>Route to the register program</td><td>${suds.register.page}</td></tr>
-    <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
-    <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
-    <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
-    <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
-    <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
-    <tr><td>Qualify column name with table <br />(e.g. "where tablename.columnname=value")</td><td>${suds.fixWhere}</td></tr>
+     <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
+     <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
      </tbody>
     </table>`;
 
-  if (suds.audit.include) {
-    output += `
-        <h3>Audit trail Included</h3><p>`;
-    if (suds.audit.trim) {
-      output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
-       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`;
-    }
-    output += `
-     </p>`;
-
-
-  }
-
-  output += `<h3>Database</h3>
-    <table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
-    <thead>
-    <tr>
-      <th style="width: 500px">Item</th>
-      <th >Value</th>
-     </tr>
-    </thead>
-    <tbody>`;
-  for (let key of Object.keys(suds.database)) {
-    if (key == 'connection') {
-      for (let con of Object.keys(suds.database[key])) {
-        let value = suds.database[key][con];
-        if (con == 'password') { value = '****************' }
-        output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
-      }
-    }
-    else {
-      output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
-
-    }
-  }
-  output += `
-    </tbody>
-    </table>`;
 
 
 
@@ -208,7 +163,7 @@ module.exports = async function (req, res) {
      *
      **************************************** */
   output += `
-    <a name="sp"></a><h2>Searches</h2>
+    <a name="sp"></a><h1>Searches</h1>
     <table class=".table-bordered" style="width: 900px;">
     <thead>
     <tr>
@@ -240,49 +195,114 @@ module.exports = async function (req, res) {
 
 
   output += `
-    </p>`;
-
+    </p>
+    <hr class="sudsreporthr">`;
+    
 
 
 
 
   /* ****************************************
     *
-    *  Permission sets
+    *  Security
     *
     **************************************** */
   output += `
-   <a name="ps"></a><h1>Permission sets</h1>
-    <p>`;
+   <a name="ps"></a><h1>Security</h1>
+   <table class=".table-bordered" style=" margin-bottom: 10px;">
+   <thead>
+   <tr>
+     <th style="width: 350px" >Item</th>
+     <th >Value</th>
+    </tr>
+   </thead>
+   <tbody>
+  <tr><td>Route to the login</td><td>${suds.login.page}</td></tr>
+   <tr><td>Route to logout</td><td>${suds.logout.page}</td></tr>
+   <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
+   <tr><td>Route to the register program</td><td>${suds.register.page}</td></tr>
+   <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
+   <tr><td>Forgotten password token expires after (days)</td><td>${suds.forgottenPasswordExpire}</td></tr>
+   <tr><td>Forgotten password email</td><td>
+        from:  ${suds.forgottenPasswordOptions.from}<br />
+          subject:  ${suds.forgottenPasswordOptions.subject}<br />
+          text:  ${suds.forgottenPasswordOptions.text}<br />
+          </td></tr>
+   <tr><td>Remember login expires after (days)</td><td>${suds.rememberPasswordExpire}</td></tr>
+   `;
+   
+   output+=`
+   <tr><td>Audit trail</td><td> `
+   if (suds.audit.include) {
+    output += `Included`;
+    if (suds.audit.trim) {
+      output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
+       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`;
+    }
+  }
+  else {
+    output+=`Not included`;
+  }
+  output+=`</td></tr>`
+
+
+  output += `
+  <tr><td>Permission sets</td><td> `;
   for (let set of Object.keys(suds.permissionSets)) {
     output += `
         ${set} (<i>${suds.permissionSets[set]}</i>)<br /> `;
   }
+  output+=`</td></tr>`;
+
   output += `
-    </p>
+  <tr><td>The authorisation table (<i>${suds.authorisation['table']}</i>)
+   has the following columns
+  </td><td>`;
+  for (let set of Object.keys(suds.authorisation)) {
+    if (set == 'table') {continue}
+    output += `
+        ${humaniseFieldName(set)}  -> ${suds.authorisation[set]}<br /> `;
+  }
+  output+=`</td></tr>`;
+
+
+  output += ` 
+   </tbody>
+   </table>
+
     <hr class="sudsreporthr">`;
 
 
   /* ****************************************
     *
-    *  Available input types
+    *  INPUT
     *
     **************************************** */
   output += `
   <br />  
-  <a name="it"></a><h3>Input types</h3>
-      <p>
-        The following input types are handled as a standard input tag with no special handling. 
-      </p>
-      <p>[
-    `;
+  <a name="it"></a><h1>Input</h1>`;
+
+  output += `
+ <table class=".table-bordered" style=" margin-bottom: 10px;">
+ <thead>
+ <tr>
+   <th >Item</th>
+   <th >Value</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
+ <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
+ <tr><td> Input types handled as a standard input tag with no special handling</td><td>`;
+ 
   let inputFieldTypes = suds.inputFieldTypes;
   for (let i = 0; i < inputFieldTypes.length; i++) {
     output += `
         ${inputFieldTypes[i]},&nbsp;`;
   }
   output += `
-    ]</p>
+    </td></tr>  </tbody>
+    </table>
     <p>
       The following input types are handled by special helper programs
     </p>
@@ -339,6 +359,36 @@ module.exports = async function (req, res) {
   trace.log(parentChild);
 
 
+  output += `<a name="ds"></a><h1>Database</h1>`;
+  output += `<table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
+    <thead>
+    <tr>
+      <th style="width: 500px">Item</th>
+      <th >Value</th>
+     </tr>
+    </thead>
+    <tbody>`;
+  for (let key of Object.keys(suds.database)) {
+    if (key == 'connection') {
+      for (let con of Object.keys(suds.database[key])) {
+        let value = suds.database[key][con];
+        if (con == 'password') { value = '****************' }
+        output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
+      }
+    }
+    else {
+      output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
+
+    }
+  }
+  output += `
+    </tbody>
+    </table>`;
+    if (suds.fixWhere) {
+      output+=`<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
+    }
+  
+
 
   let switching, shouldSwitch;
   switching = true;
@@ -374,8 +424,7 @@ module.exports = async function (req, res) {
 
 
   output += `
-    <a name="ds"></a><h1>Database structure</h1>
-            <p>The following table lists the relationship between tables. Note that SUDS only
+               <p>The following table lists the relationship between tables. Note that SUDS only
             provides functions for these relationships if the parent table includes 'collection'
             attributes.
     </p>
@@ -391,6 +440,7 @@ module.exports = async function (req, res) {
                 `;
   let last = '';
   for (let row of parentChild) {
+    if (row[0] == 'user' && row[2] == 'updatedBy') { continue } // ignore spurious foreign key
     if (row[0] != last) {
       output += `
       <tr>
@@ -441,7 +491,7 @@ module.exports = async function (req, res) {
     output += `
         <hr class="sudsreporthr">
         <div class="sudsReportTable">     <!-- ------------------------- ${table} -------------------- -->   
-          <a name="${table}"><h2>Table: ${friendlyName}</h2>`;
+          <a name="${table}"><h1>Table: ${friendlyName}</h1>`;
     if (tabledata.description && tabledata.description != table) {
       output += `
           <p>${tabledata.description}</p>`;
@@ -566,6 +616,10 @@ module.exports = async function (req, res) {
               </td>
               <td>`;
         let first = true;
+        if (groupData.description) {
+          output += `<i>${groupData.description}</i> `;
+          first = false;
+        }
         if (groupData.static) {
           output += `This is a static group. `;
           first = false;
@@ -575,10 +629,21 @@ module.exports = async function (req, res) {
           output += `Listing of ${groupData.open} child records is automatically opened.`;
           first = false;
         }
+        if (groupData.recordTypes) {
+          if (!first) { output += '<br />' };
+          let types = groupData.recordTypes;
+          output += `Only shown for record types: <i> `;
+          for (let i = 0; i < types.length; i++) {
+            if (i > 0) { output += ', ' }
+            output += types[i];
+          }
+          output += '</i>';
+        }
+
         if (groupData.permission) {
           if (!first) { output += '<br />' };
           first = false;
-          output += `Default permissions for columns in group: <br /><i>`;
+          output += `Permission sets: <i>`;
           for (let ptype of Object.keys(groupData.permission)) {
             let sets = groupData.permission[ptype];
             output += `
@@ -644,6 +709,8 @@ module.exports = async function (req, res) {
       }
       output += `</td>
                 <td >`;
+      let autocreate = false;
+      let needBreak = false;
       for (let prop of Object.keys(properties[col])) {
         trace.log(col, prop, properties[col][prop]);
         if (prop == 'collection') { continue }
@@ -660,124 +727,215 @@ module.exports = async function (req, res) {
         if (prop == 'process' && !Object.keys(properties[col][prop]).length) { continue; }
 
         let value = properties[col][prop];
-        let line = `${prop}: ${value}`;
-        if (prop == 'permission') { // like this { edit: ['none'], view: ['all'] }, 
-          line = `Permissions`;
-          for (let i = 0; i < permissions.length; i++) {  // try all the permissions
-            if (value[permissions[i]]) {    // say permissions[i] == edit then this is ['none'] like this 
-              line += `<br />&nbsp;&nbsp;${permissions[i]}: `;
-              for (let j = 0; j < value[permissions[i]].length; j++) {
-                line += `${value[permissions[i]][j]}, `;
-              }
-            }
-          }
-        }
-        if (prop == 'primaryKey' && properties[col][prop]) {
-          line = "This is then primary key."
-        }
-        if (prop == 'autoincrement' && properties[col][prop]) {
-          line = "This is an autoincrement field."
-        }
-        if (prop == 'database') {
-          line = `Database field (may be specific to ${suds.database.client}.)`;
-          trace.log(properties[col][prop]);
-          for (let subprop of Object.keys(properties[col][prop])) {
-            line += `<br />&nbsp;&nbsp;${subprop}: ${properties[col][prop][subprop]}: `;
-          }
-        }
-        if (prop == 'process') {
-          line = `Process`;
-          for (let subprop of Object.keys(properties[col][prop])) {
-            let content = `${subprop}: ${properties[col][prop][subprop]}: `;
-            if (subprop == 'updatedBy') { content = `This field will be automatically populated.` }
-            if (subprop == 'updatedAt') { content = `This field will be automatically populated.` }
-            if (subprop == 'createdAt') { content = `This field will be automatically populated.` }
-            line += `<br />&nbsp;&nbsp;${content} `;
-          }
-        }
+        if (!value) { continue }
 
-        if (prop == 'type') {
-          line = `Data type: ${value}`;
+        if (needBreak) {
+          output += '<br />';
         }
+        needBreak = true;;
 
-        if (prop == 'input') {
-          line = `Input specification`;
-          for (let key of Object.keys(value)) {
-            if (key == 'class' && value[key] == suds.input.class) { continue }
-            if (key == 'search' && typeof value[key] == 'object') {
-              let andor = 'and';
-              if (value[key].andor && value[key].andor == 'or') { andor = 'or' }
-              line += `<br />&nbsp;&nbsp;search:`;
-              for (let i = 0; i < value[key].searches.length; i++) {
-                if (i > 0) { line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${andor}` }
-                let search = value[key].searches[i];
-                line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${search[0]} ${search[1]} ${search[2]}`;
-              }
-            }
-            else {
-              if (key == 'values') {
-                line += `<br />&nbsp;&nbsp;Values:`;
-                let values = value[key];
-                for (let type of Object.keys(values)) {
-                  line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${type}: ${values[type]}`;
+
+        /** Big Switch - attribute characteristics */
+        /** ************************************** */
+
+        let line = ''
+        switch (prop) {
+
+          /** Permission */
+          case 'permission':
+            output += `Permissions`;
+            for (let i = 0; i < permissions.length; i++) {  // try all the permissions
+              if (value[permissions[i]]) {    // say permissions[i] == edit then this is ['none'] like this 
+                output += `<br />&nbsp;&nbsp;${permissions[i]}: `;
+                for (let j = 0; j < value[permissions[i]].length; j++) {
+                  output += `${value[permissions[i]][j]}, `;
                 }
+              }
+            }
+            break;
+          /** Primary key */
+          case 'primaryKey':
+            if (properties[col][prop]) {
+              output += "This is the primary key."
+            }
+            break;
+
+          /** Autoincrement */
+          case 'autoincrement':
+            if (properties[col][prop]) {
+              output += "This is an autoincrement field."
+              autocreate = true;
+            }
+            break;
+
+          /** Dataase field type */
+          case 'database':
+            output += `Database field (may be specific to ${suds.database.client}.)`;
+            trace.log(properties[col][prop]);
+            for (let subprop of Object.keys(properties[col][prop])) {
+              output += `<br />&nbsp;&nbsp;${subprop}: ${properties[col][prop][subprop]}: `;
+            }
+            break;
+
+          /** Process */
+          case 'process':
+            {
+              let line = `Process`;
+              for (let subprop of Object.keys(properties[col][prop])) {
+                let content = `${subprop}: ${properties[col][prop][subprop]}: `;
+                if (subprop == 'updatedBy') { content = `Automatically populated with user who updated.` }
+                if (subprop == 'updatedAt') { content = `Automatically populated with date-time updated.` }
+                if (subprop == 'createdAt') { content = `Automatically populated with date-time created.` }
+                line += `<br />&nbsp;&nbsp;${content} `;
+                autocreate = true;
+              }
+              output += line;
+            }
+            break;
+
+          /** helptext */
+          case 'helpText':
+            if (autocreate) {
+              needBreak = false;
+              continue
+            }
+
+            break;
+
+          /** Type */
+          case 'type':
+            output += `Data type: ${value}`;
+            break;
+
+          /** Input  */
+          case 'input':
+            if (autocreate) {
+              needBreak = false;
+              continue
+            }
+            {
+              let line = `Input specification`;
+              for (let key of Object.keys(value)) {
+                if (key == 'class' && value[key] == suds.input.class) { continue }
+                let thisline = `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
+                if (key == 'search' && typeof value[key] == 'object') {
+                  let andor = 'and';
+                  if (value[key].andor && value[key].andor == 'or') { andor = 'or' }
+                  thisline = `<br />&nbsp;&nbsp;search:`;
+                  for (let i = 0; i < value[key].searches.length; i++) {
+                    if (i > 0) { line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${andor}` }
+                    let search = value[key].searches[i];
+                    thisline += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${search[0]} ${search[1]} ${search[2]}`;
+                  }
+                }
+                if (key == 'validations') {
+                  if (Object.keys(value[key]).length == 0) {
+                    thisline = '';
+                    continue
+                  }
+                  thisline = `Validations: `;
+                  for (let subkey of Object.keys(value[key])) {
+                    let val = value[key][subkey];
+                    if (typeof (val) == 'object') { val = `See <i>${table}</i> config file` }
+                    thisline += `<br />&nbsp;&nbsp;${subkey}: ${val}`;
+                  }
+
+                  let val = value[key];
+                  if (typeof (val) == 'object') { val = `See <i>${table}</i> config file` }
+                  thisline = `<br />&nbsp;&nbsp;${key}: ${val}`;
+                }
+                line += thisline;
+              }
+              output += line;
+            }
+            break;
+
+          /** Output format */
+          case 'display':
+            {
+              let line = '';
+              let count = 0;
+              for (let key of Object.keys(value)) {
+                if (!value[key]) {
+                  needBreak = false
+                  continue;
+                }
+                count++
+                let name = key;
+                if (key == 'linkedTable') { name = 'Lookup in table' }
+                line += `<br />&nbsp;&nbsp;${name}: ${value[key]}`;
+                if (key == 'titleField') { line += `&nbsp;&nbsp;(<i>Shown this field in the linked table</i>)`; }
+              }
+              if (count) {
+                line = `Output format: ${line}`;
+              }
+              output += line;
+            }
+            break;
+
+          /** Values */
+          case 'values':
+
+            output += `
+              Values: `;
+            {
+              let line = ''
+              if (typeof (value) == 'string') { line = `Set in item <i>${value}</i> in config file suds.js.`; }
+              if (typeof (value) == 'object') { line = `Set in table definition ${table}.js.`; }
+              if (typeof (value) == 'function') { line = `Set in a function in table definition <i>${table}.js</i>.`; }
+              output += line;
+            }
+
+            break;
+
+          /** */
+          case 'collectionList':
+            line = `
+              Child list parameters: `;
+            for (let key of Object.keys(value)) {
+              if (key == 'columns') {
+                line += `<br />&nbsp;&nbsp;Columns listed:<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;[`;
+                let cols = value[key];
+                for (let i = 0; i < cols.length; i++) {
+                  if (i > 0) { line += ', ' }
+                  line += cols[i];
+                }
+                line += ']';
               }
               else {
                 line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
               }
             }
-          }
+            output += line;
+            break;
+
+          /** Extended description */
+          case 'extendedDescription':
+            output += `Extended description: <br /><i>${value}</i>`;
+            break;
+
+          /** required */
+          case 'required':
+            output += `Required`;
+            break;
+
+          /** Foreign key */
+          case 'model':
+            output += `Foreign key - links to table ${properties[col].model}`;
+            break;
+
+          /** Example */
+          case 'example':
+            output += `Example:  ${properties[col].example}`;
+            break;
+
+          /** Default */
+          default:
+            output += `${prop}: ${value}`;
+            break;
+
         }
-
-        if (prop == 'display') {
-          if (Object.keys(value).length == 0) { continue }
-          else {
-            line = `Output format: `;
-            for (let key of Object.keys(value)) {
-              let name = key;
-              if (key == 'linkedTable') { name = 'Lookup in table' }
-              line += `<br />&nbsp;&nbsp;${name}: ${value[key]}`;
-              if (key == 'titleField') { line += `&nbsp;&nbsp;(<i>Shown this field in the linked table</i>)`; }
-            }
-          }
-        }
-
-        if (prop == 'collectionList') {
-          line = `
-              Child list parameters: `;
-          for (let key of Object.keys(value)) {
-            if (key == 'columns') {
-              line += `<br />&nbsp;&nbsp;Columns listed:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;[`;
-              let cols = value[key];
-              for (let i = 0; i < cols.length; i++) {
-                if (i > 0) { line += ', ' }
-                line += cols[i];
-              }
-              line += ']';
-            }
-            else {
-              line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
-            }
-          }
-        }
-
-        if (prop == 'validations') {
-          if (Object.keys(value).length == 0) { continue }
-          else {
-            line = `Validations: `;
-            for (let key of Object.keys(value)) {
-              line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
-            }
-          }
-        }
-
-        if (prop == 'extendedDescription') { line = `Extended description: <br /><i>${value}</i>` }
-
-        if (prop == 'required') { line = `Required` }
-        if (prop == 'model') { line = `Links to table ${properties[col].model}` }
-        if (prop == 'example') { line = `Example:  ${properties[col].example}` }
-        output += line + '<br>\n';
       }
     }
     output += `
@@ -794,7 +952,7 @@ module.exports = async function (req, res) {
   output += `
     </div> <!-- sudsReport -->`;
 
-  let result = sendView(res, 'admin', output);
+  let result = sendView(res, 'report', output);
   return result;
 
 }

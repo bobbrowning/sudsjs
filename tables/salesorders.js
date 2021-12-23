@@ -15,8 +15,9 @@ module.exports = {
     return `Order no:${record.id} - Value: £${record.totalValue}`;
   },
 
+  
   list: {
-    columns: ['updatedAt', 'id', 'customer', 'date'],
+    columns: ['updatedAt', 'id', 'customer','status', 'date'],
     open: 'salesorderlines',
   },
   edit: {
@@ -91,7 +92,11 @@ module.exports = {
     {
       description: 'Status of the order',
       type: 'string',
-      values: ['Order placed', 'Processing', 'Dispatched'],
+      values: {
+        O:'Ordered', 
+        P:'Processing', 
+        D:'Dispatched',
+      },
       input: {
         type: 'select',
        }

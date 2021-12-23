@@ -61,7 +61,7 @@ module.exports = async function (attributes, value, children, permission) {
     }
     catch (err) {
       trace.log(err)
-     }
+    }
     if (helper) {
       trace.log('using helper', attributes.display.type);
       return (await helper(attributes, value))
@@ -93,30 +93,39 @@ module.exports = async function (attributes, value, children, permission) {
 
 
   trace.log(attributes.friendlyName, value);
-  if (attributes.display && attributes.display.JSON) {
+  if (attributes.display && (attributes.display.JSON || attributes.display.type == 'JSON')) {
     let data = JSON.parse(value);
-    trace.log(value, data);
-    let display = '';
-    for (let i = 0; i < data.length; i++) {
-      key = data[i];
-      if (i > 0) { display += '; ' }
-      trace.log(key);
-      let lookedup = await lookup(attributes, key);
-      trace.log(lookedup);
-      display += `${lookedup}`;
+    trace.log({ value: value, data: data });
+    let display=value;
+    if (Array.isArray(data)) {
+      display = '';
+      for (let i = 0; i < data.length; i++) {
+        key = data[i];
+        if (i > 0) { display += '; ' }
+        trace.log(key);
+        let lookedup = await lookup(attributes, key);
+        trace.log(lookedup);
+        display += `${lookedup}`;
+      }
+    }
+    else {
+      display='';
+      for (let key of Object.keys(data) ) {
+        display+=`${key}:  ${JSON.stringify(data[key])}<br />`;
+      }
     }
     return (display);
   }
 
   /** File upload */
   if (attributes.input && attributes.input.type == 'uploadFile') {
-    display='';
-    if (attributes.display.type == 'image') { 
-      let width='100px';
-      if (attributes.display.width) {width=attributes.display.width}
+    display = '';
+    if (attributes.display.type == 'image') {
+      let width = '100px';
+      if (attributes.display.width) { width = attributes.display.width }
       display = `<a href="/uploads/${value}" target="_blank"><img src="/uploads/${value}" style="width: ${width};"></a>&nbsp;`;
     }
-      display += `<a href="/uploads/${value}" target="_blank">${value}</a>`;
+    display += `<a href="/uploads/${value}" target="_blank">${value}</a>`;
     return (display);
   }
 
