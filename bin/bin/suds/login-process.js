@@ -51,7 +51,12 @@ module.exports = async function (req, res) {
     req.session.userId = userRec[aut.primaryKey];
     let goto='';
     if (next) {goto=`<script>document.location="${next}"</script>`}
-    if (allParms.remember) { res.cookie('user', userRec[aut.primaryKey], { maxAge: 1000 * 60 * 60 * suds.rememberPasswordExpire }) };
+    if (allParms.remember) { 
+        res.cookie('user', userRec[aut.primaryKey], { maxAge: 1000 * 60 * 60 * suds.rememberPasswordExpire }) 
+    }
+    else {
+        res.clearCookie('user')        
+    }
     output += `<p>Log in complete - <a href="${suds.mainPage}">Admin page</a></p>
     ${goto}`;
     if (suds.audit.include

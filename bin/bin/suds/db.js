@@ -389,7 +389,7 @@ async function  deleteRow(permission,table,id) {
   
  
 async function getRow (table, val,col) {
-    trace.log({inputs:arguments})
+    trace.log({inputs:arguments,td: typeof tableDataFunction})
     let record = {};
     let tableData = tableDataFunction(table);
     trace.log({tableData: tableData, maxdepth: 3})

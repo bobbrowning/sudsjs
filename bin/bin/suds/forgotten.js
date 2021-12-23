@@ -86,7 +86,12 @@ module.exports = async function (req, res) {
     }
     else {
         trace.log(errortext);
-    output += `<p>Failed to send email.</p> ${errortext}`;
+        let err='<table>';
+        for (key of Object.keys(errortext)) {
+            err+=`<tr><td>${key}</td><td>${errortext[key]}</td></tr>`;
+        }
+        err+=`</table>`;
+    output += `<p>Failed to send email.</p> ${err}`;
     await sendView(res, 'admin', output);
      }
     return;

@@ -7,20 +7,21 @@
 
 module.exports = {
 
-  friendlyName: 'User table',                                  // Name of the table
+  friendlyName: 'User table', 
 
   description: `This table includes a row for each person or organisation that 
   the system needs to process. This may be a customer, supplier, or in-house staff. 
   Rows can be linked so it can indicate which organisation a customer works for.`,
 
-  permission: {                                           // Permission sets who can see this file 
+  /** Permission sets who can edit / see this file  */
+  permission: { 
     all: ['sales', 'purchasing', 'admin', 'demo'], view: ['all']
   },
 
   /** Words that appear in the add button */
   addRow: 'Add a new user',
 
-  /** This provides a text string that in some way identifies the  
+  /** This column provides a text string that in some way identifies the  
    *  row to people. In this case it is the full name  */
   rowTitle: 'fullName',
 
@@ -35,7 +36,7 @@ module.exports = {
   },
 
   /** The columns can be split into groups for editing and display purposes   
-  * Once the edit page is loaded then user can switch between groups with   
+  * Once the edit/view page is loaded then user can switch between groups with   
   * a menu. Any columns not listed here are automatically included in a    
   * group called 'other' */
   groups: {
@@ -59,7 +60,7 @@ module.exports = {
       friendlyName: 'Contacts',
       open: 'contacts',                                                      // When this group is shown, these child records are shown
       permission: { all: ['sales', 'purchasing', 'admin', 'demo'] },
-      columns: ['contacts',],
+      columns: ['contacts','lastContact','nextActionDate','nextAction'],
     },
     sales: {
       friendlyName: 'Sales',
@@ -81,7 +82,6 @@ module.exports = {
       open: 'website',                                                       // List web pages authored by this user
       columns: ['webpages'],
       permission: { all: ['admin', 'web', 'demo'] },
-      recordTypes: ['W'],                                                    // Only shown for web developers
     },
     security: {
       friendlyName: 'Security',
@@ -93,12 +93,7 @@ module.exports = {
     },
   },
 
-
-  /*  If a column is not included here. The defaults are:                          */
-  /*    input: type= text for string columns, number for numbers                   */
-  /*                  and checkbox for boolean,                                    */
-  /*    friendlyName: Like this 'streetAddress' would become 'Street address'      */
-
+/**  Treatment of each column */
   attributes: {
     id: {
       friendlyName: 'User No',
@@ -134,14 +129,12 @@ module.exports = {
       example: 'Mary Sue van der McHenst',
       input: {
         required: true,
-        placeholder: 'Please enter the persons full name'      // Placeholder text in the input field
+        placeholder: 'Please enter the persons full name',
       },
     },
     emailAddress: {
       type: 'string',
-      input: {
-        type: 'email',
-      }
+      input: { type: 'email', }
     },
 
     picture: {
@@ -154,7 +147,6 @@ module.exports = {
 
     password: {
       type: 'string',
-      //      required: true,
       description: 'Securely hashed representation of the user\'s login password.',
       extendedDescription: `This field is created by the login program, where the hashing 
       takes place. Only the superuser can see this field.`,
@@ -335,6 +327,17 @@ module.exports = {
       }
     },
 
+    lastContact: {
+      model: 'contacts',
+    },
+    nextActionDate: {
+         type: 'string',
+         display: {type: 'date'},
+    },
+    nextAction: {
+         type: 'string',
+    },
+    
     //  ╔═╗╔═╗╔═╗╔═╗╔═╗╦╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
     //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝

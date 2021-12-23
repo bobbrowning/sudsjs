@@ -17,7 +17,7 @@ let displayField = require('./display-field');
 let humaniseFieldname = require('./humanise-fieldname');
 let hasPermissionFunction = require('./has-permission');
 let listTable = require('./list-table');
- 
+
 /*
   friendlyName: 'List table row',
   description: 'List table row based on the model for that table.',
@@ -46,7 +46,7 @@ let listTable = require('./list-table');
 
 */
 module.exports = async function (permission, table, id, open, openGroup) {
-  trace.log({ inputs: arguments, break: '#', level: 'min' });
+  trace.log({ inputs: arguments, break: '#', level: 'min',td: typeof tableDataFunction });
 
 
   /* ************************************************
@@ -138,7 +138,7 @@ module.exports = async function (permission, table, id, open, openGroup) {
 
   /** ********************************************
    * 
-   * Creat ativity log.  There is a more elegant way of doing this but I just read
+   * Creat activity log.  There is a more elegant way of doing this but I just read
    * the 10 (say) most recent child records from each child table and put them in an array, 
    * then sort by date and take the first 10. 
    * 
@@ -198,16 +198,17 @@ module.exports = async function (permission, table, id, open, openGroup) {
         ['mode', 'ne', 'populate']
       ]
     };
-    let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
-    trace.log(auditRecords);
-    for (let record of auditRecords) {
-      let rowTitle = lang[record.mode];
-      let reason = '';
+    if (suds.audit.include) {
+      let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
+      trace.log(auditRecords);
+      for (let record of auditRecords) {
+        let rowTitle = lang[record.mode];
+        let reason = '';
 
-      //   if (record.createdAt==record.updatedAt) {reason=lang.new}
-      activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, rowTitle, reason]
+        //   if (record.createdAt==record.updatedAt) {reason=lang.new}
+        activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, rowTitle, reason]
+      }
     }
-
 
 
     /** Now assemble the array into some HTML. */
@@ -815,21 +816,21 @@ module.exports = async function (permission, table, id, open, openGroup) {
             reportData.headingText += display;
             continue;
           }
-            if (spec.type == 'count') { total[key] = children[child]; }
-            if (spec.type == 'total') { total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column); }
-            if (spec.type == 'average') {
-              total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column);
-              total[key] /= children[child];
-            }
-            if (spec.type == 'composite') {
-              if (spec.divide) { total[key] = total[spec.divide[0]] / total[spec.divide[1]] }
-              if (spec.add) { total[key] = total[spec.divide[0]] + total[spec.divide[1]] }
-              if (spec.subtract) { total[key] = total[spec.divide[0]] - total[spec.divide[1]] }
-            }
-            let display = total[key];
-            if (spec.display) { display = await displayField(spec, display) }
-            reportData.headingText += `<br />${spec.friendlyName}: ${display}`;
+          if (spec.type == 'count') { total[key] = children[child]; }
+          if (spec.type == 'total') { total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column); }
+          if (spec.type == 'average') {
+            total[key] = await db.totalRows(attributes[child].collection, { searches: [[attributes[child].via, 'eq', id]] }, spec.column);
+            total[key] /= children[child];
           }
+          if (spec.type == 'composite') {
+            if (spec.divide) { total[key] = total[spec.divide[0]] / total[spec.divide[1]] }
+            if (spec.add) { total[key] = total[spec.divide[0]] + total[spec.divide[1]] }
+            if (spec.subtract) { total[key] = total[spec.divide[0]] - total[spec.divide[1]] }
+          }
+          let display = total[key];
+          if (spec.display) { display = await displayField(spec, display) }
+          reportData.headingText += `<br />${spec.friendlyName}: ${display}`;
+        }
       }
     }
 

@@ -4,7 +4,6 @@
  * Web Pages configuration file
  * Webpages.js
  * 
- * One row for each web page 
  *
  * **************************************************** */
 
@@ -14,7 +13,7 @@ module.exports = {
     friendlyName: 'Web pages',
     description: 'Web pages for the starter content management system',
 
-    /** Only the superuser can edit this page. */
+    /** Only the superuser can edit this table. */
     permission: { view: ['admin', 'web', 'demo'] },
 
     /** One column can be assigned as the record  type. 

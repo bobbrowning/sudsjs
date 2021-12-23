@@ -79,7 +79,7 @@ h1 {
   list-style-type: none;
   margin         : 0;
   padding        : 0;
-  overflow       : hidden;
+/*  overflow       : hidden;*/
   height         : 40px;
 
 }
@@ -94,7 +94,7 @@ h1 {
   display        : inline-block;
   color          : #08146a;
   text-align     : center;
-  padding        : 14px 16px;
+  padding        : 10px 16px;
   text-decoration: none;
 
 }

@@ -58,6 +58,8 @@ module.exports = {
     },
     data: {
       type: 'string',
+      input: {type: 'textarea'},
+      display: {type: 'JSON'},
       database: { type: 'longtext' },
     },
   }

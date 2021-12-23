@@ -14,6 +14,7 @@ let db = require('./db');
 let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let sendView = require('./send-view');
+let humaniseFieldName = require('./humanise-fieldname');
 
 
 
@@ -83,7 +84,7 @@ module.exports = async function (req, res) {
           <a href="#sp">Searches</a><br />
           <a href="#ps">Permission sets</a><br />
           <a href="#it">Input Types</a><br />
-          <a href="#ds">Database structure</a><br />
+          <a href="#ds">Database</a><br />
         </p>
         <p>
           <b>Tables</b><br />`;
@@ -146,57 +147,11 @@ module.exports = async function (req, res) {
    <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
    <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
    <tr><td>Route to the configuration validate program</td><td>${suds.validate.page}</td></tr>
-   <tr><td>Route to the login</td><td>${suds.login.page}</td></tr>
-    <tr><td>Route to logout</td><td>${suds.logout.page}</td></tr>
-    <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
-    <tr><td>Route to the register program</td><td>${suds.register.page}</td></tr>
-    <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
-    <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
-    <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
-    <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
-    <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
-    <tr><td>Qualify column name with table <br />(e.g. "where tablename.columnname=value")</td><td>${suds.fixWhere}</td></tr>
+     <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
+     <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
      </tbody>
     </table>`;
 
-  if (suds.audit.include) {
-    output += `
-        <h3>Audit trail Included</h3><p>`;
-    if (suds.audit.trim) {
-      output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
-       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`;
-    }
-    output += `
-     </p>`;
-
-
-  }
-
-  output += `<h3>Database</h3>
-    <table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
-    <thead>
-    <tr>
-      <th style="width: 500px">Item</th>
-      <th >Value</th>
-     </tr>
-    </thead>
-    <tbody>`;
-  for (let key of Object.keys(suds.database)) {
-    if (key == 'connection') {
-      for (let con of Object.keys(suds.database[key])) {
-        let value = suds.database[key][con];
-        if (con == 'password') { value = '****************' }
-        output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
-      }
-    }
-    else {
-      output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
-
-    }
-  }
-  output += `
-    </tbody>
-    </table>`;
 
 
 
@@ -208,7 +163,7 @@ module.exports = async function (req, res) {
      *
      **************************************** */
   output += `
-    <a name="sp"></a><h2>Searches</h2>
+    <a name="sp"></a><h1>Searches</h1>
     <table class=".table-bordered" style="width: 900px;">
     <thead>
     <tr>
@@ -240,49 +195,114 @@ module.exports = async function (req, res) {
 
 
   output += `
-    </p>`;
-
+    </p>
+    <hr class="sudsreporthr">`;
+    
 
 
 
 
   /* ****************************************
     *
-    *  Permission sets
+    *  Security
     *
     **************************************** */
   output += `
-   <a name="ps"></a><h1>Permission sets</h1>
-    <p>`;
+   <a name="ps"></a><h1>Security</h1>
+   <table class=".table-bordered" style=" margin-bottom: 10px;">
+   <thead>
+   <tr>
+     <th style="width: 350px" >Item</th>
+     <th >Value</th>
+    </tr>
+   </thead>
+   <tbody>
+  <tr><td>Route to the login</td><td>${suds.login.page}</td></tr>
+   <tr><td>Route to logout</td><td>${suds.logout.page}</td></tr>
+   <tr><td>Route to the change password program</td><td>${suds.changepw.page}</td></tr>
+   <tr><td>Route to the register program</td><td>${suds.register.page}</td></tr>
+   <tr><td>Superuser by default</td><td>${suds.superuser}</td></tr>
+   <tr><td>Forgotten password token expires after (days)</td><td>${suds.forgottenPasswordExpire}</td></tr>
+   <tr><td>Forgotten password email</td><td>
+        from:  ${suds.forgottenPasswordOptions.from}<br />
+          subject:  ${suds.forgottenPasswordOptions.subject}<br />
+          text:  ${suds.forgottenPasswordOptions.text}<br />
+          </td></tr>
+   <tr><td>Remember login expires after (days)</td><td>${suds.rememberPasswordExpire}</td></tr>
+   `;
+   
+   output+=`
+   <tr><td>Audit trail</td><td> `
+   if (suds.audit.include) {
+    output += `Included`;
+    if (suds.audit.trim) {
+      output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
+       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`;
+    }
+  }
+  else {
+    output+=`Not included`;
+  }
+  output+=`</td></tr>`
+
+
+  output += `
+  <tr><td>Permission sets</td><td> `;
   for (let set of Object.keys(suds.permissionSets)) {
     output += `
         ${set} (<i>${suds.permissionSets[set]}</i>)<br /> `;
   }
+  output+=`</td></tr>`;
+
   output += `
-    </p>
+  <tr><td>The authorisation table (<i>${suds.authorisation['table']}</i>)
+   has the following columns
+  </td><td>`;
+  for (let set of Object.keys(suds.authorisation)) {
+    if (set == 'table') {continue}
+    output += `
+        ${humaniseFieldName(set)}  -> ${suds.authorisation[set]}<br /> `;
+  }
+  output+=`</td></tr>`;
+
+
+  output += ` 
+   </tbody>
+   </table>
+
     <hr class="sudsreporthr">`;
 
 
   /* ****************************************
     *
-    *  Available input types
+    *  INPUT
     *
     **************************************** */
   output += `
   <br />  
-  <a name="it"></a><h3>Input types</h3>
-      <p>
-        The following input types are handled as a standard input tag with no special handling. 
-      </p>
-      <p>[
-    `;
+  <a name="it"></a><h1>Input</h1>`;
+
+  output += `
+ <table class=".table-bordered" style=" margin-bottom: 10px;">
+ <thead>
+ <tr>
+   <th >Item</th>
+   <th >Value</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
+ <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
+ <tr><td> Input types handled as a standard input tag with no special handling</td><td>`;
+ 
   let inputFieldTypes = suds.inputFieldTypes;
   for (let i = 0; i < inputFieldTypes.length; i++) {
     output += `
         ${inputFieldTypes[i]},&nbsp;`;
   }
   output += `
-    ]</p>
+    </td></tr>  </tbody>
+    </table>
     <p>
       The following input types are handled by special helper programs
     </p>
@@ -339,6 +359,36 @@ module.exports = async function (req, res) {
   trace.log(parentChild);
 
 
+  output += `<a name="ds"></a><h1>Database</h1>`;
+  output += `<table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
+    <thead>
+    <tr>
+      <th style="width: 500px">Item</th>
+      <th >Value</th>
+     </tr>
+    </thead>
+    <tbody>`;
+  for (let key of Object.keys(suds.database)) {
+    if (key == 'connection') {
+      for (let con of Object.keys(suds.database[key])) {
+        let value = suds.database[key][con];
+        if (con == 'password') { value = '****************' }
+        output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
+      }
+    }
+    else {
+      output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
+
+    }
+  }
+  output += `
+    </tbody>
+    </table>`;
+    if (suds.fixWhere) {
+      output+=`<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
+    }
+  
+
 
   let switching, shouldSwitch;
   switching = true;
@@ -374,8 +424,7 @@ module.exports = async function (req, res) {
 
 
   output += `
-    <a name="ds"></a><h1>Database structure</h1>
-            <p>The following table lists the relationship between tables. Note that SUDS only
+               <p>The following table lists the relationship between tables. Note that SUDS only
             provides functions for these relationships if the parent table includes 'collection'
             attributes.
     </p>
@@ -442,7 +491,7 @@ module.exports = async function (req, res) {
     output += `
         <hr class="sudsreporthr">
         <div class="sudsReportTable">     <!-- ------------------------- ${table} -------------------- -->   
-          <a name="${table}"><h2>Table: ${friendlyName}</h2>`;
+          <a name="${table}"><h1>Table: ${friendlyName}</h1>`;
     if (tabledata.description && tabledata.description != table) {
       output += `
           <p>${tabledata.description}</p>`;
@@ -588,7 +637,7 @@ module.exports = async function (req, res) {
             if (i > 0) { output += ', ' }
             output += types[i];
           }
-          output+='</i>';
+          output += '</i>';
         }
 
         if (groupData.permission) {
@@ -903,7 +952,7 @@ module.exports = async function (req, res) {
   output += `
     </div> <!-- sudsReport -->`;
 
-  let result = sendView(res, 'admin', output);
+  let result = sendView(res, 'report', output);
   return result;
 
 }
