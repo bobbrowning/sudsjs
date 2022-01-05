@@ -24,11 +24,7 @@ app.use(fileUpload({
 }));
 
 
-app.use(session({
-  secret: 'head shoe',
-  resave: 'false',
-  saveUninitialized: true,
-}))
+app.use(suds.session())
 
 
 app.locals.config = {};

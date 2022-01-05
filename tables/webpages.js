@@ -206,6 +206,7 @@ module.exports = {
         /**   Redirect only  */
         targetPage: {
             type: 'number',
+            friendlyName: 'Target page for redirect',
             model: 'webpages',
             input: {
                 type: 'autocomplete',
@@ -215,14 +216,17 @@ module.exports = {
             },
         },
         targetUrl: {
+            friendlyName: 'Target URL for redirect',
             type: 'text',
         },
         openIn: {
+            friendlyName: 'Open target in',
             type: 'text',
             values: {
                 T: 'This window',
                 W: 'Another window',
-            }
+            },
+            input: {type: 'radio'}
         },
 
         /**   HTML page  only  */

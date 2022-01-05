@@ -7,12 +7,19 @@
 var app = require('./app');
 var debug = require('debug')('base:server');
 var http = require('http');
-var suds = require('../config/suds.js')
+var suds = require('../config/suds.js');
+let trace=require('track-n-trace');
 
 /**
  * Get port from environment and store in Express.
  */
 
+trace.log(process.argv,{level: 'verbose'});
+for (let arg of process.argv.slice(2)){
+  let arg2=arg.split('=');
+  process.env[arg2[0]]=arg2[1];
+}
+trace.log(process.env,{level: 'verbose'});
 var port = normalizePort(process.env.PORT || suds.port);
 app.set('port', port);
 
@@ -28,7 +35,7 @@ var server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-console.log(`Listening on port ${port}`);
+console.log(`Listening on port ${port}: ${process.env.NODE_ENV} mode`);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

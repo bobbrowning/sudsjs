@@ -28,7 +28,7 @@ module.exports = {
    * 
    *********************************************** */
 
-  
+
   port: 3000,
   mainPage: '/admin',                          // e.g. http://localhost:3000/admin
   baseURL: 'http://www.sudsjs.com',
@@ -117,6 +117,29 @@ module.exports = {
   ],
 
 
+  
+  /** 
+   * This provides session middleware. See https://www.npmjs.com/package/express-session
+   * 
+   * You will need to replace it depending on what database you are using    
+   * see https://www.npmjs.com/package/express-session#compatible-session-stores
+   * 
+   * Warning: connect.session() MemoryStore used here is not designed 
+   * for a production environment, as it will leak memory, and
+   *  will not scale past a single process.
+   * 
+   * */
+   session: function () {
+    let session = require('express-session')
+     return session ({
+      secret: 'head shoe',
+      resave: 'false',
+     saveUninitialized: true,
+  });
+  },
+
+
+
   /* ****************************************************
   *
   *                    Security
@@ -125,23 +148,27 @@ module.exports = {
   ***************************************************** */
   superuser: 'admin@admin.com',                //  This person is always superuser.
 
- authorisation: {
-   table: 'user',
-   /** Columns in authorisation table */
-   primaryKey: 'id',
-   passwordHash: 'password',
-   salt: 'salt',
-   permissionSet: 'permission',
-   superuser: 'isSuperAdmin',
-   emailAddress: 'emailAddress',
-   forgottenPasswordToken: 'forgottenPasswordToken',
-   forgottenPasswordExpire: 'forgottenPasswordExpire',
- },
- 
- 
+
+
+
+
+  authorisation: {
+    table: 'user',
+    /** Columns in authorisation table */
+    primaryKey: 'id',
+    passwordHash: 'password',
+    salt: 'salt',
+    permissionSet: 'permission',
+    superuser: 'isSuperAdmin',
+    emailAddress: 'emailAddress',
+    forgottenPasswordToken: 'forgottenPasswordToken',
+    forgottenPasswordExpire: 'forgottenPasswordExpire',
+  },
+
+
   forgottenPasswordExpire: 600,                //  Token sent in forgotten password email expires after this
   rememberPasswordExpire: 600,                   // cookie set by remember is this number of days to expire. 
-  
+
   forgottenPasswordOptions: {
     from: 'info@sudsjs.com',
     subject: 'Password Reset',
@@ -472,12 +499,12 @@ bottom bar.`,
     fieldWidth: '250px',                       // Size of search text fields
     maxConditions: '7',                        // This number can be increased if you need more conditiona
     /* These are always equals search types. Less than & greater than have no meaning */
-    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox','autocomplete'],
+    allwaysEquals: ['radio', 'select', 'yesnoRadio', 'checkbox', 'autocomplete'],
     /* These input types always have a simple input text field in the search      */
     /* whatever the input type on forms                                           */
     allwaysText: [
       'text',
-//      'autocomplete',
+      //      'autocomplete',
       'textarea',
       'summernote',
       'ckeditor4',

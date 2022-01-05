@@ -12,6 +12,9 @@ const db = require('./db');
 const lang = require('../../config/language')['EN'];
 
 
+
+
+
 let friendlyName = `Central switching program.`;
 let description = `
  The program checks whether the user is logged in. If not it links to 
