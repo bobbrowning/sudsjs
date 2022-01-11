@@ -317,10 +317,18 @@ module.exports = async function (req, res) {
     <tbody>
  `;
   trace.log(suds.inputTypeHandlers);
-  for (let js of suds.inputTypeHandlers) {
-    docs = await require(`./input/${js}`).documentation;
+  for (let fieldType of suds.inputTypeHandlers) {
+    helperName = '';
+    for (let i = 0; i < fieldType.length; i++) {
+      if (fieldType.charAt(i) == fieldType.charAt(i).toUpperCase()) {
+        helperName += '-';
+      }
+      helperName += fieldType.charAt(i).toLowerCase();
+    }
+
+    docs = await require(`./input/${helperName}`).documentation;
     output += `
-         <tr><td>${js}</td><td>${docs.friendlyName}</td><td>${docs.description}</td></tr> `;
+         <tr><td>${fieldType}</td><td>${docs.friendlyName}</td><td>${docs.description}</td></tr> `;
   }
   output += `
     <tbody>
@@ -384,7 +392,7 @@ module.exports = async function (req, res) {
   output += `
     </tbody>
     </table>`;
-    if (suds.fixWhere) {
+    if (suds.qualifyColName) {
       output+=`<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
     }
   

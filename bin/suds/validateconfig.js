@@ -10,6 +10,7 @@ let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
 let db = require('./db');
+const fs = require('fs');
 const { register } = require('../../config/suds');
 
 
@@ -37,6 +38,8 @@ module.exports = async function (req, res) {
 
     errors = '';
     warnings = '';
+    errorCount=-0;
+    warningCount=0;
     /* ****************************************
     *
     *  Validate  suds.config
@@ -48,6 +51,7 @@ module.exports = async function (req, res) {
         console.log(msg);
         msg = msg.replace(/\n/g, '<br />&nbsp;&nbsp;');
         this.errors += `\n<p>Error:<br />${msg}</p>`;
+        errorCount++;
 
     }
     warning = function (msg) {
@@ -55,6 +59,7 @@ module.exports = async function (req, res) {
         console.log(msg);
         msg = msg.replace(/\n/g, '<br />&nbsp;&nbsp;');
         this.warnings += `\n<p>Warning:<br />${msg}</p>`;
+        warningCount++;
 
     }
 
@@ -68,8 +73,12 @@ module.exports = async function (req, res) {
         'get',
         'post',
         'validate',
+        'baseURL',
         'mainPage',
         'validatePage',
+        'forgottenPasswordOptions',
+        'session',
+        'authorisation',
         'login',
         'logout',
         'changepw',
@@ -83,7 +92,8 @@ module.exports = async function (req, res) {
         'rememberPasswordExpire',
         'audit',
         'currency',
-        'fixWhere',
+        'qualifyColName',
+        'quoteColName',
         'input',
         'search',
         'permissionSets',
@@ -95,7 +105,6 @@ module.exports = async function (req, res) {
         'emailTransport',
         'documentation',
         'headerTags',
-
     ];
     for (let key of Object.keys(suds)) {
         console.log('checking suds: ', key);
@@ -191,7 +200,9 @@ module.exports = async function (req, res) {
         'values',
         'helpText',
         'recordTypeColumn',
-
+        'addRow',
+        'recordType'
+  
     ];
     let validTableData = [
         'friendlyName',
@@ -226,6 +237,11 @@ module.exports = async function (req, res) {
         'derive',
         'sort',
     ];
+    let validTypes=[
+        'string',
+        'number',
+        'boolean'
+    ];
     let validPermissions = Object.keys(suds.permissionSets);
     validPermissions.push('all');
     validPermissions.push('#guest#');
@@ -234,12 +250,12 @@ module.exports = async function (req, res) {
     // Start with the list of field types in suds.js then add the helpers that produce fields.
     /* clone the input field types to start */
 
-    let validInputFieldTypes = [];
-    for (let i = 0; i < suds.inputFieldTypes.length; i++) {
-        validInputFieldTypes[i] = suds.inputFieldTypes[i];
+    let validInputFieldTypes = suds.inputFieldTypes;
+    for (let i = 0; i < suds.inputTypeHandlers.length; i++) {
+        validInputFieldTypes.push(suds.inputTypeHandlers[i]);
     }
 
-    console.log('checking tables.js');
+    console.log('checking tables');
 
     /* ****************************************
       *
@@ -406,6 +422,14 @@ module.exports = async function (req, res) {
             `);
 
                 }
+             
+             if (attributes[attribute].type && !validTypes.includes(attributes[attribute].type)){
+                seterror(`
+                Table: ${table}  
+                Column: ${attribute} 
+                ${attributes[attribute].type} is not  valid type
+                `);      
+             }
 
 
                 for (let property of Object.keys(attributes[attribute])) {
@@ -424,6 +448,15 @@ module.exports = async function (req, res) {
                   *
                   **************************************** */
                 if (attributes[attribute].input && attributes[attribute].input.type) {
+
+                    if (!validInputFieldTypes.includes(attributes[attribute].input.type)){
+                        seterror(`
+                        Table: ${table}  
+                        Column: ${attribute} 
+                        ${attributes[attribute].input.type} is not  valid input type
+                        `);      
+                     }
+        
 
                     /* ****************************************
                      *
@@ -559,14 +592,15 @@ module.exports = async function (req, res) {
        *
        **************************************** */
     let output = "<h2>Checking the SUDS config files for obvious errors</h2>"
-    if (errors) {
+   
+    if (errorCount) {
         output += errors;
     }
     else {
         output += '<p>No Errors</p>';
 
     }
-    if (warnings) {
+    if (warningCount) {
         output += warnings;
     }
     else {
@@ -574,6 +608,19 @@ module.exports = async function (req, res) {
 
     }
     output += `\n<p><a href="${suds.mainPage}">Admin page</a></p>`;
+
+
+    let summary=   `${Date().slice(0,21)}
+    ${errorCount} Errors
+    ${warningCount} Warnings
+    `;
+    fs.writeFile('lastvalidate.txt', summary, err => {
+        if (err) {
+          console.error(err)
+          return
+        }
+       console.log(summary)
+      });
 
     res.send(output);
     return;

@@ -38,7 +38,14 @@ let description = `
  All operations and parameters are logged to the audit trail unless this feature
  has been switched off.
  `;
-
+let validModes = [
+    'list',
+    'listrow',
+    'new',
+    'populate',
+    'update',
+    'delete',
+];
 
 module.exports = async function (req, res) {
     if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
@@ -77,7 +84,7 @@ module.exports = async function (req, res) {
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
     }
-    let aut=suds.authorisation;
+    let aut = suds.authorisation;
     if (req.session.userId) {
         user = await db.getRow(aut.table, req.session.userId);
         if (user[aut.superuser]) { permission = '#superuser#' } else { permission = user[aut.permissionSet]; }
@@ -170,17 +177,60 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     * 
     * ******************************************** */
     let table = '';
-    if (req.query.table) { table = req.query.table; }              // The table being listed/updated
+    if (req.query.table) {
+        table = req.query.table;
+        if (!suds.tables.includes(table)) {
+            console.error(`
+        ********************** Fatal Error **********************
+        ${Date()}
+        Table: ${table} 
+        This table is not a valid table. It must be listed
+        in the suds.js config file.
+         *******************************************************`);
+         sendOut (`Fatal error - see console log`);
+         return;
+
+        }
+    }
+
 
     let mode = '';
-    if (req.query.mode) { mode = req.query.mode; }                  // The mode
+    if (req.query.mode) {
+        mode = req.query.mode;
+        if (!validModes.includes(mode)) {
+            console.error(`
+        ********************** Fatal Error **********************
+        ${Date()}
+        Table: ${table} 
+        Mode: ${mode}
+        This mode is not valid.
+         *******************************************************`);
+            sendOut (`Fatal error - see console log`);
+            return;
+        }
+
+    }
 
     let report = '';
-    if (req.query.report) { report = req.query.report; }              // If listing a table the report
+    if (req.query.report) {
+        report = req.query.report;   // If listing a table the report
+        if (!reports[report]) {
+            console.error(`
+        ********************** Fatal Error **********************
+        ${Date()}
+        Report: ${report}
+        This report is not in the reports config file.
+         *******************************************************`);
+         sendOut (`Fatal error - see console log`);
+         return;
+     }
+
+    }
+
 
 
     let page = 0;                                 // page number in listing
-    if (req.query.page) { page = req.query.page; }
+    if (req.query.page) { page = Number(req.query.page); }
 
     if (report) {
         if (!reports[report]) {
@@ -585,7 +635,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 else {
                     fieldNames = [req.query.prepopulate];
                 }
-                trace.log(req.query.prepopulate,fieldNames);
+                trace.log(req.query.prepopulate, fieldNames);
                 for (fieldName of fieldNames) {
                     let value = req.query[fieldName];
                     if (req.body[fieldName]) { value = req.body[fieldName] }
@@ -595,7 +645,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                     record[fieldName] = value;
                 }
             }
-            trace.log(mode,record);
+            trace.log(mode, record);
             output = await updateForm(
                 permission,
                 table,
@@ -662,17 +712,21 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     *  
     * ******************************************** */
 
-    let viewData = {};
-    if (typeof output == 'string' && output) {
-        viewData.output = output;
-        viewData.footnote = lang.footnoteText;
-    }
-    else {
-        viewData = output;
-    }
-    viewData.heading = lang.homeHeading;
-    let result = await sendView(res, 'admin', viewData);
-    trace.log(result);
+    sendOut(output);
     return;
 
+    async function sendOut(output) {
+        let viewData = {};
+        if (typeof output == 'string' && output) {
+            viewData.output = output;
+            viewData.footnote = lang.footnoteText;
+        }
+        else {
+            viewData = output;
+        }
+        viewData.heading = lang.homeHeading;
+        let result = await sendView(res, 'admin', viewData);
+        trace.log(result);
+        return;
+    }
 }

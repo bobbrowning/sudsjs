@@ -119,12 +119,24 @@ module.exports = {
       { table: 'user', title: 'All users' },
       { report: 'auditTrail', title: 'Audit trail', },
       { www: '/createtable', title: 'Create new database tables' },
-      { www: '/validateconfig', title: 'Validate configuration' },
       { www: '/configreport', title: 'Configuration report' },
       { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
 
     ],
   },
+
+  //  Setup / admin section
+  validation: {
+    title: 'Validation',
+    img: '/images/suds/settings.jpg',
+    permission: ['admin', 'demo'],
+    description: 'Run on config changes',
+    links: [
+      { www: '/validateconfig', title: 'Validate configuration' },
+      { user: 'lastValidate', title: 'Results' },
+     ],
+  },
+
 
   trouble: {
     title: 'Trouble Shooting',
@@ -145,6 +157,7 @@ module.exports = {
       { table: 'purchaseorderlines', title: 'Purchase order lines' },
     ],
   },
+
 
   //  Setup / admin section
   you: {

@@ -151,7 +151,7 @@ module.exports = {
       },
     },
     image: {
-      type: 'text',
+      type: 'string',
       input: { type: 'uploadFile' },
     },
     description: {

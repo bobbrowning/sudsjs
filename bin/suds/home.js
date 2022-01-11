@@ -20,7 +20,7 @@ const suds = require('../../config/suds');
 var mergeAttributes = require('./merge-attributes');
 var hasPermission = require('./has-permission');
 let db = require('./db');
-
+const fs = require('fs');
 module.exports = async function (req, permission) {
   trace.log('SUDS Home page', { break: '#', level: 'min' });  // Distinctive break on trace
 
@@ -78,7 +78,7 @@ module.exports = async function (req, permission) {
         description = home[section].description;
       }
     }
-    if (permission == '#guest#') {description=lang.guest}
+    if (permission == '#guest#') { description = lang.guest }
     output += `
                 <br />
                 <span class="breaktext">${description}</span>`;
@@ -247,7 +247,29 @@ module.exports = async function (req, permission) {
        * 
        */
       if (type == 'user') {
-        trace.log({ user: req.session.userId });
+        trace.log({ user: req.session.userId, link: link });
+        if (link == 'lastValidate') {
+          trace.log('lastValidation');
+          try {
+            const data = fs.readFileSync('lastvalidate.txt', 'utf8')
+            let lines=data.split('\n');
+            output += `
+            <li>
+              <a href="/validateconfig">Last validate</a>
+            </li>
+            ${lines[0]}<br />
+            ${lines[1]}<br />
+            ${lines[2]}<br />
+            `;
+          } catch (err) {
+            console.error(err)
+            output += `
+            <li>
+              <a href="/validateconfig">Needs validation</a>
+            </li>`;
+         }
+        }
+
         if (link == 'login') {
           if (req.session.userId) { continue }
           output += `

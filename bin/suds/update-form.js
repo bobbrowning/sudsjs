@@ -286,8 +286,7 @@ module.exports = async function (
       operation = 'update';
       trace.log({ Updating: id, table: table });
       for (let key of Object.keys(attributes)) {
-        trace.log({ Updating: id, key: key, process: attributes[key].process });
-        if (attributes[key].process.updatedAt) { record[key] = Date.now() }
+         if (attributes[key].process.updatedAt) { record[key] = Date.now() }
         if (attributes[key].process.updatedBy) { record[key] = loggedInUser }
       }
       try {
@@ -316,14 +315,15 @@ module.exports = async function (
           if (attributes[key].type == 'string') { rec[key] = ''; }
           if (attributes[key].type == 'number') { rec[key] = 0; }
           if (attributes[key].type == 'boolean') { rec[key] = false; }
-          if (attributes[key].process.createdAt) { rec[key] = Date.now() }
-          if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
           if (attributes[key].process.updatedBy) { rec[key] = loggedInUser }
         }
       }
       trace.log('New record', table, rec);
       try {
         let created = await db.createRow(table, rec);
+        if (typeof(created[tableData.primaryKey]) == undefined) {
+          return("Error adding row - see console log");
+        }
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
         if (auditId) {
           await db.updateRow('audit', { id: auditId, mode: 'new', row: id });

@@ -44,7 +44,7 @@ module.exports = {
     auto: '../bin/suds/api/autocomplete',
     lookup: '../bin/suds/api/lookup',
     unique: '../bin/suds/api/unique',
-    createtable: '../bin/suds/create-table',
+    createtables: '../bin/suds/create-table',
     register: '../bin/suds/register',
     logout: '../bin/suds/logout',
     forgotten: '../bin/suds/forgotten',
@@ -77,20 +77,33 @@ module.exports = {
    *********************************************** */
 
   /** *********   mysql config ***************************
-   * commented out as we are using sqlite for the demo version...
-   
+   * commented out as we are using sqlite for the demo version... 
+   * However I have done some testing with mysql and postgresql 
+ /*
+   database:
+   {
+     client: 'postgresql',
+     connection: {
+       host: 'localhost',
+       user: 'postgres',
+       password: 'xxxxxxxxx',
+       database: 'suds',
+     },
+   },
+
+
       database:
       {
         client: 'mysql',
         connection: {
           host: 'localhost',
           user: 'bob',
-          password: '*********',
+          password: 'xxxxxxxxxx',
           database: 'suds',
         },
       },
-
-   **************  end of commented section ************ */
+*/
+/*   **************  end of commented section ************ */
 
   database: {
     client: 'sqlite3',
@@ -116,7 +129,29 @@ module.exports = {
     'productvariant',
   ],
 
+ /** 
+   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
+   * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
+   *    SELECT FROM table WHERE table.col=xxx  
+   * 
+   * Theoretically this means you can use SQL reserved words as column names but I am 
+   * not convinced this always works with sqlite. 
+   * 
+   * Qualified names  doesn't seem to work at all with postgresql so try quoting 
+   * them below instead.
+   * 
+   * To avoid these issues, use lower case and avoid reserved words. 
+   * 
+   */
 
+  qualifyColName: false,   
+
+  /** This puts quotes around the column name in where instructions.
+   * You may need this if your column names include upper case because 
+   * postgresql folds all column names to lower case unless quoted.
+   * 
+   */
+  quoteColName: true,
   
   /** 
    * This provides session middleware. See https://www.npmjs.com/package/express-session
@@ -146,7 +181,7 @@ module.exports = {
   *                    --------
   *
   ***************************************************** */
-  superuser: 'admin@admin.com',                //  This person is always superuser.
+  superuser: 'admin@admin.demo',                //  This person is always superuser.
 
 
 
@@ -246,12 +281,12 @@ module.exports = {
     'readonly',
     'select',
     'summernote',
-    'ckeditor-4',
-    'ckeditor-5',
+    'ckeditor4',
+    'ckeditor5',
     'textarea',
-    'upload-file',
-    'yesno-radio',
-    'record-type-select',
+    'uploadFile',
+    'yesnoRadio',
+    'recordTypeSelect',
   ],
   /**
   * 
@@ -532,19 +567,7 @@ bottom bar.`,
 
   },
 
-  /** 
-   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
-   * work. Set this to true and the SQL will loook like this  
-   *    SELECT FROM table WHERE table.col=xxx  
-   * If this doesn't work for your DBM, it can be changed in /bin/suds/get-instruction.js 
-   * 
-   * Theoretically this means you can use SQL reserved words as column names but I am 
-   * not convinced this always works with sqlite. 
-   * 
-   */
-
-  fixWhere: true,
-
+ 
 
   /**
    * 

@@ -114,7 +114,7 @@ module.exports = {
         pagetype: {
             friendlyName: 'Page type',
             description: 'Cannot be changed once set',
-            type: 'text',
+            type: 'string',
             input: {
                 required: true,
                 type: 'select',                                          // Select drop-down list
@@ -217,11 +217,11 @@ module.exports = {
         },
         targetUrl: {
             friendlyName: 'Target URL for redirect',
-            type: 'text',
+            type: 'string',
         },
         openIn: {
             friendlyName: 'Open target in',
-            type: 'text',
+            type: 'string',
             values: {
                 T: 'This window',
                 W: 'Another window',
@@ -258,25 +258,25 @@ module.exports = {
         },
         /** upload files. The uploaded files will be given a unique name unless keepFileName is true  */
         image1: {
-            type: 'text',
+            type: 'string',
             input: { type: 'uploadFile', },
         },
 
         image2: {
-            type: 'text',
+            type: 'string',
             input: { type: 'uploadFile', },
         },
 
         image3: {
-            type: 'text',
+            type: 'string',
             input: { type: 'uploadFile', },
         },
         image4: {
-            type: 'text',
+            type: 'string',
             input: { type: 'uploadFile', },
         },
         image5: {
-            type: 'text',
+            type: 'string',
             input: { type: 'uploadFile', },
         },
 

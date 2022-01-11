@@ -4,6 +4,7 @@
  * It reads the last contact with that user and the next action required
  * for display on the screen.
  ***************************************************** */
+ let trace = require('track-n-trace');
 
 module.exports=  async function (record) {
     let db = require('../suds/db.js') 
@@ -24,6 +25,8 @@ module.exports=  async function (record) {
      'DESC'                                      // sort order
    );
 
+   trace.log({last:last});
+   if (!last.length) {return ''}
     /** Store the beginning of the date of the contact,
      * The next action and the first 40 characters of the next action 
      * if there is one*/
@@ -43,4 +46,5 @@ module.exports=  async function (record) {
    <br />
    Next action due: ${nextdate} ${next}
    `);
+
 }

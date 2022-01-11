@@ -43,11 +43,11 @@ module.exports = {
     },
     tableName: {
       type: 'string',
-      database: { type: 'tinytext' },
+      database: { type: 'varchar', length: 50, },
     },
     mode: {
       type: 'string',
-      database: { type: 'tinytext', length: 10, },
+      database: { type: 'varchar', length: 10, },
     },
     row: {
       type: 'number',
@@ -60,7 +60,7 @@ module.exports = {
       type: 'string',
       input: {type: 'textarea'},
       display: {type: 'JSON'},
-      database: { type: 'longtext' },
+ //     database: { type: 'longtext' },
     },
   }
 }

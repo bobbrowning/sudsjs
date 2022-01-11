@@ -7,14 +7,19 @@ let suds = require('../../config/suds');
 module.exports = function (table, permission) {
   // merge extra attributes with attributes 
   trace.log({ inputs: arguments, });
-
   tableData = require('../../tables/' + table);
   humaniseFieldname = require('./humanise-fieldname');
   trace.log({ tableData: tableData, level: 'verbose' });
   if (!tableData) {
-    console.log(`********************* Table ${table} not found  ****************`);
-    return;
+    console.error(`
+    ************************* Fatal Error ******************
+    Table: ${table} 
+    Can't find any config data for this table.
+    Suggest running ${suds.baseURL}/validateconfig
+    *******************************************************`)
+    process.exit(1);
   }
+
 
 
   const attributes = tableData.attributes;
@@ -39,7 +44,7 @@ module.exports = function (table, permission) {
 
     merged[key] = attributes[key];
 
-    
+
     /** 
      * 
      * Guarantee that certain sub-object/values are there with default values 
@@ -49,12 +54,23 @@ module.exports = function (table, permission) {
     if (!merged[key].database) { merged[key].database = {}; }
     if (!merged[key].process) { merged[key].process = {}; }
     if (!merged[key].display) { merged[key].display = {}; }
-  
+
     if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
 
     /** field type */
     if (!merged[key].type) { merged[key].type = 'string'; }
     if (merged[key].model) { merged[key].type = 'number'; }
+
+    if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean') {
+      console.error(`
+    ************************* Fatal Error ******************
+    Table: ${table} 
+    Attribute: ${key} 
+    Type: ${merged[key].type} is invalid
+    Suggest running ${suds.baseURL}/validateconfig
+    *******************************************************`)
+      process.exit(1);
+    }
 
     /** Input and input type */
     if (merged[key].type == 'boolean' && !merged[key].input.type) { merged[key].input.type = 'checkbox'; }
@@ -185,10 +201,10 @@ module.exports = function (table, permission) {
   }
 
   if (tableData.recordTypeColumn && merged[tableData.recordTypeColumn]) {
-     merged[tableData.recordTypeColumn].recordType=true;
-    if (tableData.recordTypeFix) {merged[tableData.recordTypeColumn].recordTypeFix=true;}
+    merged[tableData.recordTypeColumn].recordType = true;
+    if (tableData.recordTypeFix) { merged[tableData.recordTypeColumn].recordTypeFix = true; }
   }
- 
+
   trace.log({ merged: merged, level: 'verbose' });
   return (merged);
 }

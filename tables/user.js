@@ -304,9 +304,11 @@ module.exports = {
 
     mobilePhone: {
       type: 'string',
+      input: {type: 'tel' }   // but this doesn't validate
     },
     mainPhone: {
       type: 'string',
+      input: {type: 'tel' }
     },
 
     lastSale: {

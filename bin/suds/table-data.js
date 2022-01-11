@@ -10,7 +10,7 @@ module.exports = function (table, permission) {
 
   let merged = {}
   let tableData = require('../../tables/' + table);
-
+   trace.log({tabledata: tableData, level: 'verbose'});
   if (!suds.tables.includes(table)) {    // Check that table exists in model.
     console.log('Error in suds.js - table does not exist: ' + table);
     return ({});
@@ -23,7 +23,7 @@ module.exports = function (table, permission) {
     // loop through fields (columns) in the table
     if (key != 'attributes') {
       merged[key] = tableData[key]
-      trace.log(merged[key], { level: 'verbose' });
+      trace.log(key, merged[key], { level: 'verbose' });
     }
   }
 

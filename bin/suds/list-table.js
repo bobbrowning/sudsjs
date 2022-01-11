@@ -436,7 +436,7 @@ module.exports = async function (
           delete attributes[key].input.placeholder;
         }
       }
-      trace.log(key, attributes[key].input.type);
+      trace.log(key, attributes[key].type, attributes[key].input.type);
 
       // compare select depends on field type. defaults to text
       let comp = `
@@ -477,9 +477,9 @@ module.exports = async function (
           </select>`;
       }
       // can't have equals because this is to the millisecond...
-      if (attributes[key].type = 'number'
+      if (attributes[key].type == 'number'
         && (
-          attributes[key].input.type == 'date' 
+          attributes[key].input.type == 'date'
           || attributes[key].process.createdAt
           || attributes[key].process.updatedAt
         )
@@ -489,12 +489,12 @@ module.exports = async function (
             <option value="lt">Before</option>
             <option value="gt">After</option>
           </select>`;
-          attributes[key].input.type = 'date'; 
-        }
-        if (saved_type == 'uploadFile') {
-          attributes[key].input.placeholder='Please enter a file name ';
-        }
-  
+        attributes[key].input.type = 'date';
+      }
+      if (saved_type == 'uploadFile') {
+        attributes[key].input.placeholder = 'Please enter a file name ';
+      }
+
       // Better than a checkbox...
       if (attributes[key].type == 'boolean') {
         attributes[key].input.type = 'yesnoRadio';
@@ -504,12 +504,12 @@ module.exports = async function (
         attributes[key].input.width = suds.search.fieldWidth;
       }
       if (attributes[key].process.updatedBy) {
-        attributes[key].input.type='autocomplete';
-        attributes[key].input.width='80%';
-        attributes[key].input.search='fullName';
-        attributes[key].input.placeholder='Number or type name';
+        attributes[key].input.type = 'autocomplete';
+        attributes[key].input.width = '80%';
+        attributes[key].input.search = 'fullName';
+        attributes[key].input.placeholder = 'Number or type name';
       }
-       // some types do not require a compare option 
+      // some types do not require a compare option 
       if (suds.search.allwaysEquals.includes(attributes[key].input.type)) {
         comp = `<input type="hidden" name="{{compare}}" value="eq">is`;
       }
@@ -546,6 +546,7 @@ module.exports = async function (
                let comp=\`${comp}\`;  
                return [comp,field];
              },`;
+      trace.log(key, attributes[key].type, attributes[key].input.type);
     }
 
     output += `
@@ -900,12 +901,14 @@ module.exports = async function (
 
     records = await db.getRows(table, searchSpec, offset, limit, sortKey, direction);
     trace.log({ offset: offset, page: page, records: records });
-   
-   if (page == 1 && records.length==1) {
-     return `<script>window.location="${suds.mainPage}?table=${table}&id=${records[0].id}&mode=listrow"</script>`;
-   }
-  
- 
+    /*
+    if (page == 1 && records.length==1) {
+      let output=`<script>window.location="${suds.mainPage}?table=${table}&id=${records[0][tableData.primaryKey]}&mode=listrow"</script>`;
+      trace.log(output);
+      return output;
+    }
+   */
+
     for (let i = 0; i < records.length; i++) {
       let record = records[i];
       trace.log(record);
@@ -991,7 +994,7 @@ module.exports = async function (
     *  with a search for the parent..
     *
     ************************************************ */
-     
+
     let prev = '';
     let next = '';
     trace.log({ page: page, type: typeof page, count: count, limit: limit });

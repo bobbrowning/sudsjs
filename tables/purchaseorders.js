@@ -7,7 +7,9 @@ module.exports = {
   friendlyName: 'Purchase Orders',
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
  addRow: 'Add new purchase order',   // text in the link to add a new row  
- columns: ['id','supplier','date','status','total'],
+ list: {
+   columns: ['id','supplier','date','status','total'],
+ },
  open: 'purchaseorderlines',
   attributes: {
     id: {
