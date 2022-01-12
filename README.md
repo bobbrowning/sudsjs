@@ -7,7 +7,7 @@ SUDSjs is a database management system based on node,js. No or minimal coding is
 * List / Edit / Delete rows. 
 * An extended permission system, 
 * An administration page,
-* Some basic functions to get you off the ground.  The test data includes a useable contact management system and web site content, management system. 
+* Some starter applications. The test data includes a useable contact management system and web site content, management system. 
 * This is all controlled by configuration files.
 
 This will:
@@ -16,9 +16,9 @@ This will:
 * provide a test-bed for your planned data structure before you commit resources;
 * provide a system for users to enter data while you are developing the application.
 
+For fuul details please visit http://sudsjs.com. 
 
-SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
-
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL, and Postgesql.
 
 # Setup of the SUDS system plus test data.
 
@@ -36,17 +36,12 @@ bash sudsjs-main/install.sh
 
 # Run the system as-is
 
-To stop the application just ^C.  To start it: 
+To start the application: 
 ```
 cd myapp
 node bin/www
 ```
-Alternatively 
-```
-cd myapp
-nodemon -e js,css, ejs
-```
-nodemon needs installing but will restart the app every time you change a config file, whuch is a big time-saver during development. 
+To stop the application just ^C.
 
 Then in a browser:  http://localhost:3000  
 
@@ -59,37 +54,42 @@ Alternative logins are
 * howard@wagner.com password howard, permission: General manager
 * willy@loman.com password willy, permission: sales
 
+Alternatively start the application with 
+```
+cd myapp
+nodemon -e js,css, ejs
+```
+Nodemon needs installing but will restart the app every time you change a config file, whuch is a big time-saver during development. 
 
-# Developing your site
 
-## 
 
-## Set yourself up as superuser 
-1. Edit the config/suds.js file and change the superuser email address to your email address.
-1. Run the system and load the admin area in your browser. 
-1. Register with your email address
-1. Load the admin area again and log in with your email address you should see a setup menu as you are the superuser.
-1. Edit the user table, find your record and set up the Uset type to 'in-house' and person/business to person.
+# Set up your database
 
-The test system uses the same table for logged-in users (in-house), external customers, suppliers or companies. There is a user type that shows which is which.  There is also a radio button to identify people or organisations and a permissions selection list.  If you want to add new password-protected users, register them first via admin page, then go in and add this information to their record. 
-
-Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
+## Modify the configuration files 
 
 The test system is set up to use port 3000, which is obviously not a final setup.  To change it tempoarily set the PORT environment variable or change the default in suds.js (config directory). Google "apache proxypass nodejs"  for some tip on how to integrate with the apache server using mod-proxy.  Try Googling "nodejs load balancing" for heavier loads.
 
-
-
-# Set up a new database
-
-S far the system has been tested with sqlite3 and mysql.
-
-1. Modify the configuration files to match your requirements. I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this may cause problems. 
-1. There must be a user table defined and it must have certain fields in it. You will find these in the authorisation section of suds.js. (If you change this you will currently be in uncharted territory but you can add/remove other fields.) If you select an audit file it has to be configured like the one in the test database. 
-1.You will need to create the database first. You don't need to create the tables at this stage. 
+## Set up the database. 
+1. Update/create the table definitions
+1.1 There must be a user table defined and it must have certain fields in it. You will find these in the authorisation section of suds.js. (If you change this you will currently be in uncharted territory but you can add/remove other fields.) 
+1.1 If you select an audit file it has to be configured like the one in the test database. 
 1. Set up the database name and password in the suds.js config file along with the database type.  The test data config file has a mysql setup (without the password) commented out as an example.  
-1. Add the tables to the database with http://localhost:3000/createtables then take the link to the admin page.  This program is not password-protected so you might want to comment out the route in the config file aftert you have used it. This program does not update tables, but can be used to add new ones.
+1. Add the tables to the database with http://localhost:3000/createtables.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
+
+
+I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this may cause problems.
+
+
+# Run the system 
+1. Run the admin page. 
 1. Register with the same email address you set up as superuser in the config file.  Log in and you should see all of the home page sections. 
 1. Click on 'All users' and edit the user you have just set up. You will need to set the User Type (presumably in-house) and Person or business. 
+1. Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
+
+
+
+
+
 
 
 
