@@ -32,8 +32,12 @@ module.exports = {
   port: 3000,
   mainPage: '/admin',                          // e.g. http://localhost:3000/admin
   baseURL: 'http://www.sudsjs.com',
-  /**  routes -> module */
-  /**  GET requests  */
+  /**  
+   * routes : module 
+   * so for example, http://domain/admin runs the module in /bin/suds/admin.js
+   * 
+   *  GET requests 
+   */
   get: {
     admin: '../bin/suds/admin',
     validateconfig: '../bin/suds/validateconfig',
@@ -68,110 +72,6 @@ module.exports = {
   changepw: { page: '/changepw', },
   register: { page: '/register', },
   forgotten: { page: '/forgotten', },
-
-
-  /** **********************************************
-   * 
-   *           Database
-   *           --------
-   *********************************************** */
-
-  /** *********   mysql config ***************************
-   * commented out as we are using sqlite for the demo version... 
-   * However I have done some testing with mysql and postgresql 
- /*
-   database:
-   {
-     client: 'postgresql',
-     connection: {
-       host: 'localhost',
-       user: 'postgres',
-       password: 'xxxxxxxxx',
-       database: 'suds',
-     },
-   },
-
-
-      database:
-      {
-        client: 'mysql',
-        connection: {
-          host: 'localhost',
-          user: 'bob',
-          password: 'xxxxxxxxxx',
-          database: 'suds',
-        },
-      },
-*/
-/*   **************  end of commented section ************ */
-
-  database: {
-    client: 'sqlite3',
-    connection: {
-      filename: './suds.db',
-    },
-    useNullAsDefault: true,
-  },
-
-  /** List of tables in the database.. */
-  tables: [
-    'user',
-    'audit',
-    'webpages',
-    'contacts',
-    'products',
-    'salesorders',
-    'salesorderlines',
-    'purchaseorders',
-    'productjoin',
-    'purchaseorderlines',
-    'fieldtypes',
-    'productvariant',
-  ],
-
- /** 
-   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
-   * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
-   *    SELECT FROM table WHERE table.col=xxx  
-   * 
-   * Theoretically this means you can use SQL reserved words as column names but I am 
-   * not convinced this always works with sqlite. 
-   * 
-   * Qualified names  doesn't seem to work at all with postgresql so try quoting 
-   * them below instead.
-   * 
-   * To avoid these issues, use lower case and avoid reserved words. 
-   * 
-   */
-
-  qualifyColName: false,   
-
-  /** This puts quotes around the column name in where instructions.
-   * You may need this if your column names include upper case because 
-   * postgresql folds all column names to lower case unless quoted.
-   * 
-   */
-  quoteColName: true,
-  
-  /** 
-   * This provides session middleware. See https://www.npmjs.com/package/express-session
-   * 
-   * You will need to replace it depending on what database you are using    
-   * see https://www.npmjs.com/package/express-session#compatible-session-stores
-   * 
-   * Warning: connect.session() MemoryStore used here is not designed 
-   * for a production environment, as it will leak memory, and
-   *  will not scale past a single process.
-   * 
-   * */
-   session: function () {
-    let session = require('express-session')
-     return session ({
-      secret: 'head shoe',
-      resave: 'false',
-     saveUninitialized: true,
-  });
-  },
 
 
 
@@ -245,10 +145,11 @@ module.exports = {
    *           ------
    *********************************************** */
 
-  /* 
+  /**  
    *
    * These are the input field types that are passed on to the 
-   * generic input routine. (bin/suds/input/generic.js) 
+   * generic input routine. (bin/suds/input/generic.js)
+   * You prpbably should not change this. 
    *
    */
   inputFieldTypes: [
@@ -548,6 +449,110 @@ bottom bar.`,
       'uploadFile',
     ],
   },
+
+
+  /** **********************************************
+   * 
+   *           Database
+   *           --------
+   *********************************************** */
+
+  /** *********   mysql config ***************************
+   * commented out as we are using sqlite for the demo version... 
+   * However I have done some testing with mysql and postgresql 
+ /*
+   database:
+   {
+     client: 'postgresql',
+     connection: {
+       host: 'localhost',
+       user: 'postgres',
+       password: 'xxxxxxxxx',
+       database: 'suds',
+     },
+   },
+
+
+      database:
+      {
+        client: 'mysql',
+        connection: {
+          host: 'localhost',
+          user: 'bob',
+          password: 'xxxxxxxxxx',
+          database: 'suds',
+        },
+      },
+*/
+/*   **************  end of commented section ************ */
+
+database: {
+  client: 'sqlite3',
+  connection: {
+    filename: './suds.db',
+  },
+  useNullAsDefault: true,
+},
+
+/** List of tables in the database.. */
+tables: [
+  'user',
+  'audit',
+  'webpages',
+  'contacts',
+  'products',
+  'salesorders',
+  'salesorderlines',
+  'purchaseorders',
+  'productjoin',
+  'purchaseorderlines',
+  'fieldtypes',
+  'productvariant',
+],
+
+/** 
+ * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
+ * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
+ *    SELECT FROM table WHERE table.col=xxx  
+ * 
+ * Theoretically this means you can use SQL reserved words as column names but I am 
+ * not convinced this always works with sqlite. 
+ * 
+ * Qualified names  doesn't seem to work at all with postgresql so try quoting 
+ * them below instead.
+ * 
+ * To avoid these issues, use lower case and avoid reserved words. 
+ * 
+ */
+
+qualifyColName: false,   
+
+/** This puts quotes around the column name in where instructions.
+ * You may need this if your column names include upper case because 
+ * postgresql folds all column names to lower case unless quoted.
+ * 
+ */
+quoteColName: true,
+
+/** 
+ * This provides session middleware. See https://www.npmjs.com/package/express-session
+ * 
+ * You will need to replace it depending on what database you are using    
+ * see https://www.npmjs.com/package/express-session#compatible-session-stores
+ * 
+ * Warning: connect.session() MemoryStore used here is not designed 
+ * for a production environment, as it will leak memory, and
+ *  will not scale past a single process.
+ * 
+ * */
+ session: function () {
+  let session = require('express-session')
+   return session ({
+    secret: 'head shoe',
+    resave: 'false',
+   saveUninitialized: true,
+});
+},
 
 
 

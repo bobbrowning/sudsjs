@@ -47,7 +47,7 @@ Then in a browser:  http://localhost:3000
 
 This will load a website that is managed by SUDSjs and runs on a test SQLite database. It has links to various functions. To go straight to the administration area:  http://localhost:3000/admin.  
 
-You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo (not recommended for production use!)
+You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
 
 Alternative logins are 
 * gladys@loman.demo password: gladys, permission: purchasing;
@@ -67,12 +67,24 @@ Nodemon needs installing but will restart the app every time you change a config
 
 ## Modify the configuration files 
 
-The test system is set up to use port 3000, which is obviously not a final setup.  To change it tempoarily set the PORT environment variable or change the default in suds.js (config directory). Google "apache proxypass nodejs"  for some tip on how to integrate with the apache server using mod-proxy.  Try Googling "nodejs load balancing" for heavier loads.
+The configuration files are in the config directory. The main file to change is suds.js.  This covers:
+* Routes
+* Security
+* Data Input
+* Views / Output
+* Database
+* Other technical configuration
+
+1. Routes. Defines the mapping of URL to Javascript modules. It alsi includes the default port which the programs listen to. To change it temporarily set the PORT environment variable.
+1. Set up the superuser email address in the security section. This section  defines the columns in the table used for authorised users. It also lists the permission sets you require.
+1. The input section includes a list of input field types. Youy can create your own handlers for special input types, in which cas you list them here.
+1. The view configuration lists the view engine and views. This is set to ejs. Other view engines have not been tested.
+
 
 ## Set up the database. 
 1. Update/create the table definitions
-1.1 There must be a user table defined and it must have certain fields in it. You will find these in the authorisation section of suds.js. (If you change this you will currently be in uncharted territory but you can add/remove other fields.) 
-1.1 If you select an audit file it has to be configured like the one in the test database. 
+* There must be a user table defined and it must have certain fields in it. You will find these in the authorisation section of suds.js. (If you change this you will currently be in uncharted territory but you can add/remove other fields.) 
+* If you select an audit file it has to be configured like the one in the test database. 
 1. Set up the database name and password in the suds.js config file along with the database type.  The test data config file has a mysql setup (without the password) commented out as an example.  
 1. Add the tables to the database with http://localhost:3000/createtables.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
 
