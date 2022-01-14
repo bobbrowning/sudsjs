@@ -3,6 +3,8 @@
 
 SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
 
+## For full details please visit http://sudsjs.com.
+
 * List / filter / sort tables, 
 * List / Edit / Delete rows. 
 * An extended permission system, 
@@ -16,7 +18,7 @@ This will:
 * provide a test-bed for your planned data structure before you commit resources;
 * provide a system for users to enter data while you are developing the application.
 
-For fuul details please visit http://sudsjs.com. 
+ 
 
 SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL, and Postgesql.
 
