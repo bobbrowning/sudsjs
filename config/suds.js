@@ -29,8 +29,8 @@ module.exports = {
    *********************************************** */
 
 
-  port: 3000,
-  mainPage: '/admin',                          // e.g. http://localhost:3000/admin
+  port: 3000,                                  // Change temporarily by setting the PORT environment variable 
+  mainPage: '/admin',                          // e.g. http://sudsjs.com/admin
   baseURL: 'http://www.sudsjs.com',
   /**  
    * routes : module 
