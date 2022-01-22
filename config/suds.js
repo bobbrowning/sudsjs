@@ -463,6 +463,7 @@ bottom bar.`,
  /*
    database:
    {
+     driver: 'db.js',
      client: 'postgresql',
      connection: {
        host: 'localhost',
@@ -475,7 +476,8 @@ bottom bar.`,
 
       database:
       {
-        client: 'mysql',
+       driver: 'db.js',
+       client: 'mysql',
         connection: {
           host: 'localhost',
           user: 'bob',
@@ -487,6 +489,7 @@ bottom bar.`,
 /*   **************  end of commented section ************ */
 
 database: {
+  driver: 'db.js',
   client: 'sqlite3',
   connection: {
     filename: './suds.db',

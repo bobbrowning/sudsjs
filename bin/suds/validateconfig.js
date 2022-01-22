@@ -9,7 +9,7 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 const fs = require('fs');
 const { register } = require('../../config/suds');
 

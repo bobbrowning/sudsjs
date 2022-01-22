@@ -5,9 +5,9 @@
  * for display on the screen.
  ***************************************************** */
  let trace = require('track-n-trace');
-
+ let suds = require('../../config/suds');
+ let db = require('../suds/'+suds.database.driver);
 module.exports=  async function (record) {
-    let db = require('../suds/db.js') 
 
  /** Read the most recent contact for this user in the contacts file 
   * This will be stored in last[0] = the first (and only row) read 

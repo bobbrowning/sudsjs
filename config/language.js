@@ -47,7 +47,7 @@ module.exports = {
     filterBy: 'Filtered by ',                                           // List Table
     filterSelect: 'Which field?',               // List table
     filterStart: 'Start search',                 // Filter button on table list
-    footnoteText: 'SUDS Express version 1.0.0',
+    footnoteText: 'SUDSjs version 1.0.0',
     forgottenPassword: 'Forgotten password (disabled)',
     formGroup: 'Click for further data: ',
     forTable: 'for table',

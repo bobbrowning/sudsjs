@@ -345,6 +345,7 @@ module.exports = {
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
 
     webpages: {
+      description: `Web pages authored by this user`,
       collection: 'webpages',
       via: 'author',
     },
@@ -355,6 +356,7 @@ module.exports = {
 
 
     contacts: {
+      description: `Contacts with this user by phone, email, etc`,
       collection: 'contacts',
       via: 'user',
       collectionList: {
@@ -362,7 +364,7 @@ module.exports = {
         order: 'date',                                 // The order in which the are listed (default updatedAt)
         direction: 'DESC',                                  // ASC or DESC  default DESC
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
-        columns: ['id', 'date', 'notes', 'closed'],
+        columns: ['id', 'date', 'notes', 'nextActionDate', 'nextAction','closed'],
         addChildTip: 'Add a new contact for this user.',
         derive: {
           lines: { type: 'count', friendlyName: 'Number of contacts' },
@@ -416,7 +418,7 @@ module.exports = {
       collection: 'products',
       via: 'supplier',
       collectionList: {
-        columns: ['name', 'price', 'class', 'description'],
+        columns: ['name', 'price', 'class', 'description','stockLevel'],
       }
     },
 
@@ -431,6 +433,7 @@ module.exports = {
 
     people: {
       friendlyName: 'Staff / Subsidiary',
+      description: `These are people who are emplyed by the organisation or subsidiary companies in a group.`,
       collection: 'user',
       addRow: false,
       via: 'organisation',

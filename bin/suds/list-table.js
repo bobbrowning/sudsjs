@@ -17,7 +17,7 @@ let humaniseFieldname = require('./humanise-fieldname');
 let suds = require('../../config/suds');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 
 module.exports = async function (
   permission /*

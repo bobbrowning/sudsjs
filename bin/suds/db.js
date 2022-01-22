@@ -1,3 +1,43 @@
+
+/** *********************************************
+ * Generic database driver.  This has been tested with 
+ * sqlite3, mysql and postgesql.
+ * 
+ * = createTable(req, res)
+ * = getRow(table, val, col)
+ * = getRows(table, spec, offset, limit, sortKey, direction,)
+ * = countRows(table,spec)
+ * = totalRows(table, spec, col)
+ * = createRow(table, record)
+ * = deleteRow(permission, table, id)
+ * = updateRow(permission, table, id)
+ * 
+ *  table:  Table name
+ *  val:    value 
+ *  col:    Column being searched for matching value (default to primary key)
+ *  spec:   Filter specification - see below)
+ *  offset: Column number to start with
+ *  limit:  Maximum number of rows returned (if not in spec)
+ *  sortKey: Column to sort by (if not in spec) defaults to primary key
+ *  direction: ASC or DESC (if not in spec) defaults to DESC
+ * 
+ * 
+ * Typical  filter specification
+  {
+   search: {                                             
+      andor: 'and',
+      searches: [
+        ['userType', 'eq', 'C'],
+        ['fullName', 'contains', 'Acme']  
+      ]
+    },
+    sort: ['id', 'DESC'],
+    limit: 20,
+  } 
+ *
+ * ********************************************** */
+
+
 exports.createTable = createTable;
 
 exports.getRow = getRow;
@@ -6,12 +46,11 @@ exports.countRows = countRows;
 exports.totalRows = totalRows;
 exports.createRow = createRow;
 exports.deleteRow = deleteRow;
-exports.deleteRows = deleteRows;
 exports.updateRow = updateRow;
 
 let trace = require('track-n-trace');
 let suds = require('../../config/suds');
-let tableDataFunction = require('./table-data');
+const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 const knex = require('knex')(suds.database);
 let lang = require('../../config/language')['EN'];
@@ -24,21 +63,7 @@ let lang = require('../../config/language')['EN'];
  * 
  * Turns a search specification into an sql search and bindings 
  * Won't work with MONGO *
- * 
- * Typical  spec
-  {
-   search: {                                             
-      andor: 'and',
-      searches: [
-        ['userType', 'eq', 'C'],
-        ['fullName', 'contains', '#fullName']             // Name assigned in suds-home.js 
-      ]
-    },
-    sort: ['id', 'DESC'],
-    limit: 20,
-  }
-
-  
+ *  
 * **************************************** */
 
 function getInstruction(table, spec) {
@@ -209,16 +234,25 @@ async function createRow(table, record) {
   let tableData = tableDataFunction(table);
   let attributes = mergeAttributes(table);
   let rec = fixRecord(table, record, tableData, attributes);
-  if (attributes[key].process.createdAt) { rec[key] = Date.now() }
-  if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
+  for (let key of Object.keys(attributes)) {
+    if (attributes[key].process.createdAt) { rec[key] = Date.now() }
+    if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
+  }
   trace.log('inserting:', rec);
   let inserted;
-  let id=0;
+  let id = 0;
   try {
     trace.log(table, rec);
     temp = await knex(table).insert(rec).into(table).returning('*');
-    trace.log(temp);
-    if (temp[0][tableData.primaryKey]) {id=temp[0][tableData.primaryKey]}
+    trace.log(temp, typeof (temp), Array.isArray(temp), typeof (temp[0]));
+    if (Array.isArray(temp)) {
+      if (typeof (temp[0]) == 'number') {
+        id = temp[0]
+      }
+      else {
+        if (temp[0][tableData.primaryKey]) { id = temp[0][tableData.primaryKey] }
+      }
+    }
     if (suds.database.client == 'mysql') {
       inserted = await knex(table).select(knex.raw(`LAST_INSERT_ID()`)).limit(1);
       id = inserted[0]['LAST_INSERT_ID()'];
@@ -227,7 +261,7 @@ async function createRow(table, record) {
     if (id == 0) {
       console.log(`Table ${table}: Default code is used to get the inserted ID.
       This is not suitable for  multi-user environment.`)
-      let last = await knex(table).orderBy('updatedAt', 'DESC').limit(1);
+      let last = await knex(table).orderBy(tableData.primaryKey, 'DESC').limit(1);
       trace.log(last);
       id = last[0][tableData.primaryKey];
     }
@@ -386,6 +420,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
 async function getRow(table, val, col) {
   trace.log({ inputs: arguments, td: typeof tableDataFunction })
   let record = {};
+
   let tableData = tableDataFunction(table);
   trace.log({ tableData: tableData, maxdepth: 3 })
   if (!col) { col = tableData.primaryKey };

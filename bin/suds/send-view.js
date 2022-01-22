@@ -2,7 +2,7 @@
 
 trace = require('track-n-trace');
 const suds = require('../../config/suds');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 
 
 

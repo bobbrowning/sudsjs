@@ -1,9 +1,9 @@
 
 # Overview / installation
 
-SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
-
 ## For full details please visit http://sudsjs.com.
+
+SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
 
 * List / filter / sort tables, 
 * List / Edit / Delete rows. 
@@ -92,7 +92,7 @@ The configuration files are in the config directory. The main file to change is 
 
 1. Routes. Defines the mapping of URL to Javascript modules. It alsi includes the default port which the programs listen to. To change it temporarily set the PORT environment variable.
 1. Set up the superuser email address in the security section. It also lists the permission sets you require.
-1. The input section includes a list of input field types. Youy can create your own handlers for special input types, in which case you add them here.
+1. The input section includes a list of input field types. You can create your own handlers for special input types (/bin/suds/input for examples), in which case you add them here.
 1. The view configuration lists the view engine and views. The view engine is set to ejs (https://ejs.co/). Other view engines have not been tested.
 
 
@@ -107,7 +107,7 @@ If you have an audit file it has to have the same name and table definition as t
 I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this may cause problems.
 
 
-# Final steps 
+## Final steps 
 1. Run the admin page. 
 1. Register with the same email address you set up as superuser in the config file.  Log in and you should see all of the home page sections. 
 1. Click on 'All users' and edit the user you have just set up. You will need to set the User Type (presumably in-house) and Person or business. 

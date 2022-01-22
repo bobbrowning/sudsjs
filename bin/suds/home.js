@@ -19,7 +19,7 @@ trace = require('track-n-trace');
 const suds = require('../../config/suds');
 var mergeAttributes = require('./merge-attributes');
 var hasPermission = require('./has-permission');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 const fs = require('fs');
 module.exports = async function (req, permission) {
   trace.log('SUDS Home page', { break: '#', level: 'min' });  // Distinctive break on trace

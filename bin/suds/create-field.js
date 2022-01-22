@@ -10,7 +10,7 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
   trace.log({ inputs: arguments, maxdepth: 2 });
   trace.log({ attributes: attributes[key] })
   const inputFieldTypes = suds.inputFieldTypes;
-
+  trace.log(inputFieldTypes);
 
   /* *******************************************************
      * 
@@ -66,9 +66,9 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
     let helperModule;
     let helper;
     trace.log({ fieldType: fieldType });
+    trace.log(key,inputFieldTypes.length,inputFieldTypes.includes(fieldType));
     //  if not a simple input tag or display - look for helper   
     if (!inputFieldTypes.includes(fieldType)) {
-      // e.g sails.helpers.suds-input-checkbox()
       helperName = '';
       for (let i = 0; i < fieldType.length; i++) {
         if (fieldType.charAt(i) == fieldType.charAt(i).toUpperCase()) {
@@ -76,6 +76,7 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
         }
         helperName += fieldType.charAt(i).toLowerCase();
       }
+      trace.log(helperName);
       helperModule = require('./input/' + helperName);
       if (helperModule.fn) {
         helper = helperModule.fn;

@@ -9,7 +9,8 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
+const fs = require('fs');
 
 let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
@@ -74,8 +75,8 @@ module.exports = async function (req, res) {
   output = `
       <div class="sudsReport">
       <div style="margin-bottom: 60px;">   <!--  header page -->
-        <h1>SUDS Database Report</h1>
-        <h2>${title}</h1>
+        <h1>SUDS Database Report </h1>
+         <h2>${title}</h1>
         <p>${description}</p>${superwarning}</p>
         <h2>Contents</h2>
         <p>
@@ -121,10 +122,8 @@ module.exports = async function (req, res) {
     </table>`;
 
   output += `
-  <p>
-    <a href="${suds.mainPage}">Admin page</a>
-    </p>
-    </div>            <!--  header page -->      
+  <p>Report date: ${Date().substring(0,16)}</p>
+     </div>            <!--  header page -->      
      <hr class="sudsreporthr">`;
 
 
@@ -133,6 +132,22 @@ module.exports = async function (req, res) {
      *  Other configuration data
      *
      **************************************** */
+
+  let val = '';
+  try {
+    const data = fs.readFileSync('lastvalidate.txt', 'utf8')
+    let lines = data.split('\n');
+    val = `
+    ${lines[0]}<br />
+    ${lines[1]}<br />
+    ${lines[2]}<br />
+    `;
+  } catch (err) {
+    console.error(err)
+    val = `Needs validation`;
+  }
+
+
   output += `
      <a name="ot"></a><h1>Basic settings</h1>
     <table class=".table-bordered" style=" margin-bottom: 10px;">
@@ -143,25 +158,24 @@ module.exports = async function (req, res) {
      </tr>
     </thead>
     <tbody>
-    <tr><td>Listening on port</td><td>${suds.port}</td></tr>
+    <tr><td>Listening on this port by default <br />(can be changed by setting the PORT environment variable)</td><td>${suds.port}</td></tr>
    <tr><td>Route to the main program</td><td>${suds.mainPage}</td></tr>
    <tr><td>Route to the configuration report program</td><td>${suds.report.page}</td></tr>
    <tr><td>Route to the configuration validate program</td><td>${suds.validate.page}</td></tr>
      <tr><td>Number of rows in paginated lists</td><td>${suds.pageLength}</td></tr>
      <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
+     <tr><td>Last validation run<br />(Needed when configuration changes) </td><td>${val}</td></tr>
      </tbody>
     </table>`;
 
 
 
 
-
-
   /* ****************************************
-     *
-     *  Search parameters
-     *
-     **************************************** */
+    *
+    *  Search parameters
+    *
+    **************************************** */
   output += `
     <a name="sp"></a><h1>Searches</h1>
     <table class=".table-bordered" style="width: 900px;">
@@ -197,7 +211,7 @@ module.exports = async function (req, res) {
   output += `
     </p>
     <hr class="sudsreporthr">`;
-    
+
 
 
 
@@ -230,10 +244,10 @@ module.exports = async function (req, res) {
           </td></tr>
    <tr><td>Remember login expires after (days)</td><td>${suds.rememberPasswordExpire}</td></tr>
    `;
-   
-   output+=`
+
+  output += `
    <tr><td>Audit trail</td><td> `
-   if (suds.audit.include) {
+  if (suds.audit.include) {
     output += `Included`;
     if (suds.audit.trim) {
       output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
@@ -241,9 +255,9 @@ module.exports = async function (req, res) {
     }
   }
   else {
-    output+=`Not included`;
+    output += `Not included`;
   }
-  output+=`</td></tr>`
+  output += `</td></tr>`
 
 
   output += `
@@ -252,18 +266,18 @@ module.exports = async function (req, res) {
     output += `
         ${set} (<i>${suds.permissionSets[set]}</i>)<br /> `;
   }
-  output+=`</td></tr>`;
+  output += `</td></tr>`;
 
   output += `
   <tr><td>The authorisation table (<i>${suds.authorisation['table']}</i>)
    has the following columns
   </td><td>`;
   for (let set of Object.keys(suds.authorisation)) {
-    if (set == 'table') {continue}
+    if (set == 'table') { continue }
     output += `
         ${humaniseFieldName(set)}  -> ${suds.authorisation[set]}<br /> `;
   }
-  output+=`</td></tr>`;
+  output += `</td></tr>`;
 
 
   output += ` 
@@ -294,7 +308,7 @@ module.exports = async function (req, res) {
   <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
  <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
  <tr><td> Input types handled as a standard input tag with no special handling</td><td>`;
- 
+
   let inputFieldTypes = suds.inputFieldTypes;
   for (let i = 0; i < inputFieldTypes.length; i++) {
     output += `
@@ -392,10 +406,10 @@ module.exports = async function (req, res) {
   output += `
     </tbody>
     </table>`;
-    if (suds.qualifyColName) {
-      output+=`<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
-    }
-  
+  if (suds.qualifyColName) {
+    output += `<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
+  }
+
 
 
   let switching, shouldSwitch;
@@ -517,11 +531,33 @@ module.exports = async function (req, res) {
     if (tabledata.tableName && tabledata.tableName != table) {
       output += `The database table is ${tabledata.tableName}. <br /> `;
     }
+    output += `<p>`;
     if (tabledata.primaryKey) {
       output += `
-           <p>The primary key is  ${tabledata.primaryKey}. </p> `;
+           The primary key is  <i>${tabledata.primaryKey}</i>. <br /> `;
+    }
+    if (tabledata.addRow) {
+      output += `
+           The add row button is titled  "${tabledata.addRow}". <br /> `;
+    }
+    if (tabledata.recordTypeColumn) {
+      output += `
+           This table has record types identified by field  <i>${tabledata.recordTypeColumn}</i>.  See below. <br /> `;
     }
     trace.log(tabledata, { level: table });
+    output += `</p>`;
+
+    if (tabledata.list && tabledata.list.columns) {
+      output += `<p>A standard listing in tabular form has the following columns listed<br />`;
+      for (let i = 0; i < tabledata.list.columns.length; i++) {
+        if (i > 0) { output += ', ' }
+
+        output += properties[tabledata.list.columns[i]].friendlyName;
+      }
+      output += `</p>`;
+    }
+
+
 
     let defaultDescription = ` For details see the 
     table definition file in the tables directory`;
@@ -565,8 +601,8 @@ module.exports = async function (req, res) {
     *
     **************************************** */
 
-    if (sudsdata.permission) {
-      let permissions = sudsdata.permission;
+    if (tabledata.permission) {
+      let permissions = tabledata.permission;
       output += `
         <h3>Permission sets</h3>
         <table class=".table-bordered" style="margin-bottom: 30px" >
@@ -603,7 +639,8 @@ module.exports = async function (req, res) {
     trace.log({ table: table, data: tabledata, maxdepth: 2 });
     if (tabledata.groups && Object.keys(tabledata.groups).length > 1) {
       output += `
-        <h3 style="margin-top: 30px">Data Item Groups</h3>
+        <h3 style="margin-top: 30px">Groups of columns</h3>
+        <p>Columns are in these groups for editing and presentation</p>
         <table class=".table-bordered">
           <thead>
             <tr>
@@ -685,11 +722,13 @@ module.exports = async function (req, res) {
     }
     /* ****************************************
       *
-      *  List attributes
+      * Collections
       *
       **************************************** */
-    output += `
-        <h3 style="margin-top: 30px">Columns</h3>
+    let anycollections = false;
+    let collections = `
+        <h3 style="margin-top: 30px">Links to this table.</h3>
+        <p>Where this table is parent in a parent/child relationship.</p>
         <table class=".table-bordered" >
           <thead>
             <tr>
@@ -702,13 +741,125 @@ module.exports = async function (req, res) {
 
     trace.log({ table: table, attributes: properties, level: table })   // trick to only log for one table... 
     for (let col of Object.keys(properties)) {
+      if (!properties[col].collection) { continue }
+      anycollections = true;
       let fld = properties[col].friendlyName;
-      output += `
+      collections += `
               <tr>
                 <td >${fld}<br />(<i>${col}</i>}</td>
                 <td >`;
+
+      if (properties[col].description) {
+        collections += properties[col].description;
+      }
+      collections += `</td>
+                <td >`;
+      let autocreate = false;
+      let needBreak = false;
+      for (let prop of Object.keys(properties[col])) {
+        trace.log(col, prop, properties[col][prop]);
+        if (properties[col].collection && prop == 'permission') { continue }
+        if (prop == 'friendlyName') { continue }
+        if (prop == 'canEdit') { continue }
+        if (prop == 'canView') { continue }
+        if (prop == 'description') { continue }
+        let value = properties[col][prop];
+        if (!value) { continue }
+
+        if (needBreak) {
+          collections += '<br />';
+        }
+        needBreak = true;;
+
+
+        /** Big Switch - attribute characteristics */
+        /** ************************************** */
+
+        let line = '';
+        switch (prop) {
+
+          /** */
+          case 'collectionList':
+            line = `
+              Child list parameters: `;
+            for (let key of Object.keys(value)) {
+              if (key == 'columns') {
+                line += `<br />&nbsp;&nbsp;Columns listed:<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;[`;
+                let cols = value[key];
+                for (let i = 0; i < cols.length; i++) {
+                  if (i > 0) { line += ', ' }
+                  line += cols[i];
+                }
+                line += ']';
+              }
+              else {
+                if (key == 'derive') {
+                  line += `<br />&nbsp;&nbsp;Derived information: <i>`;
+                  for (let der of Object.keys(value.derive)) {
+                    line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${value.derive[der].friendlyName}`
+                  }
+                  line += `</i>`;
+                }
+                else {
+                  line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
+                }
+              }
+            }
+            collections += line;
+            break;
+          /** Extended description */
+          case 'via':
+            collections += `Foreign key in child table: <i>${value}</i>`;
+            break;
+
+          case 'collection':
+            collections += `Child table: <i>${value}</i>`;
+            break;
+
+
+          /** Extended description */
+          case 'extendedDescription':
+            collections += `Extended description: <br /><i>${value}</i>`;
+            break;
+
+
+        }
+      }
+    }
+    collections += `
+              </td>`;
+    collections += `
+            </tbody>    
+          </table>`;
+
+    if (anycollections){
+      output+=collections;
+    }
+
+    output += `
+  <h3 style="margin-top: 30px">Columns</h3>
+  <table class=".table-bordered" >
+    <thead>
+      <tr>
+        <th style="width: 20%">Name</th>
+        <th style="width: 30%">Description</th>
+        <th style="width: 50%">Characteristics</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+    trace.log({ table: table, attributes: properties, level: table })   // trick to only log for one table... 
+    for (let col of Object.keys(properties)) {
+      if (properties[col].collection) { continue }
+      let fld = properties[col].friendlyName;
+      output += `
+        <tr>
+          <td >${fld}<br />(<i>${col}</i>}</td>
+          <td >`;
       for (let prop of Object.keys(properties[col])) {
         if (prop == 'collection') {
+          continue;
           output += `<b>Not a database column.</b> <br />It identifies a link from a child table<br />`;
         }
       }
@@ -716,7 +867,7 @@ module.exports = async function (req, res) {
         output += properties[col].description;
       }
       output += `</td>
-                <td >`;
+          <td >`;
       let autocreate = false;
       let needBreak = false;
       for (let prop of Object.keys(properties[col])) {
@@ -885,7 +1036,7 @@ module.exports = async function (req, res) {
           case 'values':
 
             output += `
-              Values: `;
+        Values: `;
             {
               let line = ''
               if (typeof (value) == 'string') { line = `Set in item <i>${value}</i> in config file suds.js.`; }
@@ -894,28 +1045,6 @@ module.exports = async function (req, res) {
               output += line;
             }
 
-            break;
-
-          /** */
-          case 'collectionList':
-            line = `
-              Child list parameters: `;
-            for (let key of Object.keys(value)) {
-              if (key == 'columns') {
-                line += `<br />&nbsp;&nbsp;Columns listed:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;[`;
-                let cols = value[key];
-                for (let i = 0; i < cols.length; i++) {
-                  if (i > 0) { line += ', ' }
-                  line += cols[i];
-                }
-                line += ']';
-              }
-              else {
-                line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
-              }
-            }
-            output += line;
             break;
 
           /** Extended description */
@@ -947,16 +1076,15 @@ module.exports = async function (req, res) {
       }
     }
     output += `
-              </td>`;
+        </td>`;
     output += `
-            </tbody>    
-          </table>`;
+      </tbody>    
+    </table>`;
     output += `
-      </div> <!-- End ${table} -->`;
+</div> <!-- End ${table} -->`;
+
+
   }
-
-
-
   output += `
     </div> <!-- sudsReport -->`;
 

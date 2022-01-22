@@ -1,6 +1,5 @@
 const suds = require('../../config/suds');
 let trace = require('track-n-trace');
-const { attributes } = require('../../tables/user');
 let humanise = require('./humanise-fieldname');
 
 

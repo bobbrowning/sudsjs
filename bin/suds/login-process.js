@@ -4,7 +4,7 @@ let sendView = require('./send-view');
 //let createRow = require('./create-row');
 let suds = require('../../config/suds');
 let crypto = require('crypto');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 
 module.exports = async function (req, res) {
     console.log(__dirname);

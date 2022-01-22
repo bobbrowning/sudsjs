@@ -24,7 +24,7 @@ let mergeAttributes = require('./merge-attributes');     // Standardises attribu
 let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
 let classes = require('../../config/classes');           // Links class codes to actual classes
 let lang = require('../../config/language')['EN'];       // Object with language data
-let db = require('./db');                                // Database routines
+let db = require('./'+suds.database.driver);                                // Database routines
 let listRow = require('./list-row');                     // List one row of the table plus a limited number of child roecords
 let createField = require('./create-field');             // Creates an input field
 let displayField = require('./display-field');           // displays a column value
@@ -325,6 +325,7 @@ module.exports = async function (
           return("Error adding row - see console log");
         }
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
+        trace.log({created: record[tableData.primaryKey],key: tableData.primaryKey })
         if (auditId) {
           await db.updateRow('audit', { id: auditId, mode: 'new', row: id });
         }
@@ -343,7 +344,7 @@ module.exports = async function (
      * */
     trace.log('postprocess', record, operation);
     if (tableData.edit.postProcess) { await tableData.edit.postProcess(record, operation) }
-    trace.log('switching to list record');
+    trace.log('switching to list record',id,record[tableData.primaryKey],tableData.primaryKey);
     let output = listRow(
       permission,
       table,

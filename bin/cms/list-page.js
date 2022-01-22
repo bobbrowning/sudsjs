@@ -7,7 +7,8 @@ let trace = require('track-n-trace');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
-let db = require('../suds/db');
+let suds = require('../../config/suds');
+let db = require('../suds/'+suds.database.driver);
 let sendView = require('../suds/send-view');
 let createNavBar=require('./create-navbar');
 

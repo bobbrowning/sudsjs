@@ -5,7 +5,7 @@
 let suds = require('../../../config/suds');
 let trace = require('track-n-trace');
 let tableDataFunction = require('../table-data');
-let db = require('../db');
+let db = require('../'+suds.database.driver);
 
 module.exports = async function (req, res) {
     trace.log('#unique called ', req.query);

@@ -3,9 +3,9 @@
  * Create a pair of arrays containing values and corresponding descriptions 
  * to use in select, chekboxes etc.
  */
-
+ let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 
 module.exports = async function (attributes, record) {
   trace = require('track-n-trace');
@@ -74,7 +74,7 @@ module.exports = async function (attributes, record) {
         }
         else {
           if (typeof attributes.values == 'string') {
-            let lookup = require(`../../../config/${attributes.values}`)
+            let lookup = require(`../../config/${attributes.values}`)
             for (let key of Object.keys(lookup)) {
               values.push(key);
               labels.push(lookup[key]);

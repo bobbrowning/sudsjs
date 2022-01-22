@@ -10,9 +10,9 @@
  * 
  */
 
-let suds = require('../../config/suds');
-let db=require('../suds/db');
-let trace = require('track-n-trace');
+ let suds = require('../../config/suds');
+ let db = require('../suds/'+suds.database.driver);
+ let trace = require('track-n-trace');
 
 
 /** table name and the sales or purchase order data from the input form. 

@@ -3,7 +3,8 @@ let trace = require('track-n-trace');
 let classes = require('../../config/classes')['navbar'];
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
-let db = require('../suds/db');
+let suds = require('../../config/suds');
+let db = require('../suds/'+suds.database.driver);
 let tableDataFunction = require('../suds/table-data');
 
 let loopcount = 0;

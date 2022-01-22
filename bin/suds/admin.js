@@ -8,7 +8,7 @@ let home = require('./home');
 let suds = require('../../config/suds');
 let reports = require('../../config/reports');
 let trace = require('track-n-trace');
-const db = require('./db');
+const db = require('./'+suds.database.driver);
 const lang = require('../../config/language')['EN'];
 
 
@@ -327,6 +327,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     allParms = { ...req.query, ...req.body };
 
     let auditId = 0;
+    trace.log(mode);
     if (suds.audit.include
         && (
             !suds.audit.operations
@@ -334,10 +335,13 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         )) {
 
         let requestData = {};
-        for (let item of suds.audit.log) { requestData[item] = req[item]; }
-
+        for (let item of suds.audit.log) { 
+            requestData[item] = req[item]; 
+        }
+        trace.log(table,page);
 
         if (table && !page) {
+            trace.log(table,page);
             let rec = {
                 updatedBy: req.session.userId,
                 tableName: table,

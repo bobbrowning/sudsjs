@@ -1,11 +1,12 @@
 let trace = require('track-n-trace');
+let suds = require('../../config/suds');
 let sendView = require('./send-view');
 //let getRow = require('./get-row');
 //let updateRow = require('./update-row');
-let db = require('./db');
+let db = require('./'+suds.database.driver);
 let crypto = require('crypto');
 
-let suds = require('../../config/suds');
+
 
 module.exports = async function (req, res) {
     console.log(__dirname);

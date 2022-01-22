@@ -282,6 +282,7 @@ module.exports = {
 
         /** This is not a real column in the database. But it defines how child rows are to be displayed.    */
         subpages: {
+            description: `Pages below this page in the hierarchy of pages.`,
             collection: 'webpages',                      // Tbe collection is the child table
             via: 'parent',                               // The column in the child record that links to this
             collectionList: {                            // How child records are to be displayed

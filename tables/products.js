@@ -193,9 +193,7 @@ module.exports = {
       collectionList: {
         open: true,
         columns: ['name', 'price' ],                       
-        hideEdit: true,
-        hideDetails: true,
-      },
+       },
     },
     purchases: {
       collection: 'purchaseorderlines',

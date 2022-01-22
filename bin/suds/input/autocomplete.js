@@ -23,7 +23,7 @@ description: `Generates autocomplete field. This can be based in a fixed set of 
 let trace = require('track-n-trace');
 let lang = require('../../../config/language')['EN'];
 let tableDataFunction = require('../table-data');
-let db = require('../db');
+let db = require('../'+suds.database.driver);
 let classes = require('../../../config/classes').input;           // Links class codes to actual classes
 
 
