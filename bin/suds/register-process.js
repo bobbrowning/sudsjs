@@ -4,7 +4,7 @@ let sendView = require('./send-view');
 //let createRow = require('./create-row');
 //let updateRow = require('./update-row');
 const suds = require('../../config/suds');
-let db = require('./'+suds.database.driver);
+let db = require('./'+suds.dbDriver);
 let crypto = require('crypto');
 
 

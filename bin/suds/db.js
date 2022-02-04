@@ -37,7 +37,7 @@
  *
  * ********************************************** */
 
-
+exports.connect=connect;
 exports.createTable = createTable;
 
 exports.getRow = getRow;
@@ -46,15 +46,25 @@ exports.countRows = countRows;
 exports.totalRows = totalRows;
 exports.createRow = createRow;
 exports.deleteRow = deleteRow;
+exports.deleteRows = deleteRows;
 exports.updateRow = updateRow;
 
 let trace = require('track-n-trace');
 let suds = require('../../config/suds');
 const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
-const knex = require('knex')(suds.database);
 let lang = require('../../config/language')['EN'];
 
+/** *********************************************
+ * 
+ * Connect to database 
+ * 
+ * 
+ * ********************************************* */
+
+function connect() {
+  globalThis.knex = require('knex')(suds.database);
+}
 
 
 /** ******************************************

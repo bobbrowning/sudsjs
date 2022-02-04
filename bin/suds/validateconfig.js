@@ -9,7 +9,7 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./'+suds.database.driver);
+let db = require('./'+suds.dbDriver);
 const fs = require('fs');
 const { register } = require('../../config/suds');
 
@@ -68,6 +68,7 @@ module.exports = async function (req, res) {
         'description',
         'versionHistory',
         'database',
+        'dbDriver',
         'tables',
         'port',
         'get',
@@ -250,8 +251,11 @@ module.exports = async function (req, res) {
     // Start with the list of field types in suds.js then add the helpers that produce fields.
     /* clone the input field types to start */
 
-    let validInputFieldTypes = suds.inputFieldTypes;
-    for (let i = 0; i < suds.inputTypeHandlers.length; i++) {
+    let validInputFieldTypes = [];
+    for (let i = 0; i < suds.inputFieldTypes.length; i++) {
+        validInputFieldTypes.push(suds.inputFieldTypes[i]);
+    }
+   for (let i = 0; i < suds.inputTypeHandlers.length; i++) {
         validInputFieldTypes.push(suds.inputTypeHandlers[i]);
     }
 
@@ -591,7 +595,7 @@ module.exports = async function (req, res) {
        *  Exit
        *
        **************************************** */
-    let output = "<h2>Checking the SUDS config files for obvious errors</h2>"
+    let output = "<h2>Checking the SUDSjs config files for obvious errors</h2>"
    
     if (errorCount) {
         output += errors;

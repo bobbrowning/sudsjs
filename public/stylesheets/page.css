@@ -2,6 +2,8 @@
   background-color: green;
 }
 
+a {font-weight: bold;}
+
 .nav {
   position        : fixed;
   top             : 0;

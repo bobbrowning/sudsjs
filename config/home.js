@@ -118,7 +118,7 @@ module.exports = {
     links: [
       { table: 'user', title: 'All users' },
       { report: 'auditTrail', title: 'Audit trail', },
-      { www: '/createtable', title: 'Create new database tables' },
+      { www: '/createtables', title: 'Create new database tables' },
       { www: '/configreport', title: 'Configuration report' },
       { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
 

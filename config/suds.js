@@ -455,7 +455,25 @@ bottom bar.`,
    * 
    *           Database
    *           --------
+   * 
+   *  The generic database driver is db.js. The database object set below
+   * is used to initialise the knex library when the software is loaded. 
+   * See knex documentation for details https://knexjs.org/#Installation-client
+   * 
    *********************************************** */
+
+   dbDriver: 'db.js',   
+
+/** **************** Database configuration ***************
+ * 
+ */
+   database: {
+    client: 'sqlite3',
+    connection: {
+      filename: './suds.db',
+    },
+    useNullAsDefault: true,
+  },
 
   /** *********   mysql config ***************************
    * commented out as we are using sqlite for the demo version... 
@@ -463,7 +481,6 @@ bottom bar.`,
  /*
    database:
    {
-     driver: 'db.js',
      client: 'postgresql',
      connection: {
        host: 'localhost',
@@ -476,7 +493,6 @@ bottom bar.`,
 
       database:
       {
-       driver: 'db.js',
        client: 'mysql',
         connection: {
           host: 'localhost',
@@ -488,14 +504,7 @@ bottom bar.`,
 */
 /*   **************  end of commented section ************ */
 
-database: {
-  driver: 'db.js',
-  client: 'sqlite3',
-  connection: {
-    filename: './suds.db',
-  },
-  useNullAsDefault: true,
-},
+
 
 /** List of tables in the database.. */
 tables: [

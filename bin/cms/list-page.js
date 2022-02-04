@@ -8,7 +8,7 @@ let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
 let suds = require('../../config/suds');
-let db = require('../suds/'+suds.database.driver);
+let db = require('../suds/'+suds.dbDriver);
 let sendView = require('../suds/send-view');
 let createNavBar=require('./create-navbar');
 

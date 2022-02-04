@@ -22,20 +22,28 @@
 let suds = require('../../../config/suds');
 let trace = require('track-n-trace');
 let tableDataFunction = require('../table-data');
-let db = require('../'+suds.database.driver);
+let db = require('../' + suds.dbDriver);
 
 module.exports = async function (req, res) {
   trace.log('#autocomplete called ', req.query);
   let allParms = req.query;
   let linkedTable = allParms.linkedtable;
-
+  let permission = req.session.permission;
+  trace.log(permission);
   /**
    * Sort out the field to be displayed, or the function that returns the 
-   * displayed text.
+   * displayed text. 
    */
   let display = allParms.display;
   let displayFunction = false;
-  let tableData = tableDataFunction(linkedTable);
+  let tableData = tableDataFunction(linkedTable, permission);
+  trace.log(tableData.canView);
+  if (!permission || !tableData.canView) {
+    let names = [['You do not have permission to access this table'], [0]];
+    trace.log('#43 ', names);
+    return res.json(names);
+  }
+
   if (tableData.rowTitle) {
     displayFunction = tableData.rowTitle;
   }
@@ -89,7 +97,7 @@ module.exports = async function (req, res) {
       else {
         show = tableData.rowTitle(records[i]);
       }
- //     show = displayFunction(records[i]);
+      //     show = displayFunction(records[i]);
     }
     trace.log('34', i, display, records[i]);
     /*
@@ -97,8 +105,8 @@ module.exports = async function (req, res) {
         names[i].label = records[i][tableData.primaryKey] + ':' + show;
         names[i].value = show;
     */
-     labels.push(show);
-     values.push(records[i][tableData.primaryKey]);
+    labels.push(show);
+    values.push(records[i][tableData.primaryKey]);
   }
   let id = Number(term);
   if (!isNaN(id)) {
@@ -115,22 +123,22 @@ module.exports = async function (req, res) {
         else {
           show = tableData.rowTitle(record);
         }
-//          show = await displayFunction(record);
+        //          show = await displayFunction(record);
       }
       trace.log('34', i, display, record);
-/*
-      let label = record[tableData.primaryKey] + ':' + show;
-      let value = show;
-
-      names.push({ label: label, value: value });
-      */
+      /*
+            let label = record[tableData.primaryKey] + ':' + show;
+            let value = show;
+      
+            names.push({ label: label, value: value });
+            */
       labels.push(show);
       values.push(record[tableData.primaryKey]);
- 
+
     }
 
   }
-  names=[labels,values];
+  names = [labels, values];
   trace.log('#58 ', names);
 
   //  return array

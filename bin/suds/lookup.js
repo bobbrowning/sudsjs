@@ -3,7 +3,7 @@ let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
 let lang = require('../../config/language')['EN'];
 let trace = require('track-n-trace');
-let db = require('./'+suds.database.driver);
+let db = require('./'+suds.dbDriver);
 
 const friendlyName = 'Look up text corresponding to field value';
 const description = `Looks up the value in a values object in the table 

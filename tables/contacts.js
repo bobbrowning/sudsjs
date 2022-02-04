@@ -126,7 +126,10 @@ module.exports = {
       description: 'Date (ISO Format)',
       example: '2020-10-29 13:59:58.000',
       input: {
-        type: 'date', width: '200px', required: true,
+        type: 'date', 
+        width: '200px', 
+        required: true,
+        default: '#today',
       },
       display: { type: 'date' }
     },
@@ -135,7 +138,7 @@ module.exports = {
       model: 'user',
       friendlyName: 'Person who made the contact',
       input: {
-        type: 'autocomplete',       // jQuery Autocomplete function
+        type: 'autocomplete',       
         required: true,
         limit: 5,                   // number of options returned
         search: {                  // This can simply be a field to search 
@@ -170,7 +173,7 @@ module.exports = {
 
     isFollowUp: {
       model: 'contacts',
-      description: 'If this is a follow-up to another contact. Yhis refers.',
+      description: 'If this is a follow-up to another contact. This refers.',
       friendlyName: 'Contact number that this is a following up to',
     },
 
@@ -209,6 +212,7 @@ module.exports = {
       description: 'Next action Date (ISO Format)',
       example: '2020-10-29 13:59:58.000',
       input: { type: 'date', width: '220px', default: '#today+5' },
+      display: { type: 'date' },
     },
     nextAction:
     {

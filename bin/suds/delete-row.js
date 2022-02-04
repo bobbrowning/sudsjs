@@ -3,7 +3,7 @@ let suds = require('../../config/suds');
 let trace = require('track-n-trace');
 let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
-let db = require('./'+suds.database.driver);
+let db = require('./'+suds.dbDriver);
 let fs = require('fs');
 
 module.exports = async function (permission, table, id) {

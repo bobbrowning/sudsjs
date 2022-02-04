@@ -9,7 +9,7 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./'+suds.database.driver);
+let db = require('./' + suds.dbDriver);
 const fs = require('fs');
 
 let mergeAttributes = require('./merge-attributes');
@@ -122,7 +122,7 @@ module.exports = async function (req, res) {
     </table>`;
 
   output += `
-  <p>Report date: ${Date().substring(0,16)}</p>
+  <p>Report date: ${Date().substring(0, 16)}</p>
      </div>            <!--  header page -->      
      <hr class="sudsreporthr">`;
 
@@ -399,8 +399,12 @@ module.exports = async function (req, res) {
       }
     }
     else {
-      output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
-
+      if (key == 'driver' && suds.dbDriver == 'db.js') {
+        output += `   <tr><td>driver</td><td>Generic driver (db.js)</td></tr>`;
+      }
+      else {
+        output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
+      }
     }
   }
   output += `
@@ -833,8 +837,8 @@ module.exports = async function (req, res) {
             </tbody>    
           </table>`;
 
-    if (anycollections){
-      output+=collections;
+    if (anycollections) {
+      output += collections;
     }
 
     output += `

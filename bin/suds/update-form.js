@@ -24,7 +24,7 @@ let mergeAttributes = require('./merge-attributes');     // Standardises attribu
 let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
 let classes = require('../../config/classes');           // Links class codes to actual classes
 let lang = require('../../config/language')['EN'];       // Object with language data
-let db = require('./'+suds.database.driver);                                // Database routines
+let db = require('./'+suds.dbDriver);                                // Database routines
 let listRow = require('./list-row');                     // List one row of the table plus a limited number of child roecords
 let createField = require('./create-field');             // Creates an input field
 let displayField = require('./display-field');           // displays a column value
@@ -886,7 +886,8 @@ ${attributes[key].helpText}`;
         autocomplete="off"
         enctype="multipart/form-data"
     >
-      <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />`;
+      <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />
+      `;
   //   <input type="hidden" name="table" value="${table}">`;
   //  <input type="hidden" name="#parent#" value="${parent}" >
   //  <input type="hidden" name="#parentkey#" value="${parentKey}" >

@@ -7,14 +7,14 @@
 
 module.exports = {
 
-  friendlyName: 'User table', 
+  friendlyName: 'User table',
 
   description: `This table includes a row for each person or organisation that 
   the system needs to process. This may be a customer, supplier, or in-house staff. 
   Rows can be linked so it can indicate which organisation a customer works for.`,
 
   /** Permission sets who can edit / see this file  */
-  permission: { 
+  permission: {
     all: ['sales', 'purchasing', 'admin', 'demo'], view: ['all']
   },
 
@@ -49,7 +49,7 @@ module.exports = {
       friendlyName: 'Activity Log',
       activityLog: true,                                                       // This is the activity log
       limit: 15,                                                               // Maximum entries shown (defaults to 10)
-      activities: ['contacts', 'salesorders', 'salesorderlines'],              // These shild records are included
+      activities: ['contacts', 'salesorders', 'salesorderlines','products','purchaseorders','purchaseorderlines'],              // These shild records are included
       permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
     },
     profile: {
@@ -60,7 +60,7 @@ module.exports = {
       friendlyName: 'Contacts',
       open: 'contacts',                                                      // When this group is shown, these child records are shown
       permission: { all: ['sales', 'purchasing', 'admin', 'demo'] },
-      columns: ['contacts','lastContact','nextActionDate','nextAction'],
+      columns: ['contacts', 'lastContact', 'nextActionDate', 'nextAction'],
     },
     sales: {
       friendlyName: 'Sales',
@@ -86,14 +86,14 @@ module.exports = {
     security: {
       friendlyName: 'Security',
       permission: { all: ['admin'] },
-      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission', 'audit'],
+      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission', ],
     },
     other: {                                        // This is a *special* name. 
       friendlyName: 'Other',                         // This will scoop up the rest
     },
   },
 
-/**  Treatment of each column */
+  /**  Treatment of each column */
   attributes: {
     id: {
       friendlyName: 'User No',
@@ -304,11 +304,11 @@ module.exports = {
 
     mobilePhone: {
       type: 'string',
-      input: {type: 'tel' }   // but this doesn't validate
+      input: { type: 'tel' }   // but this doesn't validate
     },
     mainPhone: {
       type: 'string',
-      input: {type: 'tel' }
+      input: { type: 'tel' }
     },
 
     lastSale: {
@@ -333,13 +333,13 @@ module.exports = {
       model: 'contacts',
     },
     nextActionDate: {
-         type: 'string',
-         display: {type: 'date'},
+      type: 'string',
+      display: { type: 'date' },
     },
     nextAction: {
-         type: 'string',
+      type: 'string',
     },
-    
+
     //  ╔═╗╔═╗╔═╗╔═╗╔═╗╦╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
     //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
@@ -364,7 +364,7 @@ module.exports = {
         order: 'date',                                 // The order in which the are listed (default updatedAt)
         direction: 'DESC',                                  // ASC or DESC  default DESC
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
-        columns: ['id', 'date', 'notes', 'nextActionDate', 'nextAction','closed'],
+        columns: ['id', 'date', 'notes', 'nextActionDate', 'nextAction', 'closed'],
         addChildTip: 'Add a new contact for this user.',
         derive: {
           lines: { type: 'count', friendlyName: 'Number of contacts' },
@@ -418,7 +418,7 @@ module.exports = {
       collection: 'products',
       via: 'supplier',
       collectionList: {
-        columns: ['name', 'price', 'class', 'description','stockLevel'],
+        columns: ['name', 'price', 'class', 'description', 'stockLevel'],
       }
     },
 
@@ -440,15 +440,6 @@ module.exports = {
       collectionList: {
         columns: ['fullName', 'mobilePhone', 'lastContact'],
       }
-    },
-
-    audit: {
-      collection: 'audit',
-      via: 'row',
-      collectionList: {
-        columns: ['id', 'createdAt', 'tableName', 'mode'],
-      },
-      permission: { all: ['admin'] },
     },
 
 

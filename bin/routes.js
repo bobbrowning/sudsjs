@@ -32,9 +32,9 @@ for (let key of Object.keys(suds.post)) {
 }
 
 
-/* GET users listing. */
+/* GET users listing.
 router.get('/', async function (req, res, next) { res.render('index', { title: 'Admin', output: 'hello' }); });
 
 router.post('/', function (req, res, next) { res.send(`<h1>Home page post</h1>`); });
-
+*/
 module.exports = router;

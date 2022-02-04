@@ -8,7 +8,7 @@ let home = require('./home');
 let suds = require('../../config/suds');
 let reports = require('../../config/reports');
 let trace = require('track-n-trace');
-const db = require('./'+suds.database.driver);
+const db = require('./'+suds.dbDriver);
 const lang = require('../../config/language')['EN'];
 
 

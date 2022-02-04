@@ -4,7 +4,7 @@ let classes = require('../../config/classes')['navbar'];
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
 let suds = require('../../config/suds');
-let db = require('../suds/'+suds.database.driver);
+let db = require('../suds/'+suds.dbDriver);
 let tableDataFunction = require('../suds/table-data');
 
 let loopcount = 0;

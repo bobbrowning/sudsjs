@@ -4,7 +4,7 @@ let lookup = require('./lookup');
 let tableDataFunction = require('./table-data');
 let lang = require('../../config/language')['EN'];
 let trace = require('track-n-trace');
-let db = require('./'+suds.database.driver);
+let db = require('./'+suds.dbDriver);
 
 const friendlyName = 'Format field data';
 const description = `For many types of field, this routine simply returns the 

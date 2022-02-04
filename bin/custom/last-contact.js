@@ -6,7 +6,7 @@
  ***************************************************** */
  let trace = require('track-n-trace');
  let suds = require('../../config/suds');
- let db = require('../suds/'+suds.database.driver);
+ let db = require('../suds/'+suds.dbDriver);
 module.exports=  async function (record) {
 
  /** Read the most recent contact for this user in the contacts file 
