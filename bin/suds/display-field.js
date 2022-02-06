@@ -76,6 +76,9 @@ module.exports = async function (attributes, value, children, permission) {
     display = date.toDateString();
     return (display);
   }
+  if (attributes.display.type == 'html') {
+     return (encodeURI(value));
+  }
 
   /** Date / time  */
   if (attributes.display.type == 'color' && value) {

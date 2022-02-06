@@ -1,26 +1,28 @@
 /**
- * Products.js
+ * Products table schema
  *
-  */
+ */
 
 module.exports = {
-  description: 'Products',
-  extendedDescription: `One record for each product that the organisation deals in.`,
+
   friendlyName: 'Products',
+
+  description: `One record for each product that the organisation deals in.`,
+
   rowTitle: function (record) {
     let suds = require('../config/suds')
     if (record.price) {
-    let formatter = new Intl.NumberFormat(
-      suds.currency.locale,
-      {
-        style: 'currency',
-        currency: suds.currency.currency,
-        minimumFractionDigits: suds.currency.digits,
-      })
-    price = formatter.format(record.price);
+      let formatter = new Intl.NumberFormat(
+        suds.currency.locale,
+        {
+          style: 'currency',
+          currency: suds.currency.currency,
+          minimumFractionDigits: suds.currency.digits,
+        })
+      price = formatter.format(record.price);
     }
     else {
-      price='See variants';
+      price = 'See variants';
     }
     return `${record.name} (No: ${record.id}) Guide retail price: ${price}`
   },
@@ -37,12 +39,12 @@ module.exports = {
       friendlyName: 'Activity Log',
       activityLog: true,                                                       // This is the activity log
       limit: 10,                                                               // Maximum entries shown (defaults to 10)
-      activities: ['salesorderlines','purchaseorderlines'],              // These shild records are included
+      activities: ['salesorderlines', 'purchaseorderlines'],              // These shild records are included
       permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
     },
     details: {
       friendlyName: 'Details',
-      columns: ['supplier', 'vatable', 'stockLevel','class', 'overview', 'image'],
+      columns: ['supplier', 'vatable', 'stockLevel', 'class', 'overview', 'image'],
     },
     transactions: {
       friendlyName: 'Transactions',
@@ -51,7 +53,7 @@ module.exports = {
     },
     related: {
       friendlyName: 'Related Products',
-      columns: ['subproductOf', 'subproducts','variants'],
+      columns: ['subproductOf', 'subproducts', 'variants'],
     },
     description: {
       friendlyName: 'Full description',
@@ -114,14 +116,14 @@ module.exports = {
         width: '150px',
         step: .01,
 
-       },
+      },
       display: { currency: true },
     },
     vatable: {
       type: 'boolean',
       description: 'Whether subject to VAT',
     },
-    stockLevel: {type: 'number'},
+    stockLevel: { type: 'number' },
 
     class: {
       type: 'string',
@@ -192,14 +194,14 @@ module.exports = {
       friendlyName: 'Product variants',
       collectionList: {
         open: true,
-        columns: ['name', 'price' ],                       
-       },
+        columns: ['name', 'price'],
+      },
     },
     purchases: {
       collection: 'purchaseorderlines',
       via: 'product',
       addRow: false,
-     },
+    },
     sales: {
       collection: 'salesorderlines',
       via: 'product',

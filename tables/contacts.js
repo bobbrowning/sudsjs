@@ -1,5 +1,5 @@
 /**
- * Contacts.js
+ * Contacts table schema
  *
  */
 

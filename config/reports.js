@@ -58,6 +58,7 @@ module.exports = {
   followUps: {
     table: 'contacts',
     friendlyName: 'My overdue follow-ups',
+    description: 'My overdue follow-ups',
     title: 'Overdue follow-ups',                                   // Title
     sort: ['nextActionDate', 'DESC'],
     open: 'contacts',
@@ -77,6 +78,7 @@ module.exports = {
   allFollowUps: {
     table: 'contacts',
     friendlyName: 'All overdue follow-ups',
+    description: 'All overdue follow-ups',
     title: 'Overdue follow-ups',                                   // Title
     sort: ['nextActionDate', 'DESC'],
     open: 'contacts',

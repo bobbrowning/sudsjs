@@ -1,9 +1,7 @@
 
 /** *****************************************************
  *
- * Web Pages configuration file
- * Webpages.js
- * 
+ * Web Pages table schema
  *
  * **************************************************** */
 
@@ -42,7 +40,7 @@ module.exports = {
         },
         settings: {
             friendlyName: 'Settings',
-            columns: ['status', 'parent', 'onMenu', 'expires', 'embargo', 'view',],
+            columns: ['author','status', 'parent', 'onMenu', 'expires', 'embargo', 'view',],
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -51,7 +49,7 @@ module.exports = {
         },
         content: {
             friendlyName: 'Page Content',
-            columns: ['headline', 'author', 'pageContent'],
+            columns: ['headline','pageContent'],
             recordTypes: ['H'],                               //  Only for HTML 
         },
         files: {
@@ -65,6 +63,11 @@ module.exports = {
             /** When the group is loaded, these child records will be visible */
             open: 'subpages',
         },
+        technical: {
+            friendlyName: 'Technical settings',
+            columns: ['titleTag','metaDescription','headerTags',],
+            recordTypes: ['H'],                               //  Only for HTML 
+         },
 
     },
 
@@ -279,7 +282,23 @@ module.exports = {
             type: 'string',
             input: { type: 'uploadFile', },
         },
-
+        titleTag: {
+            type: 'string',
+            friendlyName: 'title for the &lt;title&gt; tag', 
+        },
+        metaDescription: {
+            type: 'string',
+            friendlyName: 'meta data - description tag',
+            description: 'Description of this page fr search engines.',
+            input: {type: 'textarea'},
+        },
+       headerTags: {
+            type: 'string',
+            friendlyName: 'Other header tags',
+            description: 'Additional tags for the heading section of the page.',
+            input: {type: 'textarea'},
+            display: {type: 'html'},
+        },
         /** This is not a real column in the database. But it defines how child rows are to be displayed.    */
         subpages: {
             description: `Pages below this page in the hierarchy of pages.`,

@@ -1,5 +1,5 @@
 /**
- * Orderlines.js
+ * Purchase order lines table schema
  *
   */
 
@@ -7,7 +7,9 @@
   let stock=require('../bin/custom/stock');
 module.exports = {
   description: 'Purchase Order lines',
+
   friendlyName: 'Purchase Order Lines',
+  
   permission: { all: ['purchasing', 'admin','demo'], view: ['sales'] },
 
   edit: {

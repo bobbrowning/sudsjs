@@ -1,10 +1,15 @@
-
+/**
+ * 
+ * Purchase orders table schema
+ */
 
 const stock=require('../bin/custom/stock');
 
 module.exports = {
   description: 'Purchase orders',
+
   friendlyName: 'Purchase Orders',
+  
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
  addRow: 'Add new purchase order',   // text in the link to add a new row  
  list: {

@@ -1,12 +1,13 @@
 /**
- * ProductJoins.js
+ * Product variant table schema
  *
   */
 
 module.exports = {
-  description: 'Product Join',
    friendlyName: 'Main product to Sub product link',
-  extendedDescription: 'Used to link products, such as product/spares or product/accessories.',
+
+   description: 'Used to link products, such as product/spares or product/accessories.',
+
   permission: { all: ['admin', 'purchasing','demo'], view: ['sales'] },
   rowTitle: function (record) {
     let suds = require('../config/suds')

@@ -1,13 +1,15 @@
 /**
- * ProductJoins.js
+ * Product Joins table schema
  *
-  */
+ */
 
 module.exports = {
-  description: 'Product Join',
-   friendlyName: 'Main product to Sub product link',
-  extendedDescription: 'Used to link products, such as product/spares or product/accessories.',
-  permission: { all: ['admin', 'purchasing','demo'], view: ['sales'] },
+
+  friendlyName: 'Main product to Sub product link',
+
+  description: 'Used to link products, such as product/spares or product/accessories.',
+  permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
+
   attributes: {
     id: {
       friendlyName: 'User No',                            // Visible name 
@@ -80,7 +82,7 @@ module.exports = {
       },
     },
     type: {
-      input: {type: 'radio'},
+      input: { type: 'radio' },
       values: {
         C: 'Component / spare part',
         A: 'Accessory',

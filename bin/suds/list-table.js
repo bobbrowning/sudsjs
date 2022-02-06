@@ -78,6 +78,7 @@ module.exports = async function (
   let openGroup;
   let searchSpec = {};
   let heading;
+  let headingTip='';
 
   let hideEdit = reportData.hideEdit;
   let hideDetails = reportData.hideDetails;
@@ -86,9 +87,11 @@ module.exports = async function (
   if (reportData.openGroup) { openGroup = reportData.openGroup }
   if (reportData.title) {
     heading = reportData.title;
+    if (reportData.description) {headingTip=reportData.description}
   }
   else {
     heading = `${lang.listTable} ${tableData.friendlyName}`;
+    headingTip=tableData.description; 
   }
   let headingText = '';
   if (reportData.headingText) {
@@ -341,7 +344,7 @@ module.exports = async function (
 
 
   output = `
-        <h1>${heading}</h1>`;
+        <h1 title="${headingTip}">${heading}</h1>`;
   if (searchText) {
     output += `
     <!-- search text -->

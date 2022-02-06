@@ -75,6 +75,17 @@ module.exports = async function (req, res) {
     headline=pageData.headline;
     /* Can be <a href="slug"> <a href="#slug"> <a href="http://slug"> <a href="http://slug" target="_blank">  etc */
 
+    titleTag=pageData.title;
+    if (pageData.titleTag) {titleTag=pageData.titleTag}
+     
+    metaDescription='';
+    if (pageData.metaDescription) {metaDescription=`<meta name="description" content="${pageData.metaDescription}">`}
+
+    if (pageData.headerTags) {headerTags+=`
+    <!-- ------- Other tags for this page only ----- -->
+    ${pageData.headerTags}
+    <!-- ------------------------------------------- -->`;
+  }
     let regex = RegExp('<a href="([a-zA-Z0-9-_]+)"( target="[a-zA-Z0-9-_]+"){0,1}>(.*?)</a>');
     let array = [];
     while ((array = regex.exec(html)) !== null) {
@@ -112,8 +123,10 @@ module.exports = async function (req, res) {
   let result = await sendView(res, 'pages', {
     navbar: navbar, 
     headline: headline, 
+    titletag: titleTag,
+    metadescription: metaDescription,
     body: html, 
-    headerTags:headerTags
+    headertags:headerTags
   });
   trace.log(result);
   return;

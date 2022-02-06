@@ -1,5 +1,5 @@
 /**
- * Orders.js
+ * Sales Orders table schema
  *
  * @description :: A model definition represents a database table/collection.
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
@@ -7,9 +7,12 @@
  let db = require('../bin/suds/db');
 
 module.exports = {
+  friendlyName: 'Sales orders',  
+   
   description: 'Customer orders',
+
    permission: { all: ['sales', 'admin','demo'], view: ['purchasing'] },
-  friendlyName: 'Sales orders',   // text in the link to add a new row  
+
 
   rowTitle: function (record) {
     return `Order no:${record.id} - Value: £${record.totalValue}`;
