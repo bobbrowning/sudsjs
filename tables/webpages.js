@@ -8,8 +8,15 @@
 
 
 module.exports = {
+
     friendlyName: 'Web pages',
-    description: 'Web pages for the starter content management system',
+
+    description: `Web pages for the starter content management system. There is one row per page. 
+    The primary identifier for each page is called a 'slug'. So accessing a page is /page/[slug].
+    There is a page type field which can be 'H' for a normal HTML page and 'R' for a redirect page.
+    When a new page is created the system first asks for the page type and then presents only 
+    the appropriate fields for that type.  A redirect page simply results in the target page
+    being presented to the user.`,
 
     /** Only the superuser can edit this table. */
     permission: { view: ['admin', 'web', 'demo'] },
