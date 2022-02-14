@@ -78,7 +78,7 @@ Nodemon needs installing (https://www.npmjs.com/package/nodemon) but will restar
 
 
 
-# Set up your database
+# Set up your database 
 
 ## Modify the configuration files 
 
