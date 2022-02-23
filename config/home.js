@@ -160,6 +160,20 @@ module.exports = {
 
 
   //  Setup / admin section
+  Docs: {
+    title: 'Documentation',
+    img: '/images/suds/settings.jpg',
+    permission: ['demo'],
+    description: 'Documentation - under development',
+    links: [
+      { user: 'docs', title: 'Module path/name' },
+     ],
+  },
+
+
+
+
+  //  Setup / admin section
   you: {
     title: 'You',
     img: '/images/suds/profile.jpg',

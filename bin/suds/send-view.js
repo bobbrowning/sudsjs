@@ -13,7 +13,8 @@ module.exports = async function (res, view, output) {
   if (typeof output == 'string' && output) {
     viewData.output = output;
     viewData.footnote = '';
-    viewData.heading = suds.headerTags;
+    viewData.headerTags = suds.headerTags;
+    viewData.heading='';
   }
   
   else {

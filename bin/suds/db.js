@@ -3,39 +3,26 @@
  * Generic database driver.  This has been tested with 
  * sqlite3, mysql and postgesql.
  * 
- * = createTable(req, res)
- * = getRow(table, val, col)
- * = getRows(table, spec, offset, limit, sortKey, direction,)
- * = countRows(table,spec)
- * = totalRows(table, spec, col)
- * = createRow(table, record)
- * = deleteRow(permission, table, id)
- * = updateRow(permission, table, id)
+ * createTable(req, res)
  * 
- *  table:  Table name
- *  val:    value 
- *  col:    Column being searched for matching value (default to primary key)
- *  spec:   Filter specification - see below)
- *  offset: Column number to start with
- *  limit:  Maximum number of rows returned (if not in spec)
- *  sortKey: Column to sort by (if not in spec) defaults to primary key
- *  direction: ASC or DESC (if not in spec) defaults to DESC
+ * getRow(table, val, col)
  * 
+ * getRows(table, spec, offset, limit, sortKey, direction,)
  * 
- * Typical  filter specification
-  {
-   search: {                                             
-      andor: 'and',
-      searches: [
-        ['userType', 'eq', 'C'],
-        ['fullName', 'contains', 'Acme']  
-      ]
-    },
-    sort: ['id', 'DESC'],
-    limit: 20,
-  } 
- *
+ * countRows(table,spec)
+ * 
+ * totalRows(table, spec, col)
+ * 
+ * createRow(table, record)
+ * 
+ * deleteRow(permission, table, id)
+ * 
+ * updateRow(permission, table, id)
+ * 
+ * @name generic_database__driver
+ * 
  * ********************************************** */
+let Generic_Database__Driver='generic';    // To make documentation.js work...
 
 exports.connect=connect;
 exports.createTable = createTable;
@@ -59,6 +46,9 @@ let lang = require('../../config/language')['EN'];
  * 
  * Connect to database 
  * 
+ * No parameters. The database specification is in 
+ * /config/suds.js.  Connects to the database and sets up 
+ * a global 'knex'
  * 
  * ********************************************* */
 
@@ -72,9 +62,27 @@ function connect() {
  *        GET INSTRUCTION
  * 
  * Turns a search specification into an sql search and bindings 
- * Won't work with MONGO *
+ * Won't work with MONGO 
+ *
+ * @example
+ * Typical  filter specification
+ * {
+ *  search: {                                             
+ *    andor: 'and',
+ *    searches: [
+ *       ['userType', 'eq', 'C'],
+ *       ['fullName', 'contains', 'Acme']  
+ *     ]
+ *   },
+ *   sort: ['id', 'DESC'],
+ *   limit: 20,
+ * }  
+ * 
+ * @param {string} table - Table name
+ * @param {Object} spec - Filter specification - see above
+ * @returns {array}  instruction + bindings
  *  
-* **************************************** */
+ */
 
 function getInstruction(table, spec) {
 
@@ -139,15 +147,11 @@ function getInstruction(table, spec) {
 
   }
 
-
   trace.log({ instruction: instruction, bindings: bindings });
-
-
-
   return ([instruction, bindings]);
 }
 
-/** ****************************************************
+/** 
  * 
  *           FIX RECORD
  * 
@@ -155,7 +159,13 @@ function getInstruction(table, spec) {
  * Makes sure numeric fields are numeric and boolean fields are boolean
  * Yeah I know wouldn't be necessary with Typescript. 
  * 
- ******************************************************* */
+ * @param {string} table - Table name
+ * @param {object} record
+ * @param {object} tableData - Table data from the schema
+ * @param {object} attributes - extended attributes for each columns from the schema.
+ * @returns {object} record - cloned 
+ * 
+ */
 function fixRecord(table, record, tableData, attributes) {
   trace.log({ inputs: arguments })
   let rec = {};
@@ -176,6 +186,16 @@ function fixRecord(table, record, tableData, attributes) {
   return (rec);
 }
 
+/** 
+ * 
+ * Count Rows
+ * 
+ * Counts the number of rows given a filter specification (see above)
+ * 
+ * @param {string} table - Table name
+ * @param {Object} spec - Filter specification - see get instruction above. 
+ * @returns {number} Record count
+ */
 async function countRows(table, spec) {
 
   trace.log({ input: arguments });
@@ -206,7 +226,17 @@ async function countRows(table, spec) {
   return (count);
 }
 
-
+/** 
+ * 
+ * Total Rows
+ * 
+ * Totals one column given a filter specification (see above)
+ * 
+ * @param {string} table - Table name
+ * @param {Object} spec - Filter specification - see get instruction above. 
+ * @param {string} Column name
+ * @returns {number} Record count
+ */
 async function totalRows(table, spec, col) {
 
   trace.log({ input: arguments });
@@ -237,7 +267,18 @@ async function totalRows(table, spec, col) {
 }
 
 
-
+/**
+ * Create a row in the table
+ * 
+ * The method of obtaining the primary key is database dependent.
+ * This has been tested withMySQL. Postgesql and SqLite3
+ * The fallack is to read the most recently added record. However
+ * this may not be reliable in a multi-user situation.
+ * 
+ * @param {string} table 
+ * @param {object} record 
+ * @returns {object} record with primary key added
+ */
 
 async function createRow(table, record) {
   trace.log({ inputs: arguments })
@@ -284,7 +325,12 @@ async function createRow(table, record) {
   return (record);
 }
 
-
+/**
+ * Delete Rows
+ * @param {string} table 
+ * @param {object} spec - see above 
+ * @returns {string} HTML output
+ */
 async function deleteRows(table, spec) {
   trace.log({ input: arguments });
   if (spec && spec.searches.length) {
@@ -327,7 +373,13 @@ async function deleteRows(table, spec) {
 
 }
 
-
+/**
+ * Delete one row 
+ * @param {*} permission set
+ * @param {*} table 
+ * @param {*} id - primary key
+ * @returns {string} HTML
+ */
 async function deleteRow(permission, table, id) {
   trace = require('track-n-trace');
   trace.log({ start: 'Delete table row', inputs: arguments, break: '#', level: 'min' });
@@ -360,7 +412,11 @@ async function deleteRow(permission, table, id) {
 
 
 
-
+/**
+ * Update one row in a table
+ * @param {string} table 
+ * @param {object} record 
+ */
 async function updateRow(table, record) {
   trace.log({ inputs: arguments })
   let tableData = tableDataFunction(table);
@@ -373,7 +429,16 @@ async function updateRow(table, record) {
 
 }
 
-
+/**
+ * Get a set of rows from a table
+ * @param {string} table 
+ * @param {object} spec - flter specification - see above
+ * @param {number} offset 
+ * @param {} limit 
+ * @param {*} sortKey 
+ * @param {*} direction 
+ * @returns {array} Array of table row objects.
+ */
 async function getRows(table, spec, offset, limit, sortKey, direction,) {
 
   trace.log({ input: arguments });
@@ -426,7 +491,13 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   return (rows);
 }
 
-
+/**
+ * Get a single row from the database
+ * @param {string} table 
+ * @param {number} row to be selected - normally the primary key 
+ * @param {number} Optional - field to be searched if not the primary key 
+ * @returns {object} The row 
+ */
 async function getRow(table, val, col) {
   trace.log({ inputs: arguments, td: typeof tableDataFunction })
   let record = {};
@@ -452,7 +523,15 @@ async function getRow(table, val, col) {
 
 }
 
-
+/**
+ * Create new tables on the database according to the schema.
+ * Only new tables are added. It's purpose is to do the heavy 
+ * lifting of setting up the database. Fine tuning you need to 
+ * use a different tool but make sure it is in syncwith the schema.
+ * @param {object} req 
+ * @param {object} res 
+ * @returns {string} HTML listing the tables that have been added
+ */
 async function createTable(req, res) {
   // trace.log({ input: arguments });
   let output = '';

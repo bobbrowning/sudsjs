@@ -1,12 +1,15 @@
 
-/* ****************************************************
-*
-*  Configure SUDS
-*
-***************************************************** */
 
 module.exports = {
 
+/** ****************************************************
+ *
+ *  config/suds.js  
+ * 
+ *  Primaty SUDSjs configuration file
+ *
+ ***************************************************** */
+  'SUDSjs configuration file': 0,
   title: 'SUDS test database',
 
   description: `This is a sample test database to illustrate the main features of SUDS.
@@ -52,6 +55,7 @@ module.exports = {
     register: '../bin/suds/register',
     logout: '../bin/suds/logout',
     forgotten: '../bin/suds/forgotten',
+    docs: '../bin/docs.js',
   },
   /** POST requests */
   post: {

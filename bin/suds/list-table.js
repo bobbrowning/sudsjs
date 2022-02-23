@@ -1,10 +1,4 @@
-/* ************************************************
-*
-* List the rows in a table.
-* This may be called from the home page (via admin.js), or to list child rows
-* at the bottom of a row detail page. 
-*
-************************************************ */
+
 let trace = require('track-n-trace');
 let mergeAttributes = require('./merge-attributes');
 let createField = require('./create-field');
@@ -19,7 +13,18 @@ let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let db = require('./'+suds.dbDriver);
 
-module.exports = async function (
+module.exports = listTable;
+
+/** ************************************************
+ * 
+ * list-table.js
+ * 
+ * List the rows in a table.
+ * This may be called from the home page (via admin.js), or to list child rows
+ * at the bottom of a row detail page. 
+ *
+ ************************************************ */
+async function listTable(
   permission /*
       type: 'string',
       description: 'The permission set of the logged-in user',
@@ -203,7 +208,7 @@ module.exports = async function (
   let virtuals = {};
   if (tableData.virtuals) { virtuals = tableData.virtuals; }
 
-  /** pagination -note thst if there is a parent parameter 
+  /*** pagination -note thst if there is a parent parameter 
    * there is no pagination, but limit wll be provided.
    * Limit of -1 = no limit
    * */
@@ -353,7 +358,7 @@ module.exports = async function (
 
 
 
-  /** ************************************************
+  /*** ************************************************
   *
   *              SEARCH BOX
   *
@@ -555,7 +560,7 @@ module.exports = async function (
     output += `
     }`;
 
-    /** 
+    /*** 
      * This function uses the generated fields to create the comparison select 
      * plus input field depending on which field has been selected.. 
      * 
@@ -620,7 +625,7 @@ module.exports = async function (
       num--;
     }`;
 
-    /** 
+    /*** 
      * anyDataCheck checks that a comparison field has been entered.
     */
 
@@ -1001,7 +1006,7 @@ module.exports = async function (
     let prev = '';
     let next = '';
     trace.log({ page: page, type: typeof page, count: count, limit: limit });
-    /** No pagination for child lists */
+    /*** No pagination for child lists */
     if (parent) {
       if (limit != -1 && count > limit) {
         next = `<a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.more}</a>`;

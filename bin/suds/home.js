@@ -269,6 +269,19 @@ module.exports = async function (req, permission) {
             </li>`;
          }
         }
+        if (link == 'docs') {
+          output += `
+          <form action="/docs">
+          <input 
+          type="text" 
+          class="form-control sudsHomeSearch" 
+          name="file"
+          placeholder="Module"
+          value="suds/db.js"
+          >
+          </form>`;
+  }
+ 
 
         if (link == 'login') {
           if (req.session.userId) { continue }

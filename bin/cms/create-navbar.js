@@ -1,4 +1,16 @@
 
+/**
+ * 
+ *       Create Navbar 
+ *       
+ * This module creates the navigation in the starter content
+ * management system. It is only single-level but some draft code
+ * is there for multi-level.
+ * 
+ */
+
+
+
 let trace = require('track-n-trace');
 let classes = require('../../config/classes')['navbar'];
 let lang = require('../../config/language')['EN'];
@@ -8,7 +20,7 @@ let db = require('../suds/'+suds.dbDriver);
 let tableDataFunction = require('../suds/table-data');
 
 let loopcount = 0;
-
+/** Create class tag */
 function classtag(code) {
   let result='';
   if (classes[code]) {result=` class="${classes[code]}"`}

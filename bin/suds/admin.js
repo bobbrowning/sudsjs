@@ -8,36 +8,9 @@ let home = require('./home');
 let suds = require('../../config/suds');
 let reports = require('../../config/reports');
 let trace = require('track-n-trace');
-const db = require('./'+suds.dbDriver);
+const db = require('./' + suds.dbDriver);
 const lang = require('../../config/language')['EN'];
 
-
-
-
-
-let friendlyName = `Central switching program.`;
-let description = `
- The program checks whether the user is logged in. If not it links to 
- the login screen. The login URL must be routed from '/login'. 
- 
- Transfers control to a controller depending on mode.  If there is no 
- mode, the main menu is presented.
- 
- Mode can be as follows
-   Mode        Description                                              Controller             
-   list        list rows in the table                                   list-table.js   
-   listrow     list one row in the table                                list-row.js    
-   new         Blank for for a new record                               update-form.js
-   populate    Read record for given ID and populate form for update.   update-form.js
-   update      validate data and update if valid                        update-form.js
-   delete      Delete a row                                             db.js (deleteRow function)
- 
- The controller creates and returns the page content.   This program
- is then responsible for sending it to the user.
-
- All operations and parameters are logged to the audit trail unless this feature
- has been switched off.
- `;
 let validModes = [
     'list',
     'listrow',
@@ -47,7 +20,44 @@ let validModes = [
     'delete',
 ];
 
-module.exports = async function (req, res) {
+
+
+let friendlyName = `Central switching program.`; 
+/** **********************************************************************
+ * The program checks whether the user is logged in. If not it links to 
+ * the login screen. The login URL must be routed from '/login'. 
+ * 
+ * Transfers control to a controller depending on mode (see example).  If there is no 
+ * mode, the main menu is presented.                                       
+ *  
+ * The controller creates and returns the page content.   This program
+ * is then responsible for sending it to the user.
+ *
+ * All operations and parameters are logged to the audit trail unless this feature
+ * has been switched off.
+ * @example
+ * 
+ * Typical call
+ * http://localhost:3000/admin?table=user&mode=populate&id=1
+ * 
+ * Mode can be as follows
+ *   Mode        Description                                              Controller             
+ *   list        list rows in the table                                   list-table.js   
+ *   listrow     list one row in the table                                list-row.js    
+ *   new         Blank for for a new record                               update-form.js
+ *   populate    Read record for given ID and populate form for update.   update-form.js
+ *   update      validate data and update if valid                         update-form.js
+ *   delete      Delete a row                                             db.js (deleteRow function)
+ * 
+ * @param {Object} req - The reqest object
+ * @param {Object} res - The response object
+ * @returns {string} OK
+ * @module
+ * @name About
+ * ************************************************************************** */
+
+
+async function admin(req, res) {
     if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
     //   trace.log(req.connection);
     trace.log({
@@ -76,8 +86,10 @@ module.exports = async function (req, res) {
      * revisiting 
      * read the user record and set the permission set for thsi user. 
      * If there is no user logged in then the permission set is 'guest'.
-     * 
+     * @name get_user_id
      ************************************************************** */
+     let get_user_id=true;
+
     let user = {};
     let logNotes = '';
     permission = '#guest#';
@@ -89,7 +101,7 @@ module.exports = async function (req, res) {
         user = await db.getRow(aut.table, req.session.userId);
         if (user[aut.superuser]) { permission = '#superuser#' } else { permission = user[aut.permissionSet]; }
         if (suds.superuser == user[aut.emailAddress]) { permission = '#superuser#' }
-        /** Last seen at */
+        /*** Last seen at */
         let now = Date.now();
         await db.updateRow(aut.table, { id: req.session.userId, lastSeenAt: now });
 
@@ -145,15 +157,16 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
 
 
-    /* *********************************************
+    /** *********************************************
     *
       *  If there is no reference to a table or report then output the main menu.
       *  
       * A session variable contains an object defining the 'current'
       * report with search and sort settings. This is retained from page to page
       * in a session variable. This session variable is cleared down on return to the menu.
-      *
+      * @name main_menu
       * ******************************************** */
+     let main_menu;
 
     if (!req.query.table && !req.query.report) {
         req.session.reportData = {};
@@ -164,7 +177,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
     }
 
-    /** *********************************************
+    /*** *********************************************
     *  Organise query parameters
     *  
     * Assign parameters in the query string to variables
@@ -187,8 +200,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         This table is not a valid table. It must be listed
         in the suds.js config file.
          *******************************************************`);
-         sendOut (`Fatal error - see console log`);
-         return;
+            sendOut(`Fatal error - see console log`);
+            return;
 
         }
     }
@@ -205,7 +218,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         Mode: ${mode}
         This mode is not valid.
          *******************************************************`);
-            sendOut (`Fatal error - see console log`);
+            sendOut(`Fatal error - see console log`);
             return;
         }
 
@@ -221,9 +234,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         Report: ${report}
         This report is not in the reports config file.
          *******************************************************`);
-         sendOut (`Fatal error - see console log`);
-         return;
-     }
+            sendOut(`Fatal error - see console log`);
+            return;
+        }
 
     }
 
@@ -279,7 +292,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         openGroup: openGroup,
     });
 
-    /* *********************************************
+    /*** *********************************************
     *  Validate data
     * ******************************************** */
     let errortext = '';
@@ -318,15 +331,20 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
 
 
-    /* *********************************************
+    /** *********************************************
     *  Audit trail
+    * 
+    * Add a reord to the audit trail assuming that the 
+    * mode is one of those specified for auditing in 
+    * config/suds.js.
+    * 
     * ******************************************** */
-
+   let auditId = 0;
+ 
     /* Consolidate all parameters in one object. */
     let allParms = {};
     allParms = { ...req.query, ...req.body };
 
-    let auditId = 0;
     trace.log(mode);
     if (suds.audit.include
         && (
@@ -335,13 +353,13 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         )) {
 
         let requestData = {};
-        for (let item of suds.audit.log) { 
-            requestData[item] = req[item]; 
+        for (let item of suds.audit.log) {
+            requestData[item] = req[item];
         }
-        trace.log(table,page);
+        trace.log(table, page);
 
         if (table && !page) {
-            trace.log(table,page);
+            trace.log(table, page);
             let rec = {
                 updatedBy: req.session.userId,
                 tableName: table,
@@ -368,14 +386,16 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     /** ***********************************************************
      * 
      * Now check the mode and process.  Initialise the variable that 
-     * will recieve the output.
-     * 
+     * will recieve the output.  Then call the appropriate controller.
+     * @name check_mode
      ************************************************************ */
+     let Check_Mode;
 
+     
     let output = '';
 
 
-    /** *********************************************
+    /*** *********************************************
     *
     *            L I S T
     *            -------
@@ -388,7 +408,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
     if (mode == 'list') {
 
-        /* *********************************************
+        /*** *********************************************
         *
         * If a report is specified the this has come from the home page, 
         * set up the report specification in reportData.
@@ -408,7 +428,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 fieldName = copyfields[i];
                 if (reportObject[fieldName]) { reportData[fieldName] = reportObject[fieldName]; }
             }
-            /**
+            /***
              * 
              * Search object.
              * If a search refers to #today or #today+n or #loggedinuser then
@@ -469,7 +489,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
         }
 
-        /**  *********************************************
+        /***  *********************************************
         *
         * Report object is not specified, so create one from 
         * any stored report in the session variable plus 
@@ -564,7 +584,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     }
 
 
-    /** *********************************************
+    /*** *********************************************
     *
     *        L I S T  R O W
     *        --------------
@@ -600,7 +620,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
 
 
-    /** *********************************************
+    /*** *********************************************
     *
     *          A D D   OR   P O P U L A T E   R O W 
     *          ------------------------------------
@@ -665,7 +685,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
             );
         }
     }
-    /** *********************************************
+    /*** *********************************************
     *
     *           U P D A T E
     *           -----------
@@ -691,7 +711,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         );
     }
 
-    /** *********************************************
+    /*** *********************************************
     *
     *             D E L E T E
     *             -----------
@@ -707,17 +727,21 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         );
     }
 
+    sendOut(output);
+    return 'OK';
+
+
     /** *********************************************
     *
     * Send the output to the screen.
     * 
     * Output either contains text or is an object with 
-    * the body of html and footnote.
-    *  
+    * the body of html and footnote and oyher values to
+    * be sent to the view engine.
+    * @param {Object} output - can be a string or more normally an object
+    * @returns {string} Value returned by send-view.js
     * ******************************************** */
 
-    sendOut(output);
-    return;
 
     async function sendOut(output) {
         let viewData = {};
@@ -731,6 +755,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         viewData.heading = lang.homeHeading;
         let result = await sendView(res, 'admin', viewData);
         trace.log(result);
-        return;
+        return result;
     }
+
+
 }
+module.exports =admin;
