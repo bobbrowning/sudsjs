@@ -17,7 +17,7 @@ module.exports = async function (req, res) {
          console.log(`stdout: ${stdout}`);
          console.log(`stderr: ${stderr}`);
          output=`
-         <p><a href="/documentation/index.html" target="_blank">Docuentation generated</a></p>
+         <p><a href="/documentation/index.html" target="_blank">Documentation generated</a></p>
          <p><a href="${suds.mainPage}">Back to the main menu.</p>
          `;
          let result = sendView(res, 'admin', output);
