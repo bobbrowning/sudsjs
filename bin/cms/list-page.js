@@ -1,3 +1,6 @@
+
+
+
 /* ************************************************
 *
 * View a page from the webpages table.
@@ -48,7 +51,8 @@ module.exports = async function (req, res) {
 
   let html = `<p>Page ${req.params[slug]}</p>`;
   let headline='';
-
+  let titleTag='';
+  let metaDescription='';
   let slugValue = cms.homePage;
   if (req.params[slug]) { slugValue = req.params[slug] }
   trace.log(slugValue);

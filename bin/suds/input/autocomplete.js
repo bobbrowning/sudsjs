@@ -56,14 +56,15 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
 
   if (attributes.model) {
     source = attributes.model;
-    trace.log({model: source});
+    trace.log({model: source, id: fieldValue});
     // searching linked tble (the normal case)
     let tableData = tableDataFunction(source);
    
     let record = [];
     if (fieldValue) {
-      fieldValue = parseInt(fieldValue);   //Must be a number
+      fieldValue = db.standardiseId(fieldValue);   //Must be a valid key
       record = await db.getRow(source, fieldValue);     // populate record from database
+      trace.log(record);
       if (record.err) {
         errorMsg = `<span class="text-danger">${record.errmsg}</span>`;
       }

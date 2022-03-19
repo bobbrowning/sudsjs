@@ -106,6 +106,7 @@ module.exports = async function (req, res) {
         'emailTransport',
         'documentation',
         'headerTags',
+        'dbkey',
     ];
     for (let key of Object.keys(suds)) {
         console.log('checking suds: ', key);

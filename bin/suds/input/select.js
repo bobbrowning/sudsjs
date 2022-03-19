@@ -27,7 +27,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   let results = '';
 
   [values, labels] = await getLabelsValues(attributes, record);
-
+  trace.log(labels,values,fieldValue);
   results = `
           <select name="${fieldName}"  class="form-control" aria-label="${attributes.friendlyName}"  id="${fieldName}" style="width: ${attributes.input.width}" >
           <option value="">${lang.select}</option>`;

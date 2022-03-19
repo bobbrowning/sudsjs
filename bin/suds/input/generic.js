@@ -22,7 +22,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
    trace = require('track-n-trace');
   trace.log(arguments);
   let input = attributes.input;
-  if (attributes.model) { fieldType = 'number' };
+  
   if (typeof fieldValue == 'string' && fieldValue.includes('"')) { fieldValue = fieldValue.replace(/"/g, '&quot;') }
   let apicall = '';
   if (attributes.input.validations.api) {

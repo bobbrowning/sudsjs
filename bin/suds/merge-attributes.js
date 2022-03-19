@@ -58,10 +58,11 @@ module.exports = function (table, permission) {
     if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
 
     /** field type */
+    if (merged[key].primaryKey) {merged[key].type=suds.dbkey}
     if (!merged[key].type) { merged[key].type = 'string'; }
-    if (merged[key].model) { merged[key].type = 'number'; }
+    if (merged[key].model && suds.dbkey) { merged[key].type = suds.dbkey; }
 
-    if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean') {
+    if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean'  && merged[key].type != 'object') {
       console.error(`
     ************************* Fatal Error ******************
     Table: ${table} 

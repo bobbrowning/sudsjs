@@ -20,23 +20,24 @@ This will:
 
  
 
-SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL, and Postgesql.
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL, and Postgesql. There is also a basic MongoDB driver, however this currently only works with unstructured documents - no objects or arrays. 
 
 # Setup of the SUDS system plus test data.
 
-From the base directory for your applications.
 
+Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
 ```
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
-unzip master.zip
+```
+This downloads a file called master.zip.
+
+Unzip the file which creates a directory sudsjs-main.
+
+Run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.
+
+```
 bash sudsjs-main/install.sh
 ```
-Instead of curl you can download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the base directory for your  applications. 
-
-This procedure:
-1. downloads a file called master.zip.
-1. Unzips the file which creates a directory sudsjs-main.
-1. Runs the bash installation script.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.
 
 # Run the system as-is
 

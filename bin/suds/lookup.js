@@ -24,15 +24,14 @@ module.exports =
   async function (attributes, val) {
     if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
     trace.log(arguments);
-
     let display = false;
     let value = val;
     /** The field is a key to another table.  */
     if (attributes.model) {
       trace.log(attributes.model)
-      value = Number(value);
+      value = db.standardiseId(value);
       trace.log(attributes.model, value)
-      if (value && value != 'NaN') {
+      if (value && value != 'NaN' && value != '0') {
         let tableData = tableDataFunction(attributes.model);
         if (tableData.rowTitle) {
 

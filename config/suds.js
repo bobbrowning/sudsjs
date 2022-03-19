@@ -9,7 +9,7 @@ module.exports = {
  *  Primaty SUDSjs configuration file
  *
  ***************************************************** */
-  'SUDSjs configuration file': 0,
+ 
   title: 'SUDS test database',
 
   description: `This is a sample test database to illustrate the main features of SUDS.
@@ -90,7 +90,7 @@ module.exports = {
   authorisation: {
     table: 'user',
     /** Columns in authorisation table */
-    primaryKey: 'id',
+    primaryKey: 'id',                            /* *********** change to _id for mongodb ******************* */
     passwordHash: 'password',
     salt: 'salt',
     permissionSet: 'permission',
@@ -127,7 +127,7 @@ module.exports = {
 
   audit: {                                    // Audit trail file - logs every operation
     include: true,
-    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
+    trim: [100, 120],                       // Audit trail trimmed to 1000 records.
     log: ['ip', 'method', 'query', 'body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
     /** If omitted al operations are logged.  */
     operations: ['new', 'update', 'populate', 'delete', 'login', 'changepw'],  // can include 'list' and listrow'
@@ -462,23 +462,44 @@ bottom bar.`,
    * 
    *********************************************** */
 
-   dbDriver: 'db.js',   
+ 
+  
+/** **************** SQLite3 configuration ***************
+*
+*/
+dbDriver: 'db.js',
+dbkey: 'number',
+database: {
+ client: 'sqlite3',
+ connection: {
+   filename: './suds.db',
+ },
+ useNullAsDefault: true,
+}, 
 
-/** **************** Database configuration ***************
+
+/** **************** MongoDB configuration ***************
  * 
- */
-   database: {
-    client: 'sqlite3',
-    connection: {
-      filename: './suds.db',
-    },
-    useNullAsDefault: true,
-  },
+ *  don't forget the primary key in the security -> autorisation object needs changing
+ *  also the tables directory needs to be swapped for the mongodb set...
+ */ /*
+ dbDriver: 'db-mongo.js',
+ dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+ database: {
+    uri: `mongodb://localhost:27017`,
+    name: 'suds',
+   },
+*/
 
-  /** *********   mysql config ***************************
+
+
+
+  /** *********   Postgresql config ***************************
    * commented out as we are using sqlite for the demo version... 
    * However I have done some testing with mysql and postgresql 
  /*
+dbDriver: 'db.js',
+dbkey: 'number',
    database:
    {
      client: 'postgresql',
@@ -490,8 +511,11 @@ bottom bar.`,
      },
    },
 
+  /** *********   mysql config ***************************
 
-      database:
+ dbDriver: 'db.js',
+dbkey: 'number',
+     database:
       {
        client: 'mysql',
         connection: {
@@ -502,7 +526,7 @@ bottom bar.`,
         },
       },
 */
-/*   **************  end of commented section ************ */
+
 
 
 

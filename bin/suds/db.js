@@ -34,7 +34,8 @@ exports.totalRows = totalRows;
 exports.createRow = createRow;
 exports.deleteRow = deleteRow;
 exports.deleteRows = deleteRows;
-exports.updateRow = updateRow;
+exports.updateRow=updateRow;
+exports.standardiseId = standardiseId;
 
 let trace = require('track-n-trace');
 let suds = require('../../config/suds');
@@ -56,7 +57,30 @@ function connect() {
   globalThis.knex = require('knex')(suds.database);
 }
 
+/** *********************************************
+ * 
+ * Given a representation of the record key, returns
+ * the standard format. (in this case integer)
+ * @param {undefined} Record key
+ * 
+ * ******************************************** */
+ function standardiseId(id) {
+  if (typeof (id) == 'number') {return id}
+  else {return parseInt(id);}
+}
 
+/** *********************************************
+ * 
+ * Given a representation of the record key, returns
+ * the format that can be passed in a URL. Only
+ * relevant for MongoDB databases, so just returns
+ * the value.
+ * @param {undefined} Record key
+ * 
+ * ******************************************** */
+function stringifyId (id) {
+ return id;
+}
 /** ******************************************
  * 
  *        GET INSTRUCTION
@@ -480,7 +504,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     record = rows[i];
     for (let key of Object.keys(record)) {
       // standardise boolean value (on mysql = 0 or 1 type TINYINT)
-      if (attributes.type == 'boolean') {
+      if (attributes[key].type == 'boolean') {
         trace.log(`fixing boolean: ${key} - ${record[key]}`)
         if (record[key]) { record[key] = true } else { record[key] = false }
       }

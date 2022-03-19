@@ -65,7 +65,8 @@ module.exports = async function (
 
   const attributes = mergeAttributes(table, permission);  // attributes and extraattributes merged plus permissions
 
-  if (id && typeof id == 'string') { id = Number(id); }
+  if (id && typeof id == 'string' && suds.dbkey == 'number') { id = Number(id); }
+  if (id == '0') {id=0;}
   trace.log({
     text: 'Control information',
     table: table,
@@ -128,7 +129,7 @@ module.exports = async function (
       }
     }
   }
-  trace.log(record);
+  trace.log({record: record, id: id});
 
   /* *******************************************************
    * 
@@ -140,8 +141,8 @@ module.exports = async function (
   if (mode == 'populate') {                           // if this is not from a submitted form and not new
     record = await db.getRow(table, id);     // populate record from database
     if (record.err) {
-      console.log(`Can\'t find record ${id} on ${table}`, err);
-      return exits.success(`<h1>Unexpected error ${record.errmsg}</h1><p>More info on console</p>`);
+      console.log(`update-form.js reports: Can\'t find record ${id} on ${table}`);
+      return exits.success(`<h1>Unexpected error.</h1><p>Can\'t find record ${id} on ${table}</p>`);
     }
   }
 
@@ -222,7 +223,7 @@ module.exports = async function (
       }
 
 
-      if (attributes[key].type == 'number')      // Note mergeattributes makes type:number for link fields
+      if ( record[key] != undefined && attributes[key].type == 'number')      // Note mergeattributes makes type:number for link fields
       {
         if (record[key]) {
           record[key] = Number(record[key]);
@@ -230,6 +231,7 @@ module.exports = async function (
         else {
           record[key] = 0;
         }
+        trace.log(record[key]);
       }
 
       if (attributes[key].input && attributes[key].input.server_side) {
@@ -240,6 +242,7 @@ module.exports = async function (
         }
 
       }
+      trace.log({ after: key, value: record[key] });
     }
   }
 
@@ -272,11 +275,12 @@ module.exports = async function (
   let operation = '';
 
   if (mode == 'update' && errCount == 0) {
-    trace.log('update processing', mode);
+    trace.log('update pre-processing', mode,id);
     if (tableData.edit.preProcess) { await tableData.edit.preProcess(record) }
     var message = '';
     let operation;
     let rec = {};
+    trace.log('update/new processing', mode,id);
     /** 
      * 
      * If the record is on the database       
@@ -305,6 +309,7 @@ module.exports = async function (
        *  */
     } else {
       operation = 'addNew';
+      trace.log('new record');
       for (let key of Object.keys(attributes)) {
         if (attributes[key].primaryKey) { continue }
         if (record[key]) {
@@ -325,7 +330,11 @@ module.exports = async function (
           return("Error adding row - see console log");
         }
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
-        trace.log({created: record[tableData.primaryKey],key: tableData.primaryKey })
+        if (suds.dbtype == 'nosql'){
+          target=db.stringifyId(id);
+        }
+  
+        trace.log({created: record[tableData.primaryKey],key: tableData.primaryKey, id:id })
         if (auditId) {
           await db.updateRow('audit', { id: auditId, mode: 'new', row: id });
         }
@@ -703,7 +712,7 @@ ${attributes[key].helpText}`;
     let vals = 0;
     if (attributes[key].input.type == 'autocomplete') {
       form += `
-      value=Number(mainform.autoid_${key}.value);`;
+      value=mainform.autoid_${key}.value;`;
     }
     else {
       if (attributes[key].type == 'number') {

@@ -22,7 +22,7 @@ let validModes = [
 
 
 
-let friendlyName = `Central switching program.`; 
+let friendlyName = `Central switching program.`;
 /** **********************************************************************
  * The program checks whether the user is logged in. If not it links to 
  * the login screen. The login URL must be routed from '/login'. 
@@ -88,7 +88,7 @@ async function admin(req, res) {
      * If there is no user logged in then the permission set is 'guest'.
      * @name get_user_id
      ************************************************************** */
-     let get_user_id=true;
+    let get_user_id = true;
 
     let user = {};
     let logNotes = '';
@@ -166,7 +166,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
       * in a session variable. This session variable is cleared down on return to the menu.
       * @name main_menu
       * ******************************************** */
-     let main_menu;
+    let main_menu;
 
     if (!req.query.table && !req.query.report) {
         req.session.reportData = {};
@@ -263,7 +263,14 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     let attributes = tableData.attributes;
 
     let id = 0;                                  // record key
-    if (req.query.id) { id = parseInt(req.query.id) }
+    if (req.query.id) {
+        if (suds.dbType == 'nosql') {
+            id = req.query.id;
+        }
+        else {
+            id = parseInt(req.query.id);
+        }
+    }
 
     let open = '';
     if (req.query.open) { open = req.query.open }
@@ -339,8 +346,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     * config/suds.js.
     * 
     * ******************************************** */
-   let auditId = 0;
- 
+    let auditId = 0;
+
     /* Consolidate all parameters in one object. */
     let allParms = {};
     allParms = { ...req.query, ...req.body };
@@ -356,10 +363,10 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         for (let item of suds.audit.log) {
             requestData[item] = req[item];
         }
-        trace.log(table, page);
+        trace.log({ auditing: table, id: id, page: page });
 
         if (table && !page) {
-            trace.log(table, page);
+            trace.log(table, id);
             let rec = {
                 updatedBy: req.session.userId,
                 tableName: table,
@@ -389,9 +396,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
      * will recieve the output.  Then call the appropriate controller.
      * @name check_mode
      ************************************************************ */
-     let Check_Mode;
+    let Check_Mode;
 
-     
+
     let output = '';
 
 
@@ -417,6 +424,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         * to the search or sort ending back in the report object
         * 
         * ******************************************** */
+        trace.log('***** list *****');
         if (report) {
             trace.log('report');
             reportObject = reports[report];
@@ -595,6 +603,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     *  
     * ******************************************** */
     if (mode == 'listrow') {
+        trace.log('***** List Row *****');
 
         if (tableData.open) { open = tableData.open }
         if (tableData.opengroup) { openGroup = tableData.opengroup }
@@ -633,6 +642,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     if (mode == 'new'
         && tableData.recordTypeColumn
         && !req.body[tableData.recordTypeColumn]) {
+        trace.log('new withrecord type');
         output = await checkRecordType(
             permission,
             table,
@@ -644,6 +654,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     else {
 
         if (mode == 'new' || mode == 'populate') {
+            trace.log('new or populate', id);
             let record = {};
 
             /*       if (req.query.parent) {
@@ -663,13 +674,18 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 for (fieldName of fieldNames) {
                     let value = req.query[fieldName];
                     if (req.body[fieldName]) { value = req.body[fieldName] }
-                    if (attributes[fieldName].type == 'number') {
-                        value = Number(value);
+                    if (attributes[fieldName].primaryKey || attributes[fieldName].model) {
+                           value=db.standardiseId(value);
+                    }
+                    else {
+                        if (attributes[fieldName].type == 'number') {
+                            value = Number(value);
+                        }
                     }
                     record[fieldName] = value;
                 }
             }
-            trace.log(mode, record);
+            trace.log({ mode: mode, id: id, record: record });
             output = await updateForm(
                 permission,
                 table,
@@ -760,4 +776,4 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
 
 }
-module.exports =admin;
+module.exports = admin;

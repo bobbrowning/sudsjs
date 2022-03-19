@@ -53,6 +53,14 @@ module.exports = async function (req, res) {
     let goto='';
     if (next) {goto=`<script>document.location="${next}"</script>`}
     if (allParms.remember) { 
+        let val;
+        if (suds.dbtype =='nosql') {
+            val=db.stringifyId(req.session.userId);
+            trace.log(val);
+        }
+        else {
+            val=req.session.userId;
+        }
         res.cookie('user', userRec[aut.primaryKey], { maxAge: 1000 * 60 * 60 * suds.rememberPasswordExpire }) 
     }
     else {
@@ -67,8 +75,11 @@ module.exports = async function (req, res) {
         )) {
         await db.createRow('audit', { row: userRec[aut.primaryKey], mode: 'login', tableName: aut.table, updatedBy: userRec[aut.primaryKey] });
     }
-    let date = Date.now();
-    await db.updateRow(aut.table, { id: userRec[aut.primaryKey], lastSeenAt: date });
+    let upd={};
+     upd[aut.primaryKey]=userRec[aut.primaryKey];
+    upd.lastSeenAt=Date.now();
+    trace.log(aut.primaryKey, upd);
+   await db.updateRow(aut.table, upd);
 
     trace.log(output);
     let result = await sendView(res, 'admin', output);

@@ -975,14 +975,24 @@ async function listTable(
         output += `
          <td>`;
       }
+
+      let target;
+      if (suds.dbtype == 'nosql'){
+        target=db.stringifyId(record[tableData.primaryKey])
+      }
+      else {
+        target=record[tableData.primaryKey];
+      }
+
+
       if (!hideDetails) {
         output += `
-         <a href="${suds.mainPage}?table=${table}&mode=listrow&id=${record[tableData.primaryKey]}" title="${lang.listRowHelp}">${lang.TableListRow}</a>
+         <a href="${suds.mainPage}?table=${table}&mode=listrow&id=${target}" title="${lang.listRowHelp}">${lang.TableListRow}</a>
 &nbsp;`;
       }
       if (tableData.canEdit && !hideEdit) {
         output += `
-                     <a href="${suds.mainPage}?table=${table}&mode=populate&id=${record[tableData.primaryKey]}" title="${lang.listRowHelp}">${lang.TableEditRow}</a>`;
+                     <a href="${suds.mainPage}?table=${table}&mode=populate&id=${target}" title="${lang.listRowHelp}">${lang.TableEditRow}</a>`;
       }
       if ((tableData.canEdit && !hideEdit) || !hideDetails) {
         output += `
