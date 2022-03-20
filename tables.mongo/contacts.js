@@ -78,7 +78,7 @@ module.exports = {
   },
   attributes: {
     _id: {
-      friendlyName: 'Contact No',                            // Visible name 
+      friendlyName: 'Contact Id',                            // Visible name 
       primaryKey: true,
     },
     createdAt: {

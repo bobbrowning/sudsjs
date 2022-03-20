@@ -90,9 +90,7 @@ module.exports = {
     attributes: {
         _id: {
             friendlyName: 'Page Code',
-            type: 'object',
             primaryKey: true,
-            autoincrement: true,
         },
         createdAt: {
             friendlyName: 'Date created',

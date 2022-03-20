@@ -15,8 +15,6 @@ module.exports = {
   attributes: {
     _id: {
       friendlyName: 'Number',                            // Visible name 
-      type: 'object',
-      autoincrement: true,
       primaryKey: true,
     },
     createdAt: {

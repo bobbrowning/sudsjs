@@ -18,9 +18,7 @@ module.exports = {
         /*  Standard columns in all tables */
         _id: {
             friendlyName: 'Record key',
-            type: 'object',
             primaryKey: true,
-            autoincrement: true,
         },
         createdAt: {
             friendlyName: 'Date created',

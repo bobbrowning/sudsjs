@@ -97,10 +97,8 @@ module.exports = {
   attributes: {
     _id: {
       friendlyName: 'User No',
-      type: 'object',
-      primaryKey: true,
-      autoincrement: true,
-    },
+       primaryKey: true,
+   },
     createdAt: {
       friendlyName: 'Date created',
       type: 'number',
