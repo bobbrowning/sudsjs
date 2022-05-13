@@ -1,8 +1,12 @@
+
+
+
 /**
  * Contacts table schema
  *
  */
 
+const { stringify } = require('querystring');
 let db = require('../bin/suds/db-mongo');
 
 
@@ -20,16 +24,17 @@ module.exports = {
   /* The list property has the specification for the table listing */
   list: {
     /* When the table is listed, these are the columns shown */
-    columns: ['updatedAt', '_id', 'user', 'date', 'notes', 'closed', 'contactBy'],
+    columns: ['updatedAt', '_id', 'user', 'date', 'notes', 'closed'],
   },
 
   /* The row title function returns the first 40 characters of notes  */
   /*   plus the current date.                                            */
   rowTitle: function (record) {
     let date = new Date(record.date).toString().substring(0, 16);
-    let text = record.notes.substring(0, 40);
-    if (record.notes.length > 40) { text += ' ...' }
-    return `${text} - ${date}`;
+    //    let text = record.notes.substring(0, 40);
+    //    if (record.notes.length > 40) { text += ' ...' }
+    //    return `${text} - ${date}`;
+    return date
   },
 
 
@@ -65,7 +70,7 @@ module.exports = {
     postProcessDescription: `This function is run immediately after the record is updated.   
     It sets the last contact and next action in the user's record.`,
     postProcess: async function (record, operation) {
-      console.log('postprocess - updating user', record.user,record.id,record.nextActionDate,record.nextAction,)
+      console.log('postprocess - updating user', record.user, record.id, record.nextActionDate, record.nextAction,)
       await db.updateRow('user', {
         _id: record.user,
         lastContact: record._id,
@@ -124,61 +129,68 @@ module.exports = {
       description: 'Date (ISO Format)',
       example: '2020-10-29 13:59:58.000',
       input: {
-        type: 'date', 
-        width: '200px', 
+        type: 'date',
+        width: '200px',
         required: true,
         default: '#today',
       },
       display: { type: 'date' }
     },
-    contactBy: {
-      description: 'Contact person',
-      model: 'user',
-      friendlyName: 'Person who made the contact',
-      input: {
-        type: 'autocomplete',       
-        required: true,
-        limit: 5,                   // number of options returned
-        search: {                  // This can simply be a field to search 
-          andor: 'and',             // Or can be a full search specification  
-          searches: [
-            ['fullName', 'contains', '#input'],
-            ['userType', 'equals', 'I']
-          ],
+    contact: {
+      array: { type: 'multiple' },
+      type: 'object',
+      object: {
+        contactBy: {
+          description: 'Contact person',
+          model: 'user',
+          friendlyName: 'Person who made the contact',
+          input: {
+            type: 'autocomplete',
+            required: true,
+            limit: 5,                   // number of options returned
+            search: {                  // This can simply be a field to search 
+              andor: 'and',             // Or can be a full search specification  
+              searches: [
+                ['fullName', 'contains', '#input'],
+                ['userType', 'equals', 'I']
+              ],
+            },
+            minLength: 3,               // min characters entered before search (defaults to 2)
+            placeholder: 'Number or type name (case sensitive)',
+            idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
+            default: '#loggedInUser',    // 
+          }
         },
-        minLength: 3,               // min characters entered before search (defaults to 2)
-        placeholder: 'Number or type name (case sensitive)',
-        idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
-        default: '#loggedInUser',    // 
-      }
-    },
-    contacttype: {
-      description: 'Type of contact',
-      type: 'string',
-      friendlyName: 'Type of contact',
-      input: { type: 'radio' },
-      values: {
-        C: 'Cold call',
-        O: 'Phone out',
-        T: 'Phone in',
-        X: 'Text',
-        E: 'Email',
-        P: 'Face to face',
-        M: 'Post',
+        contactType: {
+          description: 'Type of contact',
+          type: 'string',
+          friendlyName: 'Type of contact',
+          input: { type: 'radio' },
+          values: {
+            C: 'Cold call',
+            O: 'Phone out',
+            T: 'Phone in',
+            X: 'Text',
+            E: 'Email',
+            P: 'Face to face',
+            M: 'Post',
+
+          },
+        },
 
       },
+
     },
 
     isFollowUp: {
       model: 'contacts',
       description: 'If this is a follow-up to another contact. This refers.',
       friendlyName: 'Contact number that this is a following up to',
-      input: {type: 'readonly'},
+      input: { type: 'readonly' },
     },
-
-
     notes:
     {
+      array: { type: 'multiple' },
       description: 'Notes from contact',
       type: 'string',
       input: {
@@ -188,11 +200,13 @@ module.exports = {
         placeholder: 'Please enter notes on the contact'
       },
       display: {
+        type: 'list',
         truncateForTableList: 30,
         maxWidth: '500px',
       },
     },
     result: {
+      array: { type: 'single' },
       description: 'How did it go',
       type: 'string',
       values: {
@@ -203,8 +217,9 @@ module.exports = {
         F: 'Failure',
       },
       input: {
-        type: 'select',
-      }
+        type: 'checkboxes',
+      },
+      display: { type: 'list' },
     },
     nextActionDate: {
       type: 'string',

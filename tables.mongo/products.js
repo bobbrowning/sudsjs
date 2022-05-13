@@ -11,29 +11,37 @@ module.exports = {
 
   rowTitle: function (record) {
     let suds = require('../config/suds')
-    if (record.price) {
-      let formatter = new Intl.NumberFormat(
-        suds.currency.locale,
-        {
-          style: 'currency',
-          currency: suds.currency.currency,
-          minimumFractionDigits: suds.currency.digits,
-        })
-      price = formatter.format(record.price);
+    let formatter = new Intl.NumberFormat(
+      suds.currency.locale,
+      {
+        style: 'currency',
+        currency: suds.currency.currency,
+        minimumFractionDigits: suds.currency.digits,
+      });
+    let price = '';
+    if (record.variants && record.variants.length) {
+      for (let i = 0; i < record.variants.length; i++) {
+        if (i > 0) { price += ' / ' }
+        price += formatter.format(record.variants[i].salesPrice);
+      }
     }
     else {
-      price = 'See variants';
+      price = 'TBD';
     }
-    return `${record.name} (No: ${record._id}) Guide retail price: ${price}`
+    return `${record.name} (Guide retail price(s): ${price})`
+  },
+
+  subschema: {
+    key: 'productGroup',
   },
   list: {
-    columns: ['_id', 'updatedAt', '_id', 'name', 'class', 'supplier', 'price'],
+    columns: ['name', 'productGroup', 'supplier', 'price'],
   },
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
   groups: {
     basic: {
       static: true,
-      columns: ['_id', 'name', 'price','supplier'],
+      columns: ['_id', 'name', 'productGroup','supplier'],
     },
     activityLog: {
       friendlyName: 'Activity Log',
@@ -44,7 +52,11 @@ module.exports = {
     },
     details: {
       friendlyName: 'Details',
-      columns: ['vatable', 'stockLevel', 'class', 'overview', 'image'],
+      columns: ['overview', 'image'],
+    },
+    variants: {
+      friendlyName: 'Variants',
+      columns: ['variants']
     },
     transactions: {
       friendlyName: 'Transactions',
@@ -53,7 +65,7 @@ module.exports = {
     },
     related: {
       friendlyName: 'Related Products',
-      columns: ['subproductOf', 'subproducts', 'variants'],
+      columns: ['associatedProducts'],
     },
     description: {
       friendlyName: 'Full description',
@@ -96,6 +108,22 @@ module.exports = {
         required: true,
       },
     },
+    productGroup: {
+      type: 'string',
+      array: { type: 'single' },
+      friendlyName: 'Product Groups',
+      description: 'Check those that apply',
+      model: 'subschema',
+      input: {
+        type: 'checkboxes',
+        search: {
+          searches: [
+            ['group', 'eq', 'productSpecifications'],
+          ]
+        }
+      },
+      display: { type: 'checkboxes' },
+    },
     supplier: {
       model: 'user',
       input: {
@@ -107,40 +135,9 @@ module.exports = {
         }
       }
     },
-    price: {
-      type: 'number',
-      friendlyName: 'Guide retail unit price',
-      input: {
-        width: '150px',
-        step: .01,
-
-      },
-      display: { currency: true },
-    },
     vatable: {
       type: 'boolean',
       description: 'Whether subject to VAT',
-    },
-    stockLevel: { type: 'number' },
-
-    class: {
-      type: 'string',
-      friendlyName: 'Market(s)',
-      description: 'Check those that apply',
-      values: {
-        H: 'Houshold',
-        S: 'Sports',
-        T: 'Toys',
-        A: 'Auto',
-        HW: 'Hardware',
-        AG: 'Agricultural',
-        O: 'Other'
-      },
-      input: {
-        type: 'checkboxes',
-      },
-      process: { JSON: true },
-      display: { type: 'checkboxes' },
     },
     overview: {
       type: 'string',
@@ -164,37 +161,86 @@ module.exports = {
       },
       display: { truncateForTableList: 50 },
     },
-    subproductOf: {
-      collection: 'productjoin',
-      via: 'subproduct',
-      friendlyName: 'Parent products ',
-      collectionList: {
-        columns: ['type', 'mainproduct'],                       // Heading to the listing Default to table name
-        heading: 'Parent products / Spare for',                         // Heading to the listing Default to table name
-        hideEdit: true,
-        hideDetails: true,
+
+
+    associatedProducts: {
+      type: 'object',
+      array: { type: 'multiple', bite: 2 },
+      object: {
+        product: {
+          friendyName: 'associated products',
+          model: 'products',
+          input: {
+            type: 'autocomplete',
+            search: 'name',
+          },
+        },
+        APType: {
+          friendlyName: 'Relationship to product',
+          type: 'string',
+          input: { type: 'checkboxes' },
+          array: { type: 'single' },
+          values: {
+            S: 'spare part of this product',
+            A: 'Often purchased together',
+
+          }
+        }
       },
+
     },
-    subproducts: {
-      collection: 'productjoin',
-      via: 'mainproduct',
-      friendlyName: 'Sub products / Spare parts',
-      collectionList: {
-        open: true,
-        columns: ['type', 'subproduct'],                       // Heading to the listing Default to table name
-        hideEdit: true,
-        hideDetails: true,
-      },
-    },
+
     variants: {
-      collection: 'productvariant',
-      via: 'product',
-      friendlyName: 'Product variants',
-      collectionList: {
-        open: true,
-        columns: ['name', 'price'],
+      type: 'object',
+      friendlyName: 'Variant',
+      array: { type: 'multiple', bite: 5 },
+      object: {
+        friendlyName: { type: 'string' },
+        SKU: {
+          type: 'string',
+          description: `Only include SKU if there are no subvariants`
+        },
+        description: {
+          type: 'string',
+          input: { type: 'textarea' },
+          price: {
+            type: 'number',
+          }
+        },
+        salesPrice: {
+          type: 'number',
+          friendlyName: 'Guide retail unit price',
+          input: {
+            width: '150px',
+            step: .01,
+          },
+          display: { currency: true },
+        },
+        costPrice: {
+          type: 'number',
+          friendlyName: 'Cost price',
+          input: {
+            width: '150px',
+            step: .01,
+          },
+          display: { currency: true },
+        },
+        subvariants: {
+          type: 'object',
+          friendlyName: 'Colour',
+          array: { type: 'multiple', bite: 5 },
+          object: {
+            friendlyName: { type: 'string' },
+            SKU: {
+              type: 'string',
+            },
+
+          }
+        }
       },
+
     },
+
     purchases: {
       collection: 'purchaseorderlines',
       via: 'product',

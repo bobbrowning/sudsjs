@@ -25,7 +25,7 @@ module.exports = {
     return `${record.units} X ${product.name} for ${customer.fullName}`;
   },
  /**  This allows you to vary the input form depending on the record type.  */
- recordTypeColumn: 'product',
+ // recordTypeColumn: 'product',
 
 
   edit: {
@@ -104,29 +104,13 @@ module.exports = {
         },
         placeholder: 'Number or type name (case sensitive)',
         idPrefix: 'Product number: ',
-        onchange: `
-        let title=ui.item.label;
-        console.log(title);
-        if (title) {
-          let array=title.split('£'); 
-          console.log('start',array[1]);
-          document.getElementById('price').value=array[1];
-       }`,
       },
       display: {
         linkedTable: 'products',      // if omitted will be picked up from the model
         makeLink: true,             // hypertext link to the linked table
       },
     },
-    variant: {
-      model: 'productvariant',
-      input: {
-        type: 'select',
-        search: { searches: [['product', 'eq', '$product']] },
-
-      }
-    },
-    units: {
+     units: {
       type: 'number',
       //     required: true,
       description: 'Number of units ordered',
