@@ -2,14 +2,14 @@
 
 module.exports = {
 
-/** ****************************************************
- *
- *  config/suds.js  
- * 
- *  Primaty SUDSjs configuration file
- *
- ***************************************************** */
- 
+  /** ****************************************************
+   *
+   *  config/suds.js  
+   * 
+   *  Primaty SUDSjs configuration file
+   *
+   ***************************************************** */
+
   title: 'SUDS test database',
 
   description: `This is a sample test database to illustrate the main features of SUDS.
@@ -51,12 +51,19 @@ module.exports = {
     auto: '../bin/suds/api/autocomplete',
     lookup: '../bin/suds/api/lookup',
     unique: '../bin/suds/api/unique',
+    json: '../bin/suds/api/json',
     createtables: '../bin/suds/create-table',
     register: '../bin/suds/register',
     logout: '../bin/suds/logout',
     forgotten: '../bin/suds/forgotten',
     docs: '../bin/docs.js',
+    /** Custom  */
+    getvariants: '../bin/custom/get-variants',
+    getsubvariants: '../bin/custom/get-subvariants',
   },
+
+
+
   /** POST requests */
   post: {
     changepw: '../bin/suds/change-password-process',
@@ -86,6 +93,8 @@ module.exports = {
   *
   ***************************************************** */
   superuser: 'admin@admin.demo',                //  This person is always superuser.
+
+  csrf: true,
 
   authorisation: {
     table: 'user',
@@ -206,7 +215,8 @@ module.exports = {
 
   defaultInputFieldWidth: '480px',
 
-
+  /** Only applies to  'required' validation on generic fields */
+  useHTML5Validation: false,
 
 
   /**  
@@ -366,6 +376,7 @@ bottom bar.`,
         'p',    // shortcut for {name: 'p', element: 'p'}
         'h1',
         'h2',
+        'h3',
         /** example of custom style */
         {
           name: 'Divright',
@@ -462,35 +473,36 @@ bottom bar.`,
    * 
    *********************************************** */
 
- 
+
+
+  /** **************** SQLite3 configuration ***************
+  *
+  */
   
-/** **************** SQLite3 configuration ***************
-*
-*/
-dbDriver: 'db.js',
-dbkey: 'number',
-database: {
- client: 'sqlite3',
- connection: {
-   filename: './suds.db',
- },
- useNullAsDefault: true,
-}, 
+  dbDriver: 'db.js',
+  dbkey: 'number',
+  database: {
+   client: 'sqlite3',
+   connection: {
+     filename: './suds.db',
+   },
+   useNullAsDefault: true,
+  }, 
+  
 
-
-/** **************** MongoDB configuration ***************
- * 
- *  don't forget the primary key in the security -> autorisation object needs changing
- *  also the tables directory needs to be swapped for the mongodb set...
- */ /*
- dbDriver: 'db-mongo.js',
- dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
- database: {
+  /** **************** MongoDB configuration ***************
+   * 
+   *  don't forget the primary key in the security -> autorisation object needs changing
+   *  also the tables directory needs to be swapped for the mongodb set...
+   
+  dbDriver: 'db-mongo.js',
+  dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+  database: {
     uri: `mongodb://localhost:27017`,
     name: 'suds',
-   },
-*/
+  },
 
+*/
 
 
 
@@ -530,65 +542,72 @@ dbkey: 'number',
 
 
 
-/** List of tables in the database.. */
-tables: [
-  'user',
-  'audit',
-  'webpages',
-  'contacts',
-  'products',
-  'salesorders',
-  'salesorderlines',
-  'purchaseorders',
-  'productjoin',
-  'purchaseorderlines',
-  'fieldtypes',
-  'productvariant',
-],
+  /** List of tables in the database.. */
+  tables: [
+    'user',
+    'audit',
+    'webpages',
+    'contacts',
+    'products',
+    'salesorders',
+    'salesorderlines',
+    'purchaseorders',
+    'productjoin',
+    'purchaseorderlines',
+    'fieldtypes',
+    'productvariant',
+    'subschema',
+  ],
 
-/** 
- * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
- * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
- *    SELECT FROM table WHERE table.col=xxx  
- * 
- * Theoretically this means you can use SQL reserved words as column names but I am 
- * not convinced this always works with sqlite. 
- * 
- * Qualified names  doesn't seem to work at all with postgresql so try quoting 
- * them below instead.
- * 
- * To avoid these issues, use lower case and avoid reserved words. 
- * 
- */
 
-qualifyColName: false,   
+  /** Subschema Groups */
+  subSchemaGroups: [
+    'productSpecifications',
+  ],
 
-/** This puts quotes around the column name in where instructions.
- * You may need this if your column names include upper case because 
- * postgresql folds all column names to lower case unless quoted.
- * 
- */
-quoteColName: true,
+  /** 
+   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
+   * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
+   *    SELECT FROM table WHERE table.col=xxx  
+   * 
+   * Theoretically this means you can use SQL reserved words as column names but I am 
+   * not convinced this always works with sqlite. 
+   * 
+   * Qualified names  doesn't seem to work at all with postgresql so try quoting 
+   * them below instead.
+   * 
+   * To avoid these issues, use lower case and avoid reserved words. 
+   * 
+   */
 
-/** 
- * This provides session middleware. See https://www.npmjs.com/package/express-session
- * 
- * You will need to replace it depending on what database you are using    
- * see https://www.npmjs.com/package/express-session#compatible-session-stores
- * 
- * Warning: connect.session() MemoryStore used here is not designed 
- * for a production environment, as it will leak memory, and
- *  will not scale past a single process.
- * 
- * */
- session: function () {
-  let session = require('express-session')
-   return session ({
-    secret: 'head shoe',
-    resave: 'false',
-   saveUninitialized: true,
-});
-},
+  qualifyColName: false,
+
+  /** This puts quotes around the column name in where instructions.
+   * You may need this if your column names include upper case because 
+   * postgresql folds all column names to lower case unless quoted.
+   * 
+   */
+  quoteColName: true,
+
+  /** 
+   * This provides session middleware. See https://www.npmjs.com/package/express-session
+   * 
+   * You will need to replace it depending on what database you are using    
+   * see https://www.npmjs.com/package/express-session#compatible-session-stores
+   * 
+   * Warning: connect.session() MemoryStore used here is not designed 
+   * for a production environment, as it will leak memory, and
+   *  will not scale past a single process.
+   * 
+   * */
+  session: function () {
+    let session = require('express-session')
+    return session({
+      secret: 'head shoe',
+      resave: 'false',
+      saveUninitialized: true,
+    });
+  },
 
 
 
@@ -608,7 +627,7 @@ quoteColName: true,
 
   },
 
- 
+
 
   /**
    * 
@@ -638,6 +657,7 @@ quoteColName: true,
   <!-- ------------------- suds styles and routines ------------ -->
   <link rel="stylesheet" href="/stylesheets/suds.css">
   <script src="/javascripts/suds.js"></script>
+  <script src="/javascripts/custom.js"></script>
    <!-- -------------------------------------------------------- -->
   `,
 

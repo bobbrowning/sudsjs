@@ -42,10 +42,11 @@ let suds = require('../../config/suds');
 const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 let lang = require('../../config/language')['EN'];
-const { MongoClient } = require("mongodb");
+const { MongoClient, ReadConcernLevel } = require("mongodb");
 let ObjectId = require('mongodb').ObjectId;
 const { traceDeprecation } = require('process');
 const { syncBuiltinESMExports } = require('module');
+const { readFileSync } = require('fs');
 
 /** *********************************************
  * 
@@ -152,19 +153,23 @@ function getInstruction(table, spec) {
     let searchField = searches[i][0];
     let compare = searches[i][1];
     let value = searches[i][2];
-    if (tableData.attributes[searchField].model || searchField == '_id') { value = ObjectId(value) }
+    if (tableData.attributes[searchField].model || searchField == '_id') {
+      if (typeof (value) == 'string') {
+        try { value = ObjectId(value) } catch (err) { trace.error(table, tableData.attributes[searchField].qualifiedName, value, err) }
+      }
+    }
     let qfield = searchField;
     trace.log({ searchField: searchField, qfield: qfield, compare: compare, value: value })
 
     if (compare == 'startsWith' || compare == 'startswith') {
       let re = new RegExp(`${value}.*`);
       item = { $regex: re }
-      continue;
+      //      continue;
     }
     if (compare == 'contains' || compare == 'like') {
       let re = new RegExp(`.*${value}.*`);
       item = { $regex: re }
-      continue;
+      //     continue;
     }
     if (compare == 'equals' || compare == 'eq') { item = value }
     if (compare == 'less' || compare == 'lt') { item = { $lt: value } }
@@ -212,6 +217,17 @@ function fixWrite(table, record, attributes, mode) {
   }
   for (let key of Object.keys(attributes)) {
     if (key == '_id') { continue; }
+    if (attributes[key].type == 'object') {
+      if (attributes[key].object.type == 'dictionary') {
+        rec[key] = fixWrite(table, record[key], attributes[key].object.elements, mode);
+        continue;
+      }
+    }
+    trace.log(attributes[key].array, record[key]);
+    if (attributes[key].array && !Array.isArray(record[key])) {
+      record[key] = [record[key]];
+    }
+    trace.log(record[key]);
     //   if (!attributes[key]) { continue }   // skip field if not in database
     if (attributes[key].collection) { continue }
     trace.log({ key: key, type: attributes[key].type, val: record[key], num: Number(record[key]), isNan: isNaN(rec[key]), level: 'verbose' })
@@ -250,15 +266,46 @@ function fixWrite(table, record, attributes, mode) {
  * 
  * *********************************************** */
 function fixRead(record, attributes) {
-  record._id = record._id.toString();
+  trace.log(record);
+  if (record._id) { record._id = record._id.toString(); }
   for (let key of Object.keys(record)) {
-    if (attributes[key].model && record[key]) {
-      record[key] = record[key].toString();
+    trace.log({ key: key, data: record[key], level: 'verbose' })
+    if (!attributes[key]) { continue };                          // do nothing if item not in schema
+    if (attributes[key].type == 'object' && attributes[key].object.type == 'dictionary') {
+      fixRead(record[key], attributes[key].object.elements)
     }
+    else {
+      if (attributes[key].array) {
+        trace.log(record[key]);
+        if (!Array.isArray(record[key])) {
+          if (record[key]){
+          record[key] = [record[key]];
+          }
+          else 
+          {
+            record[key]=[];
+          }
+        }
+        for (let i=0; i<record[key].length; i++)
+        {
+          if (attributes[key].type == 'object' && attributes[key].object.type == 'dictionary') {
+            fixRead(record[key][i], attributes[key].object.elements)
+          }
+          if (attributes[key].model && record[key][i]) {
+            record[key][i] = record[key][i].toString();
+          }  
+        }
+      }
+      else {
+        if (attributes[key].model && record[key]) {
+          record[key] = record[key].toString();
+          trace.log({ key: key, level: 'verbose' })
+        }
+      }
+    }
+    trace.log({ key: key, data: record[key], level: 'verbose' })
   }
-
 }
-
 /** 
  * 
  * Count Rows
@@ -326,7 +373,8 @@ async function totalRows(table, spec, col) {
   catch (err) {
     console.log(err);
   }
-  trace.log(total);
+  trace.log({total:total});
+  if (!total.length) return(0);
   return (total[0].result);
 }
 
@@ -457,13 +505,18 @@ async function deleteRow(permission, table, id) {
  * @param {string} table 
  * @param {object} record 
  */
-async function updateRow(table, record) {
+async function updateRow(table, record,subschemas) {
   trace.log({ inputs: arguments })
   const collection = database.collection(table);
-  let attributes = mergeAttributes(table);
+  let attributes = mergeAttributes(table,'',subschemas);
   let rec = fixWrite(table, record, attributes, 'update');
   let filter = { _id: rec._id };
-  await collection.updateOne(filter, { $set: rec })
+  try {
+    await collection.updateOne(filter, { $set: rec })
+  }
+  catch (err) {
+    console.log(`Problem updating ${rec._id}`, err);
+  }
   trace.log({ op: 'update ', table: table, filter: filter, record: rec });
 
 }
@@ -499,7 +552,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     instruction = spec.instruction;
   }
   trace.log({ instruction: instruction, limit: limit, offset: offset });
- if (sortKey) {
+  if (sortKey) {
     let sortObj = {};
     if (direction = 'DESC') { sortObj[sortKey] = -1 } else { sortObj[sortKey] = 1 }
     options['sort'] = sortObj;
@@ -511,13 +564,13 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     options['skip'] = offset;
   }
 
-  trace.log(options);
+  trace.log(instruction, options);
   rows = await collection.find(instruction, options).toArray();
 
   //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
-  trace.log(rows, { level: 'verbose' });
+  trace.log(rows);
   let attributes = require(`../../tables/${table}`)['attributes'];
-  trace.log(attributes, { level: 'verbose' });
+  trace.log(attributes, { level: 'silly' });
   for (let i = 0; i < rows.length; i++) {
     fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed
     trace.log('fixed read', rows[i], { level: 'verbose' });
@@ -534,22 +587,23 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
  */
 async function getRow(table, val, col) {
   trace.log({ inputs: arguments })
-  const collection = database.collection(table);
 
   let tableData = tableDataFunction(table);
-  if (!col) { col = tableData.primaryKey };
-  if (col == '_id' && typeof val == 'string') { val = ObjectId(val) }
-  trace.log(col, val);
-  let spec = { searches: [[col, 'eq', val]] };
+  let spec;
+  if (typeof val == 'object') {
+    spec = val;
+  }
+  else {
+    if (!col) { col = tableData.primaryKey };
+    if (col == '_id' && typeof val == 'string') { val = ObjectId(val) }
+    trace.log(col, val);
+    spec = { searches: [[col, 'eq', val]] };
+  }
   trace.log(spec);
-  query = getInstruction(table, spec);
-  trace.log(query);
-  record = await collection.findOne(query);
-  trace.log({ table: table, value: val, recordarray: record });
-  let attributes = require(`../../tables/${table}`)['attributes'];
-  trace.log(attributes, { level: 'verbose' });
-  if (record == null) { record = { err: 1 } }
-  else { fixRead(record, attributes); }
+  let records = await getRows(table, spec);
+  trace.log({ table: table, value: val, records: records });
+  if (!records.length) { record = { err: 1 } }
+  else { record = records[0] }
   trace.log('fixed read', record);
   return (record);
 

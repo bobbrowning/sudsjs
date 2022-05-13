@@ -24,26 +24,52 @@ let mergeAttributes = require('./merge-attributes');     // Standardises attribu
 let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
 let classes = require('../../config/classes');           // Links class codes to actual classes
 let lang = require('../../config/language')['EN'];       // Object with language data
-let db = require('./'+suds.dbDriver);                                // Database routines
+let db = require('./' + suds.dbDriver);                                // Database routines
 let listRow = require('./list-row');                     // List one row of the table plus a limited number of child roecords
 let createField = require('./create-field');             // Creates an input field
 let displayField = require('./display-field');           // displays a column value
+let addSubschemas = require('./subschemas');
 let fs = require('fs');
+const { takeCoverage } = require('v8');
 
 /** Data Division */
 module.exports = async function (
-  permission,
-  table,
-  id,
-  mode,
-  record,
-  loggedInUser,
-  open,
-  openGroup,
-  files,
-  auditId,
-  csrf,
+  permission,                            // Permission set of the current user
+  table,                                 // table / collection name
+  id,                                    // record key (for MongoDB this is the hex string not the object)
+  mode,                                  // Operation to be performed
+  entered,                                // record containing any presets
+  loggedInUser,                          // ID of the logged in user
+  open,                                  // Table/collection name of the child list to be opened
+  openGroup,                             // Group to be opened
+  files,                                 // file or files to be uploaded from the req object
+  subschemas,                            // Array of subschema keys
+  auditId,                               // ID of the audit record - updated with ID for new records
+  csrf,                                  // csrf code
 ) {
+
+  /*** Globals */
+
+  let tableData;                      // Standardised data from the schema excluding the attributes
+  let tableName;
+  let attributes;                      // Standardised attributes data form the schema.
+  let err;
+  let errors = {};                          // Errors from validation
+  let errCount;                        // Number of errors
+  let form;
+  let formList;
+  let openTab;
+  let columnGroup;
+  let visibleGroup;
+  let groups;
+  let hideGroup;
+  let tabs;
+  let formData = {};
+  let headerTags = '';
+  let mainPage;
+  let operation = '';
+  let message = '';
+
 
   /** Procedure division */
   if (arguments[0] == 'documentation') { return ({ friendlyName: friendlyName, description: description }) }
@@ -57,16 +83,16 @@ module.exports = async function (
   *   set up the data
   *
   ************************************************ */
-  let mainPage = suds.mainPage;
+  mainPage = suds.mainPage;
   if (!mainPage) { mainPage = '/'; }
-  let tableData = tableDataFunction(table, permission);
+  tableData = tableDataFunction(table, permission);
 
   tableName = tableData.friendlyName;
-
-  const attributes = mergeAttributes(table, permission);  // attributes and extraattributes merged plus permissions
+  trace.log(permission);
+  attributes = mergeAttributes(table, permission, subschemas);  // attributes and extraattributes merged plus permissions
 
   if (id && typeof id == 'string' && suds.dbkey == 'number') { id = Number(id); }
-  if (id == '0') {id=0;}
+  if (id == '0') { id = 0; }
   trace.log({
     text: 'Control information',
     table: table,
@@ -81,22 +107,297 @@ module.exports = async function (
     return `<p>Sorry - you don't have permission to edit ${tableData.friendlyName} (${table})`;
   }
 
-  /* *******************************************************
+  /**  */
+  let record = unpackInput(entered, {}, attributes, '');
+  trace.log({ stage: 'unpacked', level: 'min' });
+  trace.log(record);
+
+  trace.log({ subschemas: subschemas });
+
+
+  switch (mode) {
+    case 'new':
+      err = blankFormData();
+      if (err) { return (err) }
+      trace.log(record);
+      break;
+    case 'populate':
+      trace.log({ subschemas: subschemas });
+      record = await populateFormData()
+      if (record.err) { return (record.errtext) }
+      trace.log({ stage: 'populated record', level: 'min' });
+      trace.log({ subschemas: subschemas, attributes: attributes, maxdepth: 2 })
+      break;
+    case 'update':
+      errors = await validateData();
+      trace.log({ stage: 'validated', level: 'min' });
+      errCount = Object.keys(errors).length;
+      break;
+  }
+
+  trace.log({ subschemas: subschemas, record: record });
+
+  if (mode == 'update' && errCount == 0) {
+    await updateDatabase()
+    trace.log({ stage: 'Database updated', level: 'min' });
+
+    return postProcess();
+  }
+
+
+  trace.log({
+    table: table,
+    id: id,
+    mode: mode,
+    record: record,
+    errors: errors,
+    errCount: errCount,
+    openGroup: openGroup,
+  });
+
+
+  /*** 
+   * 
+   * Now create the input form. Note that if we were updating then the program switched 
+   * to listing the row in the previous stage.
+   * 
+   * 
+   */
+  if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
+
+  form = '';
+
+  formList = fieldList(attributes, false);
+  trace.log({ formList: formList });
+
+
+  openTab = '';
+  columnGroup = {};
+  visibleGroup = {};
+  hideGroup = {};
+  tabs = [];
+  if (tableData.groups) {
+    await createFormGroups()
+  } else {
+    tableData.groups = { other: { static: true, } };
+    tableData.groups.other.columns = formList;
+  }
+  groups = tableData.groups;
+  trace.log({ groups: groups });
+
+
+  /*** *******************************************************
+   * 
+   *  loop hrough fields in top level storing field title and html.
+   * 
+   ****************************************************** */
+
+
+
+  for (const key of formList) {
+    trace.log(key, record[key]);
+    if (attributes[key].array && attributes[key].array.type != 'single') {
+      [formData[key], headerTag] = await createFieldArray(key, attributes[key], record[key], '');
+    }
+    else {
+      if (attributes[key].type == 'object') {
+        [formData[key], headerTag] = await createFieldObject(key, attributes[key], record[key], '');
+      }
+      else {
+        trace.log(key, record[key]);
+        [formData[key], headerTag] = await createOneFieldHTML(key, attributes[key], record[key], key, '');
+      }
+    }
+    //  [formData[key], headerTag] = await createFieldHTML(key, attributes[key], record[key], '');
+    trace.log(key, formData[key], headerTag);
+    trace.log({ stage: `form field ${key} created`, level: 'min' });
+    if (!headerTags.includes(headerTag)) {
+      headerTags += headerTag;
+    }
+  }
+  trace.log({ stage: 'form fields created', level: 'min' });
+
+  await createValidationScript();
+  trace.log({ subschemas: subschemas });
+  await createForm();
+  trace.log({ stage: 'form created', level: 'min' });
+
+
+  let footnote = '';
+  if (mode != 'new') {
+    let created = new Date(record['createdAt']).toDateString();
+    let updated = new Date(record['updatedAt']).toDateString();
+    footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}`;
+  }
+  else { footnote = ''; }
+  trace.log(form);
+  trace.log({ stage: 'exiting update-form.js', level: 'min' });
+
+  return ({ output: form, footnote: footnote, headerTags: headerTags });
+  //  return exits.success(form);
+
+  /*** **************************************** Functions ********************************** */
+
+
+
+  /** ********************************************************
   * 
-  * Set defaults for blanck form.  
+  *  Unpack Input
+  * 
+  * Process unstructured data from the form and produce an object
+  * reflecting the record structure defined in the schema.
+  * 
+  * The function loops through the top-level data. It is not called
+  * recursively.
+  * 
+  * @returns {object} Record
+  ***************************************************** */
+
+  function unpackInput() {
+    trace.log(entered);
+    let formList = fieldList(attributes, true);
+    let record = {};
+    for (let key of formList) {
+      trace.log(key, attributes[key]);
+      /** array type 'single' refers to checkboxes, where the array is treated as a single field
+       * that has multiple values. There may be other types of input in the future.   */
+      if (attributes[key].array) {
+        record[key] = unpackArray(key, attributes[key]);
+      }
+      else {
+        if (attributes[key].type == 'object') {
+          record[key] = unpackObject(key, attributes[key]);
+        }
+        else {
+          trace.log(key, entered[key], typeof entered[key]);
+          if (typeof entered[key] != 'undefined') {
+            record[key] = entered[key];
+          }
+        }
+      }
+    }
+    trace.log(record);
+    //  throw 'stopped'
+    return record;
+  }
+
+
+  /** ********************************************************
+   * 
+   * Ths function fills an array from the input data.  Array data field names
+   * have a numeric postfix starting 1, e.g. user.1, user.2 etc.
+   * 
+   * If this is further down the structure the name may be qualiufied
+   * e.g. user.firstname - this is given in the index field. 
+   * So an array item that is part of an object that is part of another array might
+   * be name.2.firstame.3 for example.
+   * 
+   * @param(string) key of the array being unpacked
+   * @param {string} index -  The prefix to the field name 
+   * @param {string} attributes - the arttributes of this field only
+   ****************************************************** */
+  function unpackArray(fieldName, attributes) {
+    let arry = [];
+    let bite = 10;
+    if (attributes.array.bite) { bite = attributes.array.bite }
+    let length = parseInt(entered[fieldName + '.length']);
+    trace.log({ length: length });
+    let next = 0;
+    for (let i = 0; i < length; i++) {
+      let subFieldName = `${fieldName}.${i + 1}`
+      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName] })
+      if (attributes.type != 'object') {
+        /** Skip blank entries. */
+        if (!entered[subFieldName]) { continue }
+        arry[next++] = entered[subFieldName];
+      }
+      else {
+        arry[next++] = unpackObject(subFieldName, attributes);
+      }
+
+    }
+    trace.log(arry);
+    return arry;
+  }
+
+
+  function unpackObject(fieldName, attributes) {
+    let obj = {};
+    trace.log({ fieldNme: fieldName, attributes: attributes });
+
+    for (let subkey of Object.keys(attributes.object)) {
+      let subFieldName = fieldName + '.' + subkey;
+      trace.log({ subkey: subkey, subFieldName: subFieldName, entered: entered[subFieldName], type: attributes.object[subkey].type });
+      trace.log(attributes.object[subkey].array);
+      if (attributes.object[subkey].array) {
+        obj[subkey] = unpackArray(subFieldName, attributes.object[subkey]);
+      } else {
+        if (attributes.object[subkey].type == 'object') {
+          obj[subkey] = unpackObject(subFieldName, attributes.object[subkey]);
+        }
+        else {
+          if (entered[subFieldName]) {
+            obj[subkey] = entered[subFieldName]
+          }
+          else {
+            obj[subkey] = ''
+          }
+          trace.log(subkey, obj[subkey]);
+        }
+      }
+    }
+    trace.log(obj);
+    return obj;
+  }
+
+  /**
+   * 
+   * Ths function fills an array from the input data.  The key 
+   * is the qualified field name including index. 
+   * 
+   * @param {object} entered 
+   * @param {string} key 
+ 
+   function fillObject(entered, key, index,attributes) {
+    let obj={};  
+    for (let subkey of Object.keys(attributes[key].object) {
+         trace.log(key,subkey,Index);
+ 
+        if (attributes[subkey].type != 'object') {
+        obj[subkey]=entered[key+'.'+Index]
+        }
+        else {
+          arry[i]=fillObject(entered,key,index,attributes);
+        }
+ 
+      }
+      trace.log(arry);
+      return arry;
+  }
+ 
+*/
+
+
+  /** *******************************************************
+  * 
+  * Set defaults for blank form in the global: record.  
   * There may be some pre-populated values in the record.
   * Othewise there may be values such as #today, #today+5
   * or #loggedInUser
+  * @param {object} Attributes
+  * @param {object} Mainly empty record, but may contain any pre-set data
+  * @returns (string) Any errors. record is updated inb-place.
   * 
   ****************************************************** */
-  if (mode == 'new') {
+  function blankFormData() {
+    let err = '';
     for (let key of Object.keys(attributes)) {
       if (attributes[key].collection) { continue; }  // not intersted in collections
       let value;
       if (!record[key]) {                           // might be pre-set
         value = attributes[key].input.default;
       }
-      trace.log({ mode: mode, key: key, value: value, level: 'verbose' });
+      trace.log({ key: key, value: value, level: 'verbose' });
       if (value && typeof value == 'string') { trace.log(value.substring(6, 7)); }
       if (value) {
         if (value == '#loggedInUser') {
@@ -128,36 +429,54 @@ module.exports = async function (
         }
       }
     }
+    trace.log(record);
+    return (err);
   }
-  trace.log({record: record, id: id});
 
-  /* *******************************************************
+
+  /**
    * 
-   *  Populate data to update record or display
-   * 
-   ****************************************************** */
+   * Populate data to update record or display
+   * @returns {object} Record retrieved
+   */
+  async function populateFormData() {
+    let err = '';                          // if this is not from a submitted form and not new
+    trace.log(table, id);
+    trace.log(arguments)
+    if (!id) { return {} }
+    let record = await db.getRow(table, id);     // populate record from database
+    if (tableData.subschema && record[tableData.subschema.key] && record[tableData.subschema.key].length) {
+      subschemas = record[tableData.subschema.key];
 
+      additionalAttributes = await addSubschemas(subschemas)
+      attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
+      trace.log({ subschemas: subschemas, attributes: attributes, maxdepth: 2 })
+    }
+    trace.log({ subschemas: subschemas });
 
-  if (mode == 'populate') {                           // if this is not from a submitted form and not new
-    record = await db.getRow(table, id);     // populate record from database
+    trace.log({ record: record, id: id });
     if (record.err) {
-      console.log(`update-form.js reports: Can\'t find record ${id} on ${table}`);
-      return exits.success(`<h1>Unexpected error.</h1><p>Can\'t find record ${id} on ${table}</p>`);
+      record.errtext = `update-form.js reports: Can\'t find record ${id} on ${table}`;
+      trace.error(record);
+      return (record);
+    }
+    else {
+      trace.log(record);
+      return record
     }
   }
+
 
 
   /** *******************************************************
    * 
    * Validate / process data  from input  if we are 
-   * coming from submitted form  
+   * coming from submitted form
+   * @retuns {object} Errors - key/error
    * 
    ****************************************************** */
-  let errors = {};
-  let errCount = 0;
-  trace.log(record);
-
-  if (mode == 'update') {
+  async function validateData() {
+    let errors = {};
     for (let key of Object.keys(attributes)) {
       if (!attributes[key].canEdit) { continue; }  // can't process if not editable
       if (attributes[key].collection) { continue; }  // not intersted in collections
@@ -223,7 +542,7 @@ module.exports = async function (
       }
 
 
-      if ( record[key] != undefined && attributes[key].type == 'number')      // Note mergeattributes makes type:number for link fields
+      if (record[key] != undefined && attributes[key].type == 'number')      // Note mergeattributes makes type:number for link fields
       {
         if (record[key]) {
           record[key] = Number(record[key]);
@@ -238,27 +557,15 @@ module.exports = async function (
         let err = attributes[key].input.server_side(record);
         if (err) {
           errors[key] = `<span class="${classes.error}">${err}</span>`;
-          errCount++;
         }
 
       }
       trace.log({ after: key, value: record[key] });
     }
+    return errors;
   }
 
 
-  // delete record.mode;                                     // but remove item we don't want
-
-
-  trace.log({
-    table: table,
-    id: id,
-    mode: mode,
-    record: record,
-    errors: errors,
-    errCount: errCount,
-    openGroup: openGroup,
-  });
 
 
   /** *******************************************************
@@ -272,15 +579,14 @@ module.exports = async function (
    *  and should be updated. Otherwise add a new row.
    * 
    ****************************************************** */
-  let operation = '';
 
-  if (mode == 'update' && errCount == 0) {
-    trace.log('update pre-processing', mode,id);
+  async function updateDatabase() {
+    trace.log('update pre-processing', table, mode, id, record);
     if (tableData.edit.preProcess) { await tableData.edit.preProcess(record) }
     var message = '';
     let operation;
     let rec = {};
-    trace.log('update/new processing', mode,id);
+    trace.log('update/new processing', mode, id);
     /** 
      * 
      * If the record is on the database       
@@ -290,11 +596,12 @@ module.exports = async function (
       operation = 'update';
       trace.log({ Updating: id, table: table });
       for (let key of Object.keys(attributes)) {
-         if (attributes[key].process.updatedAt) { record[key] = Date.now() }
+        if (attributes[key].process.updatedAt) { record[key] = Date.now() }
         if (attributes[key].process.updatedBy) { record[key] = loggedInUser }
       }
       try {
-        await db.updateRow(table, record);                                         // ref record from database
+        trace.log(record);
+        await db.updateRow(table, record, subschemas);                                         // ref record from database
         message = lang.rowUpdated + tableName;
       }
       catch (err) {
@@ -326,15 +633,15 @@ module.exports = async function (
       trace.log('New record', table, rec);
       try {
         let created = await db.createRow(table, rec);
-        if (typeof(created[tableData.primaryKey]) == undefined) {
-          return("Error adding row - see console log");
+        if (typeof (created[tableData.primaryKey]) == undefined) {
+          return ("Error adding row - see console log");
         }
         record[tableData.primaryKey] = id = created[tableData.primaryKey];
-        if (suds.dbtype == 'nosql'){
-          target=db.stringifyId(id);
+        if (suds.dbtype == 'nosql') {
+          target = db.stringifyId(id);
         }
-  
-        trace.log({created: record[tableData.primaryKey],key: tableData.primaryKey, id:id })
+
+        trace.log({ created: record[tableData.primaryKey], key: tableData.primaryKey, id: id })
         if (auditId) {
           await db.updateRow('audit', { id: auditId, mode: 'new', row: id });
         }
@@ -345,65 +652,69 @@ module.exports = async function (
       }
       message = `${lang.rowAdded} ${id}`;
     }
+    return message;
+  }
 
-    /** 
-     * 
-     * Post process processing and switch to list the record 
-     * 
-     * */
+
+
+  /** 
+   * 
+   * Post process processing and switch to list the record 
+   * @returns {object} HTML from ListRow
+   * 
+   * */
+  async function postProcess() {
     trace.log('postprocess', record, operation);
     if (tableData.edit.postProcess) { await tableData.edit.postProcess(record, operation) }
-    trace.log('switching to list record',id,record[tableData.primaryKey],tableData.primaryKey);
-    let output = listRow(
+    trace.log('switching to list record', id, record[tableData.primaryKey], tableData.primaryKey);
+    let output = await listRow(
       permission,
       table,
       id,
       open,
       openGroup,
+      subschemas,
     );
     return (output);
 
   }
 
-  trace.log({
-    mode: mode,
-    columns: Object.keys(attributes),
-    record: record,
-    openGroup: openGroup,
-  });
-
-  /* *******************************************************
+  /** *******************************************************
     * 
-    *  Create the form, in a local variable and spurt it
-    * out at the end....
     * 
-    * First make a list of fields that will be in the form.
-    * All thebcolumns excluding automatically updated columns
+    * Make a list of *top* level fields that will be in the form.
+    * including object type fields which have a lower level 
+    * fields below.
+    * All the columns excluding automatically updated columns
     * and collections.
+    * 
+    * @param {object} attributes
+    * @param {boolean}  true if id is to be included in fieldlist
+    * @returns {array} List of top level fields/objects
     * 
     ****************************************************** */
 
-  trace.log('edit', tableData.edit.preForm);
-  if (tableData.edit.preForm) { await tableData.edit.preForm(record, mode) }
 
-  let form = '';
-  let formList = [];
-
-  for (const key of Object.keys(attributes)) {
-    if (attributes[key].primaryKey
-      || attributes[key].process.createdAt
-      || attributes[key].process.updatedAt
-      || attributes[key].process.updatedBy
-    ) { continue; }
-    if (attributes[key].collection) { continue; }  // not intersted in collections
-    if (!(attributes[key].canEdit)) { continue; }
-    if (attributes[key].input.hidden) { continue; }
-    formList.push(key);
+  function fieldList(attributes, includeId) {
+    let formList = [];
+    trace.log(permission);
+    for (const key of Object.keys(attributes)) {
+      trace.log({key:key,canedit:attributes[key].canEdit})
+      if (attributes[key].process.createdAt
+        || attributes[key].process.updatedAt
+        || attributes[key].process.updatedBy
+      ) { continue; }
+      if (attributes[key].primaryKey && !includeId) { continue }
+      if (attributes[key].collection) { continue; }  // not intersted in collections
+      if (!(attributes[key].canEdit)) { continue; }
+      if (attributes[key].input.hidden) { continue; }
+      formList.push(key);
+    }
+    trace.log(formList);
+    return formList;
   }
 
-  trace.log({ formList: formList });
-
-  /* *******************************************************
+  /** *******************************************************
       * 
       * Create form group
       * If the input form is split into groups make sure the 
@@ -416,38 +727,43 @@ module.exports = async function (
       * want to see.
       * 
       ****************************************************** */
+  function createFormGroups() {
+    trace.log({ formgroups: tableData.groups, formlist: formList });
 
-
-  let openTab = '';
-  let columnGroup = {};
-  let visibleGroup = {};
-  let hideGroup = {};
-
-  let tabs = [];
-  if (tableData.groups) {
+    /** Cycle through groups  
+     * - creating a list creating a list of all the columns covered
+     * - if a group applies to certain record types and the list for that group
+     *    doesn't include that recoird ttype add to a list of hidden groups
+     * - Create a list of non-static groups - these will be the tabs
+     * - if there is no columns array (unlikely) - create an empty one
+     * 
+     */
     let incl = [];
-    trace.log({ formgroups: tableData.groups });
     for (let group of Object.keys(tableData.groups)) {
-      trace.log({ group: group })
       if (tableData.groups[group].recordTypes
         &&
         !tableData.groups[group].recordTypes.includes(record[tableData.recordTypeColumn])
       ) {
+        trace.log({ hiding: group });
         hideGroup[group] = true;
       }
       if (!tableData.groups[group].static) { tabs.push(group) }      // Not static so we will need a tab function
       if (!tableData.groups[group].columns) {
         tableData.groups[group].columns = [];
       }
-      if (tableData.groups[group].columns) {
-        incl = incl.concat(tableData.groups[group].columns)
-      }
+      incl = incl.concat(tableData.groups[group].columns)
     }
-    if (!tableData.groups.other) { tableData.groups.other = {} }
-    let all = formList;
-    // need to remove the items in 'all' that are also in 'incl' and stor result in 
-    //     tableData.groups.other.columns 
-    //     tableData.groups.other.columns = all.filter(item => !incl.includes(item));
+
+
+    /** 
+     * Clone the list of all columns = note these will be top level items only
+     * need to remove the items in 'all' that are also in 'incl' and store result in 
+     * tableData.groups.other.columns 
+     * tableData.groups.other.columns = all.filter(item => !incl.includes(item));
+     * 
+     * */
+    let all = [];
+    for (let i = 0; i < formList.length; i++) { all[i] = formList[i] }
     if (!tableData.groups.other) { tableData.groups.other = {} }
     if (!tableData.groups.other.columns) { tableData.groups.other.columns = [] }
     for (let key of all) {
@@ -455,11 +771,13 @@ module.exports = async function (
         tableData.groups.other.columns.push(key);
       }
     }
-
-
+    trace.log({ other: tableData.groups.other.columns })
+    /**
+     * Find the first non-static group and open this by default.
+     * While about it - create table linking column to group
+     */
     let first = true;
     for (let group of Object.keys(tableData.groups)) {
-      trace.log(group);
       if (first && !tableData.groups[group].static) {
         openTab = group
         first = false;
@@ -472,15 +790,17 @@ module.exports = async function (
       }
     }
     trace.log({ columnGroup: columnGroup, openTab: openTab });
+    /** Create a list of visible groups
+     *  visibkeGroup just means that there is at least one field in the group that it not hidden 
+         * hiddenGroup means that we are just bot showing that group so has priority. 
+     */
     for (let key of formList) {
+      trace.log(key, attributes[key].input.hidden, columnGroup[key]);
       if (!attributes[key].input.hidden) {
         visibleGroup[columnGroup[key]] = true;
       }
     }
 
-    /** visibkeGroup just means that there is at least one field in the group that it not hidden 
-     * hiddenGroup means that we are just bot showing that group so has priority. 
-    */
     trace.log({ tabs: tabs, groups: tableData.groups, visible: visibleGroup, hide: hideGroup })
 
 
@@ -512,48 +832,209 @@ module.exports = async function (
     }
 
   }
-  else {
-    tableData.groups = { other: { static: true, } };
-    tableData.groups.other.columns = formList;
+
+
+  /** *******************************************************
+   * 
+   *      createFieldArray
+   * 
+   * Create the HTML for one item in the data structure. 
+   * If the item is an array it loops through the data calling
+   * itself recursively.  The form fields for multiple values 
+   * havve a name which includes an index starting 1.
+   * 
+   * If it is an object it runs through the keys calling itself 
+   * recursively.
+   * 
+   * If not an object it creates the HTML usin createOneFieldHTML 
+   * 
+   * 
+   * @param {*} key 
+   * @param {*} attributes for this key only
+   * @param {*} data data for this field
+   * @param {*} index blank - then 1,2,3 if an array within an array 1.1 1.2 etc
+   * @returns { array } the HTML and data required for the header if any
+   ********************************************************* */
+
+  async function createFieldArray(qualifiedName, attributes, data) {
+    trace.log(arguments);
+    let formField = '';
+    let headerTag = '';
+    let bite = 10;
+    if (attributes.array.bite) { bite = attributes.array.bite }
+    if (!data) { data = []; }
+    trace.log(data);
+    formField += `
+      <input type="hidden" id="${qualifiedName}.length" name= "${qualifiedName}.length" value="${data.length}">   <!-- Number of data items in array -->`
+    if (!data.length) {
+      formField += `
+        <br /><button type="button" id="${qualifiedName}.0.button"
+        onclick="nextArrayItem('${qualifiedName}.1.fld','${qualifiedName}.length','${qualifiedName}.0')" 
+        class="btn btn-primary btn-sm"
+        >Add a ${attributes.friendlyName} </button><br />`;
+
+    }
+
+    for (let i = 0; i < data.length + bite; i++) {
+      trace.log('before');
+      let field;
+      let subdata = data[i];
+      let tag;
+      let subqualname = `${qualifiedName}.${i + 1}`;      /** qualname is the qualified name  */
+      let nextItem = `${qualifiedName}.${i + 2}`;        /** nextItem is the qualified name of the next array item */
+      let display = 'inline';                        /** switched to none after the first empty field */
+      let onclick = '';
+
+      if (i >= data.length) {
+        display = 'none';
+      }
+      if (attributes.type == 'object') {
+        if (i >= data.length) { datum = {} }
+        [field, tag] = await createFieldObject(subqualname, attributes, subdata)
+      }
+      else {
+        if (i >= data.length) { datum = '' }
+        [field, tag] = await createOneFieldHTML(subqualname, attributes, subdata,)
+      }
+      /** if i is GT data.length then this is an empty field */
+      formField += `
+      
+      <div style="display: ${display}" id="${subqualname}.fld" >   <!-- Array item number ${i} -->           
+        <b>${attributes.friendlyName} number ${i + 1}</b><br>
+          ${field}`;
+      if (i >= data.length - 1) {
+        if (i >= data.length + bite - 1) {
+          formField += `
+          <br /><button type="button" id="${subqualname}.button"
+          class="btn btn-secondary btn-sm" disabled
+          >Another - please save and re-edit the record.</button><br />`;
+
+        }
+        else {
+          formField += `
+        <br /><button type="button" id="${subqualname}.button"
+        onclick="nextArrayItem('${nextItem}.fld','${qualifiedName}.length','${subqualname}')" 
+        class="btn btn-primary btn-sm"
+        >Another ${attributes.friendlyName} </button><br />`;
+
+        }
+      }
+      formField += `
+              </div> <!-- Array item number ${i} ends -->  `;
+      headerTag += tag;
+      trace.log('after');
+    }
+    trace.log(formField, headerTag);
+    return [formField, headerTag];
+  }
+
+
+
+
+  /*
+    if (attributes.type != 'object') {
+      let fieldName = key;
+      if (index) { fieldName = index + '.' + key };
+      return await createOneFieldHTML(key, attributes, data, fieldName, index);
+    }
+    */
+  async function createFieldObject(qualifiedName, attributes, data, index) {
+    /** This is an object */
+
+    trace.log({ type: attributes.type, data: data });
+    let formField = '';
+    let headerTag = '';
+    if (!attributes.array) {
+      formField += `
+      <b>${attributes.friendlyName}</b><br>`;
+    }
+    formField += `
+      <input type="hidden" name= "${qualifiedName}.object" value="${Object.keys(attributes.object).length}">   <!-- number of keys in object -->`
+
+    for (let subkey of Object.keys(attributes.object)) {
+      trace.log(subkey, data)
+      let subattributes = attributes.object[subkey]
+      let subqualname = fieldName = `${qualifiedName}.${subkey}`;
+      let subData = '';
+      if (data && data[subkey]) { subData = data[subkey] }
+      let subhtml;
+      let subhead;
+      trace.log({ qualifiedname: subqualname, subkey: subkey, subattributes: subattributes, subData: subData })
+      trace.log(subattributes.type, subattributes.array);
+      if (subattributes.array && subattributes.array.type != 'single') {
+        [subhtml, subhead] = await createFieldArray(subqualname, subattributes, subData, '');
+      }
+      else {
+        if (subattributes.type == 'object') {
+          if (!subData) { subData = {} }
+          trace.log('creating object', subqualname);
+          [subhtml, subhead] = await createFieldObject(subqualname, subattributes, subData);
+          trace.log('after');
+        }
+        else {
+          trace.log('creating field', subqualname);
+          [subhtml, subhead] = await createOneFieldHTML(subqualname, subattributes, subData);
+        }
+      }
+      //       trace.log(formField, subhtml)
+      formField += subhtml;
+      headerTag += subhead;
+      trace.log(formField, subhtml)
+
+    }
+    trace.log(formField, headerTag);
+
+    return [formField, headerTag];
 
   }
-  let groups = tableData.groups;
-  trace.log({ groups: groups });
 
 
-
-  /* *******************************************************
+  /**
+   * Create the HTML to enter one field
    * 
-   *  loop hrough fields in table storing field title and html.
-   * 
-   ****************************************************** */
-
-  let fieldNo = 0;  //  create array of clear names and form elements
-  let formData = {};
-  let headerTags = '';
-
-  for (const key of formList) {
+   * @param {string} key: element name 
+   * @param {object} Attributes for this field
+   * @param {*} data for this field
+   * @param {string} field name
+   * @param {string} index - qualified name
+   * @returns {array} HTML for this field + Header tags required
+   */
+  async function createOneFieldHTML(qualifiedName, attributes, data) {
+    trace.log(arguments);
     let linkedTable = '';
     let fieldValue = '';
-    formField = '';
-    if (typeof record[key] != 'undefined') { fieldValue = record[key] };
-    if (attributes[key].model) { linkedTable = attributes[key].model; }
+    let formField = '';
+    let headerTag = '';
+    //   recvalue = getRecValue(key, attributes, record);
+    let itemNumber = ` (${qualifiedName})`;
+
+    let indent = '';
+    for (let i = 1; i < attributes.qualifiedName.length; i++) {
+      indent += '&nbsp;&nbsp;&nbsp;&nbsp;'
+    }
+
+
+    if (data != 'undefined') { fieldValue = data }
+    trace.log(fieldValue);
+
+    trace.log(headerTags);
+    if (attributes.model) { linkedTable = attributes.model; }
     let errorMsg = '';
-    if (errors[key]) { errorMsg = ` ${errors[key]}`; }
+    if (errors[qualifiedName]) { errorMsg = ` ${errors[qualifiedName]}`; }
 
     trace.log({
-      element: key,
-      type: attributes[key].input.type,
-      clearname: attributes[key].friendlyName,
+      element: qualifiedName,
+      type: attributes.input.type,
+      clearname: attributes.friendlyName,
       LinkedTable: linkedTable,
       value: fieldValue,
-      titlefield: attributes[key].titlefield,
-      group: columnGroup[key],
+      titlefield: attributes.titlefield,
+      group: columnGroup[qualifiedName],
       errorMsg: errorMsg,
     });
-
+    trace.log({ attributes: attributes, level: 'verbose' });
     if (fieldValue == null) {              // can;'t pass null as a value
-      if (attributes[key].type == 'number') {
+      if (attributes.type == 'number') {
         fieldValue = 0;
       }
       else {
@@ -564,19 +1045,19 @@ module.exports = async function (
      * 
      *   If a field requires server-side processing
      * 
-     */
-    if (attributes[key].input.validations.api) {
+     
+    if (attributes.input.validations.api ) {
       formField += `
         <script>
-          function apiWait_${key}() {
-            console.log(apiWait_${key});
-            document.getElementById('err_${key}').innerHTML='${lang.apiWait}';
+          function apiWait_${qualifiedName}() {
+            console.log(apiWait_${qualifiedName});
+            document.getElementById('err_${qualifiedName}').innerHTML='${lang.apiWait}';
           }
-          function apiCheck_${key}() {
-            let value=document.getElementById('mainform').elements['${key}'].value;
-            let url='${attributes[key].input.validations.api.route}?table=${table}&id=${id}&field=${key}&value='+value;
+          function apiCheck_${qualifiedName}() {
+            let value=document.getElementById('mainform')['${qualifiedName}'].value;
+            let url='${attributes.input.validations.api.route}?table=${table}&id=${id}&field=${qualifiedName}&value='+value;
             let result=[];
-            document.getElementById('err_${key}').innerHTML='${lang.apiCheck}';
+            document.getElementById('err_${qualifiedName}').innerHTML='${lang.apiCheck}';
             console.log(url);
             fetch(url).then(function (response) {
               // The API call was successful!
@@ -586,10 +1067,10 @@ module.exports = async function (
               result=data;
               console.log(result);
               if (result[0]=='validationError'){
-                document.getElementById('err_${key}').innerHTML=result[1];
+                document.getElementById('err_${qualifiedName}').innerHTML=result[1];
               } 
               else {
-                document.getElementById('err_${key}').innerHTML='';
+                document.getElementById('err_${qualifiedName}').innerHTML='';
      
               }
              }).catch(function (err) {
@@ -598,33 +1079,33 @@ module.exports = async function (
             }); 
           }
             </script>
-        `;
-
-
-
+        `; 
+ 
+ 
+ 
     }
-    let result = '';
-    if (attributes[key].input.type == 'hidden') {
+*/
+    let result = [];
+    if (attributes.input.type == 'hidden') {
       formField += `
-        <input type="hidden" name="${key}" value="${fieldValue}">`;
+        <input type="hidden" name="${qualifiedName}" value="${fieldValue}">`;
     }
     else {
-      if (attributes[key].canEdit) {
-        result = await createField(key, fieldValue, attributes, errorMsg, 'update', record, tableData, tabs);
+      if (attributes.canEdit) {
+        result = await createField(qualifiedName, fieldValue, attributes, errorMsg, 'update', record, tableData, tabs);
       }
       else {
-        if (attributes[key].canView) {
-          result = [await displayField(attributes[key], fieldValue), ''];
+        if (attributes.canView) {
+          result = [await displayField(attributes, fieldValue), ''];
           trace.log(result);
         }
 
       }
+      trace.log(result);
       formField += result[0];
-      if (!headerTags.includes(result[1])) {
-        headerTags += result[1];
-      }
+      headerTag = result[1];
       let format = suds.input.default;
-      if (attributes[key].input.format) { format = attributes[key].input.format }
+      if (attributes.input.format) { format = attributes.input.format }
       let groupClass;
       let labelClass;
       let fieldClass;
@@ -640,18 +1121,19 @@ module.exports = async function (
       }
       let pretext = '';
       let posttext = '';
-      let tooltip = attributes[key].description;
-      if (attributes[key].helpText) {
-        tooltip = `${attributes[key].description}
+      let tooltip = attributes.description;
+      trace.log(attributes.helpText);
+      if (attributes.helpText) {
+        tooltip = `${attributes.description}
 ________________________________________________________
-${attributes[key].helpText}`;
+${attributes.helpText}`;
 
       }
       formField = `
-         <div class="${classes.input.group} ${groupClass}">    <!-- Form group for ${attributes[key].friendlyName} start -->
+         <div class="${classes.input.group} ${groupClass}">    <!-- Form group for ${attributes.friendlyName} start -->
           <div class="${labelClass}">                      <!--  Names column start -->
-            <label class="${classes.input.label}" for="${key}"  title="${tooltip}" id="label_${key}">
-              ${attributes[key].friendlyName}
+            <label class="${classes.input.label}" for="${qualifiedName}"  title="${tooltip}" id="label_${qualifiedName}">
+              ${indent}${attributes.friendlyName}
             </label>
           </div>                                      <!-- Names column end -->
           <div class="${fieldClass}">                      <!-- Fields column start -->
@@ -659,22 +1141,23 @@ ${attributes[key].helpText}`;
           ${formField}
           ${posttext}
           </div>                                       <!-- Fields column end -->
-        </div>                                         <!--Form group for ${attributes[key].friendlyName} end-->
+        </div>                                         <!--Form group for ${attributes.friendlyName} end-->
         `;
     }
     //  store clear name of the field and html in two arrays.
-    formData[key] = formField;
-    trace.log({ key: key, formField: formField, level: 'verbose' });
 
-    /* *******************************************************
-    * 
-    *  End of loop
-    * 
-    *  Create validation function
-    * 
-    ****************************************************** */
+    trace.log({ qualifiedName: qualifiedName, formField: formField, });
+    return [formField, headerTag];
   }
-  form += `
+
+
+
+
+
+
+  async function createValidationScript() {
+
+    form += `
     <script>
       function validateForm() {
         let debug=false;
@@ -684,66 +1167,147 @@ ${attributes[key].helpText}`;
         let columnError;
         let mainform=document.getElementById('mainform');
         `;
-  for (const key of formList) {
-    if (attributes[key].collection) { continue; }  // not intersted in collections
-    if (!attributes[key].canEdit) { continue; }  // can't validate if not editable
-    if (attributes[key].input.hidden) { continue; }
+    for (const key of formList) {
+      if (attributes[key].collection) { continue; }  // not intersted in collections
+      if (!attributes[key].canEdit) { continue; }  // can't validate if not editable
+      if (attributes[key].input.hidden) { continue; }
 
-    if (attributes[key].primaryKey || key == 'createdAt' || key == 'updatedAt') { continue; }  // can't validate auto updated fields
+      if (attributes[key].primaryKey || key == 'createdAt' || key == 'updatedAt') { continue; }  // can't validate auto updated fields
+      if (attributes[key].array) {
+        form += await createArrayValidation(attributes[key], key, record[key], key, columnGroup);
+      }
+      else {
+        if (attributes[key].type == 'object') {
+          form += await createObjectValidation(attributes[key], key, record[key], key, columnGroup);
+        }
 
-    trace.log({ attributes: attributes[key], level: 'verbose' });
+        else {
+          form += await createFieldValidation(attributes[key], key, record[key], key, columnGroup);
+        }
+      }
+    }
     form += `
-      // ********** Start of validation for ${attributes[key].friendlyName}  ***************
-      if (debug) {console.log('${key}',' ','${attributes[key].input.type}')}
+        if (errCount > 0) { return false; }  else {  return true; }
+      }
+    </script>
+    `;
+
+  }
+
+  async function createArrayValidation(attributes, fieldName, data, topkey, columnGroup) {
+    return '';
+    let bite = 10;
+    if (attributes.array.bite) { bite = attributes.array.bite }
+    if (!data) { data = []; }
+    trace.log({ fieldName: fieldName, data: data });
+    let result = `
+    { 
+      let length=0;   
+  //  let length=Number(document.getElementById('${fieldName}.length').innerHTML);
+        console.log('${fieldName}.length',document.getElementById('${fieldName}.length'))
+     //   console.log(document.getElementById('${fieldName}.length').innerHTML,length);      
+   `;
+    for (i = 0; i < data.length + bite; i++) {   // number of array alements generated
+      trace.log(i);
+      result += `
+       if (${i}<length) {`;               // Number of array elements used
+      let subFieldName = `${fieldName}.${i + 1}`
+
+      if (attributes.type == 'object') {
+        result += await createObjectValidation(attributes, subFieldName, data[i], topkey, columnGroup)
+      }
+      else {
+        result += await createFieldValidation(attributes, subFieldName, data[i], topkey, columnGroup);
+      }
+
+      result += `
+  }`;
+    }
+    result += `
+  }`;
+    trace.log(result);
+    return result;
+  }
+
+
+  async function createObjectValidation(attributes, fieldName, data, topkey, columnGroup) {
+    let result = '';
+    if (!data) { data = []; }
+    trace.log({ fieldName: fieldName, attributes: attributes, data: data, level: 'verbose' });
+    for (let subkey of Object.keys(attributes.object)) {
+      let subFieldName = fieldName + '.' + subkey;
+      subData = data[fieldName];
+      if (attributes.object[subkey].array) {
+        result += await createArrayValidation(attributes.object[subkey], subFieldName, subData, topkey, columnGroup);
+      }
+      else {
+        if (attributes.object[subkey].type == 'object') {
+          result += await createObjectValidation(attributes.object[subkey], subFieldName, subData, topkey, columnGroup)
+        }
+        else {
+          result += await createFieldValidation(attributes.object[subkey], subFieldName, subData, topkey, columnGroup);
+        }
+      }
+
+    }
+    return (result);
+  }
+
+
+  async function createFieldValidation(attributes, fieldName, data, topkey, columnGroup) {
+    let form = '';
+
+    trace.log({ fieldName: fieldName, attributes: attributes, level: 'verbose' });
+    form += `
+      // ********** Start of validation for ${attributes.friendlyName}  ***************
+      if (debug) {console.log('${fieldName}',' ','${attributes.input.type}')}
       columnError=false;`;
     //  Has an api left an error message
-    if (attributes[key].input.validations.api) {
+    if (attributes.input.validations.api) {
       form += `
-      if (document.getElementById('err_${key}').innerHTML) {
+      if (document.getElementById('err_${fieldName}').innerHTML) {
         columnError=true;
         errCount++;
       }
       else {
-        document.getElementById("err_${key}").innerHTML='';
+        document.getElementById("err_${fieldName}").innerHTML='';
       }`;
     }
 
-    trace.log(key, record[key], attributes[key]);
     let vals = 0;
-    if (attributes[key].input.type == 'autocomplete') {
+    if (attributes.input.type == 'autocomplete') {
       form += `
-      value=mainform.autoid_${key}.value;`;
+      value=mainform['autoid_${fieldName}'].value;`;
     }
     else {
-      if (attributes[key].type == 'number') {
+      if (attributes.type == 'number') {
         form += `
-      value=Number(mainform.${key}.value);`;
+      value=Number(mainform['${fieldName}'].value);`;
       }
       else {
         form += `
-      value=mainform.${key}.value;`;
+      value=mainform['${fieldName}'].value;`;
       }
 
     }
     form += `
-    if (debug) {console.log('${key}',' ',value)}`;
-    if (attributes[key].required || attributes[key].input.required) {       // Required
+    if (debug) {console.log('${fieldName}',' ',value)}`;
+    if (attributes.required || attributes.input.required) {       // Required
       form += `
-        if (true) {          // Start of validation for ${key} `;
+        if (true) {          // Start of validation for ${fieldName} `;
     }
     else {
       form += `
-        if (value) {                    // ${key} is not mandatory so validation only needed
-                                        // if there is something in the field`;
+        if (value) {                    // ${fieldName} is not mandatory so validation only needed                                        // if there is something in the field`;
     }
 
 
     // Start of generating code for the validations for this field
-    if (attributes[key].required || attributes[key].input.required) {
+    if (attributes.required || attributes.input.required) {
       vals++;
       form += `
             if (!value) {
-              document.getElementById("err_${key}").innerHTML="${lang.mandatory}";
+              document.getElementById("err_${fieldName}").innerHTML="${lang.mandatory}";
               columnError=true;
               errCount++;
 
@@ -751,74 +1315,74 @@ ${attributes[key].helpText}`;
     }
 
     if (
-      attributes[key].type == 'number'
-      || (attributes[key].input && attributes[key].input.isNumber)
+      attributes.type == 'number'
+      || (attributes.input && attributes.input.isNumber)
     ) {
       vals++;
       form += `
            if (value == 'NaN') {
-              document.getElementById("err_${key}").innerHTML="${lang.nan}";
+              document.getElementById("err_${fieldName}").innerHTML="${lang.nan}";
               columnError=true;
               errCount++;
             }`;
     }
 
-    if (attributes[key].input) {
+    if (attributes.input) {
 
-      if (attributes[key].input.isInteger) {
+      if (attributes.input.isInteger) {
         vals++;
         form += `
             if (!Number.isInteger(value)) {
-              document.getElementById("err_${key}").innerHTML="${lang.notInt}";
+              document.getElementById("err_${fieldName}").innerHTML="${lang.notInt}";
               columnError=true;
               errCount++;
             }`;
       }
 
-      if (attributes[key].input.isEmail) {
+      if (attributes.input.isEmail) {
         vals++;
         form += `
             if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_\`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(value)) {
-              document.getElementById("err_${key}").innerHTML="${lang.notEmail}";
+              document.getElementById("err_${fieldName}").innerHTML="${lang.notEmail}";
               columnError=true;
               errCount++;
             }`;
       }
 
-      if (attributes[key].input.max) {
+      if (attributes.input.max) {
         vals++;
         form += `
-            if (value > ${attributes[key].input.max}) {
-              document.getElementById("err_${key}").innerHTML="${lang.max} ${attributes[key].input.max}";
+            if (value > ${attributes.input.max}) {
+              document.getElementById("err_${fieldName}").innerHTML="${lang.max} ${attributes.input.max}";
               columnError=true;
               errCount++;
             }`;
       }
-      if (attributes[key].input.min) {
+      if (attributes.input.min) {
         vals++;
         form += `
-            if (value < ${attributes[key].input.min}) {
-              document.getElementById("err_${key}").innerHTML="${lang.min} ${attributes[key].input.min}";
-              columnError=true;
-              errCount++;
-            }`;
-      }
-
-      if (attributes[key].input.maxLength) {
-        vals++;
-        form += `
-            if (value.length > ${attributes[key].input.maxLength}) {
-              document.getElementById("err_${key}").innerHTML="${lang.maxLength} ${attributes[key].input.maxLength}";
+            if (value < ${attributes.input.min}) {
+              document.getElementById("err_${fieldName}").innerHTML="${lang.min} ${attributes.input.min}";
               columnError=true;
               errCount++;
             }`;
       }
 
-      if (attributes[key].input.minLength) {
+      if (attributes.input.maxLength) {
         vals++;
         form += `
-            if (value.length < ${attributes[key].input.minLength}) {
-              document.getElementById("err_${key}").innerHTML="${lang.minLength} ${attributes[key].input.minLength}";
+            if (value.length > ${attributes.input.maxLength}) {
+              document.getElementById("err_${fieldName}").innerHTML="${lang.maxLength} ${attributes.input.maxLength}";
+              columnError=true;
+              errCount++;
+            }`;
+      }
+
+      if (attributes.input.minLength) {
+        vals++;
+        form += `
+            if (value.length < ${attributes.input.minLength}) {
+              document.getElementById("err_${fieldName}").innerHTML="${lang.minLength} ${attributes.input.minLength}";
               columnError=true;
               errCount++;
             }`;
@@ -831,33 +1395,24 @@ ${attributes[key].helpText}`;
 
     if (vals == 0) {
       form += `
-                  // No inline validations for ${key} `;
+                  // No inline validations for ${fieldName} `;
     }
     else {
-      trace.log({ key: key, group: columnGroup[key] });
-      if (columnGroup[key] && tabs.length > 1) {
+      trace.log({ fieldName: fieldName, topkey: topkey, group: columnGroup });
+      if (columnGroup[topkey] && tabs.length > 1) {
         form += `
-            if (columnError) {tabclick('${columnGroup[key]}')}`;
+            if (columnError) {tabclick('${columnGroup[topkey]}')}`;
       }
 
     }
     form += `
        if (!columnError) {
-            document.getElementById("err_${key}").innerHTML="";
+            document.getElementById("err_${fieldName}").innerHTML="";
       }
-          }       // end of validation for ${key}`;
+          }       // end of validation for ${fieldName}`;
+    return form;
+
   }
-
-
-
-
-  form += `
-        if (errCount > 0) { return false; }  else {  return true; }
-      }
-    </script>
-    `;
-
-  trace.log({ table: tableData, record: record });
 
 
 
@@ -867,24 +1422,27 @@ ${attributes[key].helpText}`;
    *  Create form
    * 
    ****************************************************** */
-  let displayOp = '';
-  if (mode == 'populate') { displayOp = lang.update; }
-  if (mode == 'update') { displayOp = lang.update; }
-  if (mode == 'new') { displayOp = lang.addRow; }
-  // let from = '';
-  //  if (allParms['#from#']) { from = allParms['#from#']; }
+  async function createForm() {
+    trace.log({ subschemas: subschemas });
+    let displayOp = '';
+    if (mode == 'populate') { displayOp = lang.update; }
+    if (mode == 'update') { displayOp = lang.update; }
+    if (mode == 'new') { displayOp = lang.addRow; }
+    // let from = '';
+    //  if (allParms['#from#']) { from = allParms['#from#']; }
 
-  if (message) { form += `\n<P>${message}</P>` }
-  form += `
+    if (message) { form += `\n<P>${message}</P>` }
+    form += `
     <h2>${displayOp} ${lang.forTable}: ${tableName}</h2>`;
 
-  //       enctype="multipart/form-data" 
+    //       enctype="multipart/form-data" 
 
-  let query = `table=${table}&mode=update&id=${id}`;
-  if (open) { query += `&open=${open}` }
-  if (openGroup) { query += `&opengroup=${openGroup}` }
+    let query = `table=${table}&mode=update&id=${id}`;
+    if (open) { query += `&open=${open}` }
+    if (openGroup) { query += `&opengroup=${openGroup}` }
+    for (let i = 0; i < subschemas.length; i++) { query += `&subschema=${subschemas[i]}` }
 
-  form += `
+    form += `
     <form 
         action="${mainPage}?${query}"
         id="mainform"
@@ -897,48 +1455,48 @@ ${attributes[key].helpText}`;
     >
       <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />
       `;
-  //   <input type="hidden" name="table" value="${table}">`;
-  //  <input type="hidden" name="#parent#" value="${parent}" >
-  //  <input type="hidden" name="#parentkey#" value="${parentKey}" >
-  //      <input type="hidden" name="#from#" value="${from}" >`;
-  if (id) {
-    form += `
+    //   <input type="hidden" name="table" value="${table}">`;
+    //  <input type="hidden" name="#parent#" value="${parent}" >
+    //  <input type="hidden" name="#parentkey#" value="${parentKey}" >
+    //      <input type="hidden" name="#from#" value="${from}" >`;
+    if (id) {
+      form += `
       <input type="hidden" name="${tableData.primaryKey}" value="${id}">
 `;
-  }
-  //form += `
-  //   <input type="hidden" name="mode" value="update">
-  //`;
-
-  if (tableData.edit && tableData.edit.parentData && record[tableData.edit.parentData.link]) {
-    let link = attributes[tableData.edit.parentData.link].model;
-    let columns = tableData.edit.parentData.columns;
-    linkAttributes = await mergeAttributes(link, permission);
-    trace.log({ record: record, link: tableData.edit.parentData.link, data: record[tableData.edit.parentData.link] });
-    let linkRec = await db.getRow(link, record[tableData.edit.parentData.link]);
-    trace.log(linkRec);
-    let linkTableData = tableDataFunction(link, permission);
-    let linkName = link;
-    if (linkTableData.rowTitle) {
-      if (typeof (linkTableData.rowTitle) == 'string') {
-        linkName = linkRec[linkTableData.rowTitle];
-
-      }
-      else {
-        linkName = linkTableData.rowTitle(linkRec);
-      }
     }
-    form += `
-    <div class="${classes.parentData}">
-    <h3>${linkName}</h3>`;
-    for (let key of columns) {
-      let display = await displayField(linkAttributes[key], linkRec[key], 0, permission);
-      let title = linkAttributes[key].friendlyName;
-      let description = '';
-      if (linkAttributes[key].description) {
-        description = linkAttributes[key].description.replace(/"/g, `'`);
+    //form += `
+    //   <input type="hidden" name="mode" value="update">
+    //`;
+
+    if (tableData.edit && tableData.edit.parentData && record[tableData.edit.parentData.link]) {
+      let link = attributes[tableData.edit.parentData.link].model;
+      let columns = tableData.edit.parentData.columns;
+      linkAttributes = await mergeAttributes(link, permission);
+      trace.log({ record: record, link: tableData.edit.parentData.link, data: record[tableData.edit.parentData.link] });
+      let linkRec = await db.getRow(link, record[tableData.edit.parentData.link]);
+      trace.log(linkRec);
+      let linkTableData = tableDataFunction(link, permission);
+      let linkName = link;
+      if (linkTableData.rowTitle) {
+        if (typeof (linkTableData.rowTitle) == 'string') {
+          linkName = linkRec[linkTableData.rowTitle];
+
+        }
+        else {
+          linkName = linkTableData.rowTitle(linkRec);
+        }
       }
       form += `
+    <div class="${classes.parentData}">
+    <h3>${linkName}</h3>`;
+      for (let key of columns) {
+        let display = await displayField(linkAttributes[key], linkRec[key], 0, permission);
+        let title = linkAttributes[key].friendlyName;
+        let description = '';
+        if (linkAttributes[key].description) {
+          description = linkAttributes[key].description.replace(/"/g, `'`);
+        }
+        form += `
 
           <div class="${classes.input.group} ${classes.input.row.group}"> 
             <div class="${classes.input.row.label}">
@@ -948,111 +1506,111 @@ ${attributes[key].helpText}`;
   ${display}
             </div> <!-- fields column -->
           </div>  <!--  Form group for ${key} -->`;
-    }
-    form += `
+      }
+      form += `
     </div>`;
-  }
+    }
 
 
-  trace.log(groups);
-  tabs = [];
-  groupform = [];
-  for (let group of Object.keys(groups)) {                 // run through the groups (there may only be one...)
-    if (hideGroup[group]) { continue; }
+    trace.log(groups);
+    tabs = [];
+    groupform = [];
+    for (let group of Object.keys(groups)) {                 // run through the groups (there may only be one...)
+      if (hideGroup[group]) { continue; }
 
-    trace.log(group);
-    if (groups[group].static) {                              //   if the group is static, 
-      for (let key of groups[group].columns) {
-        trace.log(key);               //      just output the fields
-        if (!formData[key]) { continue }
-        form += `
+      trace.log(group);
+      if (groups[group].static) {                              //   if the group is static, 
+        for (let key of groups[group].columns) {
+          trace.log(key);               //      just output the fields
+          if (!formData[key]) { continue }
+          form += `
       <!-- --- --- --- --- --- --- Form group for ${key} --- --- --- --- --- ---  -->`;
-        form += `
+          form += `
             ${formData[key]}
               `;
-      }
-    }                                                       // end of static      
-    else {
-      // then run through the columns
-      if (visibleGroup[group]) {
-        tabs.push(group);                             // add the group to a list of groups that will be on tabs 
+        }
+      }                                                       // end of static      
+      else {
+        // then run through the columns
+        if (visibleGroup[group]) {
+          tabs.push(group);                             // add the group to a list of groups that will be on tabs 
+        }
       }
     }
-  }
-  trace.log(tabs);
-  if (tabs) {                                              // if there are any tabs
-    if (tabs.length > 1) {
-      form += `
+    trace.log(tabs);
+    if (tabs) {                                              // if there are any tabs
+      if (tabs.length > 1) {
+        form += `
           <!-- this section controlled by tabs -->
           <div class="${classes.input.groupLinks.row}">  <!-- group links row -->
           <div class="${classes.input.groupLinks.envelope}"> <!-- group links envelope -->
               <span class="${classes.input.groupLinks.spacing}">${lang.formGroup}</span>`;
-      for (let group of tabs) {                              // run through the tabs
-        trace.log(openTab, group);
-        let friendlyName = group;
-        if (groups[group].friendlyName) { friendlyName = groups[group].friendlyName; }
-        let linkClass;
-        if (openTab == group) { linkClass = classes.input.groupLinks.selected; } else { linkClass = classes.input.groupLinks.link; }   // the first will be shown the rest hidden
-        form += `
-          <a class="${classes.input.groupLinks.spacing} ${linkClass}" id="tab_${group}" href="#" onclick="tabclick('${group}')">
+        for (let group of tabs) {                              // run through the tabs
+          trace.log(openTab, group);
+          let friendlyName = group;
+          if (groups[group].friendlyName) { friendlyName = groups[group].friendlyName; }
+          let linkClass;
+          if (openTab == group) { linkClass = classes.input.groupLinks.selected; } else { linkClass = classes.input.groupLinks.link; }   // the first will be shown the rest hidden
+          form += `
+          <span class="${classes.input.groupLinks.spacing} ${linkClass}" id="tab_${group}" onclick="tabclick('${group}')">
              ${friendlyName}
-          </a>`;        // outputting a list of links
-      }
-      form += `
+          </span>`;        // outputting a list of links
+        }
+        form += `
         </div> <!-- group links row end -->
         </div> <!-- group links envelope end -->
-        `;
-    }
-    trace.log(openTab, tabs);
-    if (!tabs.includes(openTab)) { openTab = tabs[0]; }
-    let disp;
-    for (let group of tabs) {                               // then go through the non-statiuc groups
-      if (openTab == group) { disp = 'block'; } else { disp = 'none' }   // the first will be shown the rest hidden
-      form += `
+        <div></div>`;
+      }
+      trace.log(openTab, tabs);
+      if (!tabs.includes(openTab)) { openTab = tabs[0]; }
+      let disp;
+      for (let group of tabs) {                               // then go through the non-statiuc groups
+        if (openTab == group) { disp = 'block'; } else { disp = 'none' }   // the first will be shown the rest hidden
+        form += `
        <!--  --------------------------- ${group} ---------------------- -->
         <div id="group_${group}" style="display: ${disp}">  <!-- Group ${group} -->`;         // div aroiun dthem
-      trace.log({ group: group, columns: groups[group].columns });
-      for (let key of groups[group].columns) {               // then run through the columns
-        if (!formData[key]) { continue }                     // sending out the fields as before
-        form += `
+        trace.log({ group: group, columns: groups[group].columns });
+        for (let key of groups[group].columns) {               // then run through the columns
+          if (!formData[key]) { continue }                     // sending out the fields as before
+          form += `
   <!-- --- --- form-group for ${key} --- ---  -->
         ${formData[key]}
   `;
-      }
-      first = false;    // thhis will switch on the hidden grouos after first
-      form += `
+        }
+        first = false;    // thhis will switch on the hidden grouos after first
+        form += `
         </div>  <!-- Group ${group} end --> `;
+      }
     }
-  }
 
-  //       <label for="${fieldName}" class="col-sm-2 col-form-label">&nbsp;</label>
+    //       <label for="${fieldName}" class="col-sm-2 col-form-label">&nbsp;</label>
 
 
-  form += `
+    form += `
       <!-- --- --- end of form groups-- - --- -->
     <br clear="all">  
     <div class="${classes.input.buttons}">
    
     `;
-  if (permission == '#guest#') {
-    form += `<button class="${classes.output.links.danger}" type="button" title="Guest users are not allowed to submit changes">
+    if (permission == '#guest#') {
+      form += `<button class="${classes.output.links.danger}" type="button" title="Guest users are not allowed to submit changes">
     ${lang.submit}
   </button>`;
-  }
-  else {
-    form += `<button type="submit" class="btn btn-primary">
+    }
+    else {
+      form += `<button type="submit" class="btn btn-primary">
             ${lang.submit}
           </button>`;
-  }
-  if (id) {
-    form += `
+    }
+    if (id) {
+      form += `
           <span style="margin-right: 10px; margin-left: 10px;">
             <a class="btn btn-primary" href="${mainPage}?table=${table}&mode=listrow&id=${id}">${lang.listRow}</a>
           </span>
       `;
-  }
+    }
 
-  form += `
+    form += `
           <span style="margin-right: 10px; margin-left: 10px;">
             <a class="btn btn-primary" href="${mainPage}?table=${table}&mode=list">${lang.tableList}</a>
           </span>
@@ -1062,21 +1620,7 @@ ${attributes[key].helpText}`;
 
 
       `;
-  // form += `\n < P > <A HREF="${mainPage}?table=${table}&mode=list">${lang.tableList}</a></p > `;
-  // form += `\n < P > <A HREF="${mainPage}">${lang.backToTables}</a></p > `;
-  let footnote = '';
-  if (mode != 'new') {
-    let created = new Date(record['createdAt']).toDateString();
-    let updated = new Date(record['updatedAt']).toDateString();
-    footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}`;
   }
-  else { footnote = ''; }
-  trace.log(form);
-  return ({ output: form, footnote: footnote, headerTags: headerTags });
-  //  return exits.success(form);
-
-
-  // *************** end of export *************
 }
 
 

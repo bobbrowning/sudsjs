@@ -1,90 +1,161 @@
 
+
+/**
+ * 
+ * merge-attributes
+ * 
+ * Doesn't really merge things any more. It standardises the attributes to that they all have the 
+ * same structure. 
+ * 
+ */
+
 let trace = require('track-n-trace');
 let invertGroups = require('./invert-groups')
 let suds = require('../../config/suds');
+const { standardiseId } = require('./db-mongo');
+//const tableData = require('./table-data');
+humaniseFieldname = require('./humanise-fieldname');
+let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
+let cache = {};
+let lastPermission=':::';
+let tableData;
 
 
-module.exports = function (table, permission) {
-  // merge extra attributes with attributes 
+module.exports = function (table, permission, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments, });
+  trace.log({permission: permission, cached: Object.keys(cache)});
+// if (permission != lastPermission) {     //Clear cache if the permision level change.
+ //   cache={};
+//  }
+  lastPermission=permission;
   tableData = require('../../tables/' + table);
-  humaniseFieldname = require('./humanise-fieldname');
-  trace.log({ tableData: tableData, level: 'verbose' });
   if (!tableData) {
-    console.error(`
-    ************************* Fatal Error ******************
-    Table: ${table} 
-    Can't find any config data for this table.
-    Suggest running ${suds.baseURL}/validateconfig
-    *******************************************************`)
+    trace.fatal(`Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`)
     process.exit(1);
   }
+  //   if (tableData.attributes_merged) {return attributes}   // only do this once
+  //   tableData.attributes_merged=true;
+  let cachekey = '';
+  if (permission) {cachekey=permission+'.'}
+  cachekey+=table;
+  if (subschemas) {
+    for (let i = 0; i < subschemas.length; i++) { cachekey += '.' + subschemas[i] }
+  }
+   if (!cache[cachekey]) {   // only do this once
+
+    trace.log({
+      tableData: tableData,
+      cached: Object.keys(cache),
+      table: table,
+      attributes: tableData.attributes,
+      level: 'verbose'
+    });
+    /** deep clone the attributes object 
+     * adding additonal attributes if present.
+    */
+    if (additionalAttributes) {
+      cache[cachekey] = { ...tableData.attributes, ...additionalAttributes }
+    }
+    else {
+      cache[cachekey] = { ...tableData.attributes };
+    }
+
+    /** Create lookup with the group for each attribute. 
+     * This is so that permissions can be propogated through the group. 
+     * */
+    let groupLookup = invertGroups(tableData, cache[cachekey]);
+    trace.log(groupLookup, { level: 'verbose' });
 
 
-
-  const attributes = tableData.attributes;
-  trace.log({ table: table, attributes: attributes, level: 'verbose' });
-
-  let groupLookup = invertGroups(tableData, attributes);
+    /** create a shallow copy of the attributes object. */
 
 
-  trace.log(groupLookup, { level: 'verbose' });
+    /** Cycle through attributes standardising. If the attribute is an object descend a level and call the 
+     * function recursively.
+     */
 
-  let merged = {};
 
-  for (const key of Object.keys(attributes)) {
+    standardise(table, cache[cachekey], groupLookup, [], [], permission);
+
+    if (tableData.recordTypeColumn && cache[cachekey][tableData.recordTypeColumn]) {
+      cache[cachekey][tableData.recordTypeColumn].recordType = true;
+      if (tableData.recordTypeFix) { cache[cachekey][tableData.recordTypeColumn].recordTypeFix = true; }
+    }
+  }
+  trace.log({permission: permission, key: cachekey, attributes: cache[cachekey], cached: Object.keys(cache), level: 'norm' , maxdepth: 2});
+  return (cache[cachekey]);
+}
+
+
+function standardise(
+  table,
+  merged,
+  groupLookup,
+  parentQualifiedName,
+  parentQualifiedFriendlyName,
+  permission,
+) {
+  trace.log({
+    arguments: arguments, level: 'verbose',
+  });
+
+
+  for (const key of Object.keys(merged)) {
     // merged is a merge of the attributes in the model with the extra attributes in the 
     // suds config file.  These give field properties for things like the input type 
     // and dipsplay format.  
     // loop through fields (columns) in the table
+    trace.log({ next: key, attr: merged[key], level: 'verbose' })
+    if (!merged[key].type) { merged[key].type = 'string'; }
+    if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
+    if (parentQualifiedName.length == 0) {
+      merged[key].qualifiedName = [key]
+      merged[key].qualifiedFriendlyName = [merged[key].friendlyName]
+    }
+    else {
+      merged[key].qualifiedName = [];
+      merged[key].qualifiedFriendlyName = [];
+      for (let i = 0; i < parentQualifiedName.length; i++) {
+        merged[key].qualifiedName[i] = parentQualifiedName[i];
+        merged[key].qualifiedFriendlyName[i] = parentQualifiedFriendlyName[i];
+      }
+      trace.log({ key: key, qname: merged[key].qualifiedName, qfname: merged[key].qualifiedFriendlyName }, { level: 'norm' });
+      merged[key].qualifiedName.push(key);
+      merged[key].qualifiedFriendlyName.push(merged[key].friendlyName)
+      trace.log({ key: key, qname: merged[key].qualifiedName, qfname: merged[key].qualifiedFriendlyName }, { level: 'norm' });
+    }
+    if (merged[key].type == 'object') {
 
-
-    trace.log({ key: key }, { level: 'verbose' });
-
-
-    merged[key] = attributes[key];
-
-
+      standardise(table, merged[key].object, {}, merged[key].qualifiedName, merged[key].qualifiedFriendlyName)
+    }
     /** 
-     * 
-     * Guarantee that certain sub-object/values are there with default values 
-     * 
-     * */
+      * 
+      * Guarantee that certain sub-object/values are there with default values 
+      * 
+      * */
     if (!merged[key].input) { merged[key].input = {} }
     if (!merged[key].database) { merged[key].database = {}; }
     if (!merged[key].process) { merged[key].process = {}; }
     if (!merged[key].display) { merged[key].display = {}; }
-
-    if (!merged[key].friendlyName) { merged[key].friendlyName = humaniseFieldname(key); }
-
     /** field type */
-    if (merged[key].primaryKey) {merged[key].type=suds.dbkey}
-    if (!merged[key].type) { merged[key].type = 'string'; }
+    if (merged[key].primaryKey) { merged[key].type = suds.dbkey }
     if (merged[key].model && suds.dbkey) { merged[key].type = suds.dbkey; }
 
-    if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean'  && merged[key].type != 'object') {
-      console.error(`
-    ************************* Fatal Error ******************
-    Table: ${table} 
-    Attribute: ${key} 
-    Type: ${merged[key].type} is invalid
-    Suggest running ${suds.baseURL}/validateconfig
-    *******************************************************`)
+    if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean' && merged[key].type != 'object' && merged[key].type != 'array') {
+      trace.fatal(`Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`);
       process.exit(1);
     }
 
     /** Input and input type */
     if (merged[key].type == 'boolean' && !merged[key].input.type) { merged[key].input.type = 'checkbox'; }
 
-    if (merged[key].type == 'number' && !merged[key].input.type) {
-      merged[key].input.type = 'number';
-    }
+    if (merged[key].type == 'number' && !merged[key].input.type) { merged[key].input.type = 'number'; }
+
     /** Anything else is text! */
     if (!merged[key].input.type) { merged[key].input.type = 'text' }
 
     if (!merged[key].input.validations) { merged[key].input.validations = {} }   // guarantee that there is an validations object.
     if (!merged[key].input.class) { merged[key].input.class = suds.input.class; }  // Default class for input fields.
-
 
     /** display type */
     if (!merged[key].display.type) { merged[key].display.type = ''; }
@@ -127,8 +198,8 @@ module.exports = function (table, permission) {
 
 
 
-    trace.log({ key: key, type: merged[key], level: 'verbose' })
-    trace.log({ key: key, type: merged[key].input.type, level: 'verbose' })
+    trace.log({ key: key, type: merged[key], level: 'norm' })
+    trace.log({ key: key, type: merged[key].input.type, level: 'norm' })
 
 
 
@@ -142,22 +213,28 @@ module.exports = function (table, permission) {
     *   for each field.
     *
     ************************************************ */
-    trace.log({ key: key, group: groupLookup[key], permission: permission }, { level: 'verbose' });
+    trace.log({ key: key, group: groupLookup[key], permission: permission }, { level: 'norm' });
     merged[key].canEdit = true;                              // assume all permissions OK
     merged[key].canView = true;
     if (permission == '#superuser#') { continue; }
-
+    trace.log(merged[key].qualifiedName);
     //  If there is no  field-level permission object, default to the group permission
     if (!merged[key].permission) {
-      let groupPermission = tableData.groups[groupLookup[key]].permission;
-      if (groupPermission) {
-        merged[key].permission = groupPermission;
+      let groupkey = key;
+      if (merged[key].qualifiedName[0]) { groupkey = merged[key].qualifiedName[0] };
+      trace.log(groupkey, groupLookup[groupkey]);
+      if (tableData.groups[groupLookup[groupkey]]) {
+        let groupPermission = tableData.groups[groupLookup[groupkey]].permission;
+        if (groupPermission) {
+          merged[key].permission = groupPermission;
+        }
       }
+
     }
 
 
 
-    trace.log(table, key, permission, merged[key].permission, { level: 'verbose' });
+    trace.log(table, key, permission, merged[key].permission, { level: 'norm' });
     trace.log(table, key, permission, merged[key].permission, { level: key });
 
     /* if this field has a permission set then the default no longer applies */
@@ -196,18 +273,10 @@ module.exports = function (table, permission) {
       }
     }
 
-    trace.log({ text: 'end loop', key: key, merged: merged[key], level: 'verbose' })
+    trace.log({ text: 'end loop', key: key, merged: merged[key], level: 'norm' })
     trace.log({ text: 'end loop', key: key, merged: merged[key], level: key })
 
   }
-
-  if (tableData.recordTypeColumn && merged[tableData.recordTypeColumn]) {
-    merged[tableData.recordTypeColumn].recordType = true;
-    if (tableData.recordTypeFix) { merged[tableData.recordTypeColumn].recordTypeFix = true; }
-  }
-
-  trace.log({ merged: merged, level: 'verbose' });
-  return (merged);
 }
 
 

@@ -68,10 +68,13 @@ async function admin(req, res) {
         files: req.files,
         break: '#',
         level: 'min',
-        csrf: req.csrfToken,
+        csrf: req.csrfToken(),
 
     });
-
+    let csrfToken;
+    if (suds.csrf) {
+        csrfToken = req.csrfToken();
+    }
     trace.log({
         req: req,
         maxdepth: 3,
@@ -240,7 +243,11 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
     }
 
-
+    let subschemas = [];
+    if (req.query.subschema) {
+        subschemas = req.query.subschema;
+        if (!Array.isArray(subschemas)) { subschemas = [subschemas] }
+    }
 
     let page = 0;                                 // page number in listing
     if (req.query.page) { page = Number(req.query.page); }
@@ -259,6 +266,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
         res.send(`No table - may be an issue with report: ${report}`);
         return;
     }
+
     let tableData = require('../../tables/' + table);
     let attributes = tableData.attributes;
 
@@ -642,12 +650,12 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     if (mode == 'new'
         && tableData.recordTypeColumn
         && !req.body[tableData.recordTypeColumn]) {
-        trace.log('new withrecord type');
+        trace.log('new with record type');
         output = await checkRecordType(
             permission,
             table,
             req.query,
-            req.csrfToken(),
+            csrfToken,
 
         );
     }
@@ -675,7 +683,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                     let value = req.query[fieldName];
                     if (req.body[fieldName]) { value = req.body[fieldName] }
                     if (attributes[fieldName].primaryKey || attributes[fieldName].model) {
-                           value=db.standardiseId(value);
+                        value = db.standardiseId(value);
                     }
                     else {
                         if (attributes[fieldName].type == 'number') {
@@ -685,7 +693,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                     record[fieldName] = value;
                 }
             }
-            trace.log({ mode: mode, id: id, record: record });
+            trace.log({ mode: mode, id: id, record: record, subschemas: subschemas });
             output = await updateForm(
                 permission,
                 table,
@@ -696,8 +704,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 open,
                 openGroup,
                 req.files,
+                subschemas,
                 auditId,
-                req.csrfToken(),
+                csrfToken,
             );
         }
     }
@@ -722,8 +731,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
             open,
             openGroup,
             req.files,
+            subschemas,
             auditId,
-            req.csrfToken(),
+            csrfToken,
         );
     }
 
@@ -760,6 +770,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
 
 
     async function sendOut(output) {
+        trace.log({ stage: 'sendoutput', level: 'min' })
         let viewData = {};
         if (typeof output == 'string' && output) {
             viewData.output = output;

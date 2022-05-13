@@ -132,9 +132,14 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
     }
   }
 
-  let onchange = '';
+  let onblur = '';
+  if (attributes.input.onblur) {
+    onblur = attributes.input.onblur;
+  }
+  let onchange='';
   if (attributes.input.onchange) {
     onchange = attributes.input.onchange;
+    onchange=onchange.replace('{{fieldValue}}',fieldValue)
   }
 
   results = `
@@ -152,7 +157,8 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
           value="${title}"
           placeholder="${placeholder}" 
           aria-describedby="${attributes.description}"
-          oninput="auto('${route}','${fieldName}','${source}','${display}','${limit}','${searchparm}')"
+          oninput="auto('${route}','${fieldName}','${source}','${display}','${limit}','${searchparm}','${onchange}')"
+          onblur="${onblur}"
           >
           <span id="msg_${fieldName}"></span>
           <span id="err_${fieldName}" class="sudserror">
@@ -160,11 +166,10 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
           </span>
           <span 
           class="${classes.autoRemove}"
-          onclick="document.forms['mainform']['${fieldName}'].value=''; document.forms['mainform']['${fieldName}disp'].value='';"
+          onclick="document.getElementById('autoid_${fieldName}').value=''; document.getElementById('${fieldName}').value=''"
           >
             ${lang.deleteIcon} ${lang.clear}
           </span>
-
     </div>  <!--  autcomplete container end -->
   `;
 

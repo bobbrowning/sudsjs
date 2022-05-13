@@ -99,6 +99,7 @@ module.exports = {
     notEmail: 'Error: This must be a valid email,address',              // Error message
     notSpecified: '<i>Not specified</i>',                               // On listing if value is null
     or: 'Or',
+    pleaseWait: 'Please wait',
     populate: 'Create update form',
     prev: '< Previous page',                                            // Table list pagination
     //  returnToParent: 'Return',  // not used any more                                          

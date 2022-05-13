@@ -159,18 +159,19 @@ module.exports = {
   },
 
 
-  //  Setup / admin section
+ /*
   Docs: {
     title: 'Documentation',
     img: '/images/suds/settings.jpg',
     permission: ['demo'],
     description: 'Documentation - under development',
     links: [
+      { table: 'subschema', title: 'Subschema' },   
       { user: 'docs', title: 'Module path/name' },
      ],
   },
 
-
+*/
 
 
   //  Setup / admin section

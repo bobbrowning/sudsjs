@@ -4,11 +4,13 @@ let generic = require('./input/generic').fn;
 
 
 
-module.exports = async function (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
+module.exports = createField;
+
+async function createField (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
 
   trace = require('track-n-trace');
   trace.log({ inputs: arguments, maxdepth: 2 });
-  trace.log({ attributes: attributes[key] })
+  trace.log({ attributes: attributes })
   const inputFieldTypes = suds.inputFieldTypes;
   trace.log({key: key,types: inputFieldTypes, level: 'iftbug'});
 
@@ -26,14 +28,14 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
   let formField = '';
   let headerTags = '';
   let fieldType = 'text';                        // default
-  if (attributes[key].input.type == 'boolean') {
+  if (attributes.input.type == 'boolean') {
     fieldType = 'checkbox';                 // but defaults to checkbox if this is a boolean
   }
-  if (attributes[key].input && attributes[key].input.type) {
-    fieldType = attributes[key].input.type;
+  if (attributes.input && attributes.input.type) {
+    fieldType = attributes.input.type;
   }
   trace.log({ fieldType: fieldType });
-  if (attributes[key].type == 'number' && attributes[key].input.type == 'date') {   // have to make binary date readable
+  if (attributes.type == 'number' && attributes.input.type == 'date') {   // have to make binary date readable
     if (fieldValue) {
       fieldValue = new Date(Number(fieldValue)).toISOString();
     }
@@ -46,13 +48,13 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
 
   /** Special processing for process fields */
   if (
-    (attributes[key].primaryKey
-      || (attributes[key].process && attributes[key].process.createdAt)
-      || (attributes[key].process && attributes[key].process.updatedAt)
+    (attributes.primaryKey
+      || (attributes.process && attributes.process.createdAt)
+      || (attributes.process && attributes.process.updatedAt)
     )
     && (mode != 'search')
   ) {
-    if (Attributes[key].primaryKey) {
+    if (attributes.primaryKey) {
       formField = fieldValue;
     }
     else {
@@ -92,9 +94,9 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
     }
 
     if (
-      attributes[key].recordType
+      attributes.recordType
       && mode != 'checkRecordType'
-      && attributes[key].input.recordTypeFix
+      && attributes.input.recordTypeFix
       && permission != '#superuser#'
       && (mode != 'search')
     ) {
@@ -115,12 +117,12 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
 
     if (inputFieldTypes.includes(fieldType)) {
       trace.log('Regular input field', fieldType);
-      formField = await generic(fieldType, passedName, passedValue, attributes[key], errorMsg);
+      formField = await generic(fieldType, passedName, passedValue, attributes, errorMsg);
     }
     else {
       if (helperName) {
         trace.log('calling helper', helperName);
-        let result = await helper(fieldType, passedName, passedValue, attributes[key], errorMsg, record, tableData, tabs);
+        let result = await helper(fieldType, passedName, passedValue, attributes, errorMsg, record, tableData, tabs);
         if (Array.isArray(result)) {
           formField = result[0];
           headerTags = result[1];
@@ -132,7 +134,15 @@ module.exports = async function (key, fieldValue, attributes, errorMsg, mode, re
       }
     }
   }
-
+  let after='';
+  if (attributes.input.after && mode != 'search') {
+    after=attributes.input.after.replace('{{fieldValue}}',fieldValue);
+  }
+  let before='';
+  if (attributes.input.before && mode != 'search') {
+    before=attributes.input.before.replace('{{fieldValue}}',fieldValue);
+  }
+  formField=before+formField+after;
   trace.log({ field: formField });
 
   return ([formField, headerTags]);

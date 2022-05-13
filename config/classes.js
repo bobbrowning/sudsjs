@@ -31,7 +31,7 @@ module.exports = {
       row: 'row sudsListRow',
       envelope: 'col-sm-12',
       spacing: 'sudsFormTab',
-      link: 'sudsFormTab',
+      link: 'sudsFormTabLink',
       selected: 'sudsFormTabSelected',
     },
     label: 'col-form-label',              // label

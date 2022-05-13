@@ -3,12 +3,17 @@
  * Create a pair of arrays containing values and corresponding descriptions 
  * to use in select, chekboxes etc.
  */
- let suds = require('../../config/suds');
+const { trace } = require('console');
+let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
-let db = require('./'+suds.dbDriver);
+let db = require('./' + suds.dbDriver);
 
 module.exports = async function (attributes, record) {
-  trace = require('track-n-trace');
+  let
+
+
+
+    trace = require('track-n-trace');
   trace.log(arguments);
   let linkedTable = '';
   if (attributes.model) { linkedTable = attributes.model; }
@@ -16,6 +21,7 @@ module.exports = async function (attributes, record) {
 
   let values = [];
   let labels = [];
+  trace.log(attributes.values);
 
   if (linkedTable) {
     trace.log(linkedTable);
@@ -27,7 +33,6 @@ module.exports = async function (attributes, record) {
     ) {
       rowTitle = tableData.rowTitle;
     }
-
     let search = {};
     if (attributes.input.search) {
       if (attributes.input.search.andor) { search.andor = attributes.input.search.andor }
@@ -49,12 +54,12 @@ module.exports = async function (attributes, record) {
     for (let i = 0; i < records.length; i++) {
       trace.log(records[i]);
       values[i] = records[i][pk];
-   //   values[i]=db.stringifyId(values[i]);
-      if (typeof(rowTitle) == 'function') {
-      labels[i] = rowTitle(records[i]);
+      //   values[i]=db.stringifyId(values[i]);
+      if (typeof (rowTitle) == 'function') {
+        labels[i] = rowTitle(records[i]);
       }
       else {
-        labels[i] = records[i][rowTitle];       
+        labels[i] = records[i][rowTitle];
       }
     }
   }
@@ -62,9 +67,16 @@ module.exports = async function (attributes, record) {
     if (attributes.values) {
       if (typeof attributes.values == 'function') {
         let lvObject = attributes.values();
-        for (let key of Object.keys(lvObject)) {
-          values.push(key);
-          labels.push(lvObject[key]);
+        if (Array.isArray(lvObject)) {
+           for (let i=0;i<lvObject.length; i++) {
+            values[i] = labels[i] = lvObject[i];
+           }
+        }
+        else {
+          for (let key of Object.keys(lvObject)) {
+            values.push(key);
+            labels.push(lvObject[key]);
+          }
         }
       }
       else {
@@ -90,10 +102,6 @@ module.exports = async function (attributes, record) {
           }
         }
       }
-    }
-    else {
-      console.log(`No source for ${attributes.friendlyName}`)
-      return ('No source');
     }
   }
   trace.log({ values: values, labels: labels });

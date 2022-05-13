@@ -19,10 +19,10 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
     },
   */
 
-   trace = require('track-n-trace');
+  trace = require('track-n-trace');
   trace.log(arguments);
   let input = attributes.input;
-  
+
   if (typeof fieldValue == 'string' && fieldValue.includes('"')) { fieldValue = fieldValue.replace(/"/g, '&quot;') }
   let apicall = '';
   if (attributes.input.validations.api) {
@@ -50,6 +50,12 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
     result += `
           ${inprop}="${input[inprop]}" `;
   }
+  if (suds.useHTML5Validation) {
+    if (input.required) {
+      result += `
+    required`;
+    }
+  }
   result += `>
         <span id="err_${fieldName}" class="sudserror">${errorMsg}</span>
       `;
@@ -57,5 +63,5 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
   return (result);
 }
 
-exports.documentation=documentation;
-exports.fn=fn;
+exports.documentation = documentation;
+exports.fn = fn;

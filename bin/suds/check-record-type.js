@@ -43,7 +43,7 @@ let fn= async function (permission, table, inputQuery,csrf) {
     query += `&prepopulate=${inputQuery.prepopulate}&${inputQuery.prepopulate}=${inputQuery[inputQuery.prepopulate]}`;
   }
      query += `&prepopulate=${key}`;
-   let [formField, headerTags] = await createField(key, '', attributes, '', 'checkRecordType');
+   let [formField, headerTags] = await createField(key, '', attributes[key], '', 'checkRecordType');
   let format = suds.input.default;
   let groupClass;
   let labelClass;

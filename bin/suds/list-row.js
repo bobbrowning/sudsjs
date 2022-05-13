@@ -8,7 +8,6 @@ let lang = require('../../config/language')['EN'];
 let db = require('./'+suds.dbDriver);
 let evalPermission = require('./eval-permission');
 
-let createField = require('./create-field');
 //let countRows = require('./count-rows');
 //let totalRows = require('./total-rows');
 //let getRow = require('./get-row');
@@ -17,6 +16,7 @@ let displayField = require('./display-field');
 let humaniseFieldname = require('./humanise-fieldname');
 let hasPermissionFunction = require('./has-permission');
 let listTable = require('./list-table');
+let addSubschemas=require ('./subschemas');
 
 /*
   friendlyName: 'List table row',
@@ -45,7 +45,7 @@ let listTable = require('./list-table');
   },
 
 */
-module.exports = async function (permission, table, id, open, openGroup) {
+module.exports = async function (permission, table, id, open, openGroup,subschemas) {
   trace.log({ inputs: arguments, break: '#', level: 'min',td: typeof tableDataFunction });
 
 
@@ -62,15 +62,22 @@ module.exports = async function (permission, table, id, open, openGroup) {
     return `<p>Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). <a href="${suds.mainPage}">Please log in</a> and retry`;
   }
   let message = '';
-  let attributes = await mergeAttributes(table, permission);  // Merve field attributes in model with config.suds tables
+  let attributes = await mergeAttributes(table, permission,subschemas);  // Merve field attributes in model with config.suds tables
   trace.log({ attributes: attributes, level: 'verbose' })
   let record = await db.getRow(table, id);     // populate record from database
+  if (tableData.subschema) {
+    subschemas = record[tableData.subschema.key];
+   additionalAttributes= await addSubschemas(subschemas)
+    attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
+    trace.log({subschemas:subschemas,attributes:attributes,maxdepth:2})
+  }
+
   if (record.err) {
     return (`<h1>Unexpected error ${record.errmsg}/h1>`);
   }
   let output = '';
   let tableName = tableData.friendlyName;
-
+  trace.log(record);
 
   let rowTitle = `Row: ${id}`;              //  Row title defailts to Row: x  
   if (tableData.rowTitle) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
@@ -552,11 +559,12 @@ module.exports = async function (permission, table, id, open, openGroup) {
     if (tableData.groups[group].columns) {
       for (const key of tableData.groups[group].columns) {
         trace.log(key);
-        trace.log(group, key, attributes[key].canView, children[key]);
         if (!attributes[key]) {
-          console.log(`column ${key} in group ${group} does not exist.`);
+          trace.error(`
+          column ${key} in group ${group} does not exist.`);
           continue
         };
+        trace.log(group, key, attributes[key].canView, children[key]);
         trace.log(attributes[key].canView);
         if (!attributes[key].canView) { continue };
         let display = await displayField(attributes[key], record[key], children[key], permission);

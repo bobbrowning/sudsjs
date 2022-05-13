@@ -1,10 +1,13 @@
 let trace = require('track-n-trace');
 let sendView = require('./send-view');
-let suds=
+let suds = require('../../config/suds');
 
 module.exports = async function (req, res) {
     console.log(__dirname);
-    let csrf=req.csrfToken();
+   let csrfToken='';
+   if (suds.csrf) {
+        csrfToken=req.csrfToken();                                                  
+   }
     trace.log('login form' );
     let next='';
     let log='';
@@ -25,7 +28,7 @@ module.exports = async function (req, res) {
 
     <h1>Log in</h1>
     <form action="/login" method="post" class="sudsLogin" id="login">
-    <input type="hidden" name="_csrf" value="${csrf}" id="csrf" />
+    <input type="hidden" name="_csrf" value="${csrfToken}" id="csrf" />
     <input type="hidden" name="next" value="${next}" />
        <div class="form-group">
         <label for="InputEmail">Email address</label>

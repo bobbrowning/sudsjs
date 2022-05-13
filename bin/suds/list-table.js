@@ -231,7 +231,7 @@ async function listTable(
   let i = 0;
   for (let key of columns) {
     if (!attributes[key]) {
-      console.log(`unrecognised field ${key} in column list`);
+      console.log(`list-table.js: Listing table ${table} - Unrecognised field ${key} in column list`);
       continue;
     }
     if (attributes[key].canView && !attributes[key].collection) {
@@ -376,7 +376,9 @@ async function listTable(
      */
     let keys = Object.keys(attributes);
     for (let k = 0; k < keys.length; k++) {
-      if (!attributes[keys[k]].canView) { delete keys[k] }
+      if (!attributes[keys[k]].canView) { delete keys[k] ; continue;}
+      if (attributes[keys[k]].type == 'object') { delete keys[k]; continue }
+      if (attributes[keys[k]].array) { delete keys[k] }
     }
     keys = keys.filter(Boolean);   // compress array after removing elements...
 
@@ -527,7 +529,7 @@ async function listTable(
         attributes[key].input.type = 'select';
 
       }
-      let [field, headerTags] = await createField(key, '', attributes, '', 'search', {}, tableData);
+      let [field, headerTags] = await createField(key, '', attributes[key], '', 'search', {}, tableData);
       trace.log({ key: key, changed: attributes[key].input, level: 'verbose' });
 
       /* restore the attributes we have changed */
@@ -907,8 +909,8 @@ async function listTable(
     *
     ************************************************ */
 
-    records = await db.getRows(table, searchSpec, offset, limit, sortKey, direction);
-    trace.log({ offset: offset, page: page, records: records });
+    let records = await db.getRows(table, searchSpec, offset, limit, sortKey, direction);
+    trace.log({ offset: offset, page: page, records: records , length: records.length});
     /*
     if (page == 1 && records.length==1) {
       let output=`<script>window.location="${suds.mainPage}?table=${table}&id=${records[0][tableData.primaryKey]}&mode=listrow"</script>`;
@@ -923,8 +925,8 @@ async function listTable(
       let width;
       output += `
           <tr>`;
-      for (let i = 0; i < fieldList.length; i++) {
-        let key = fieldList[i];
+      for (let j = 0; j < fieldList.length; j++) {
+        let key = fieldList[j];
         let maxWidth = '';
         if (attributes[key].display.maxWidth) {
           maxWidth = attributes[key].display.maxWidth;
@@ -942,8 +944,8 @@ async function listTable(
           trace.log({ key: key, attributes: attributes[key], level: 'verbose' });
           let attr = attributes[key];
           let val = record[key]
-          display = await displayField(attr, val);
-          trace.log({ key: key, attributes: attributes[key], level: 'verbose' });
+         display = await displayField(attr, val);
+          trace.log({ key: key, attributes: attributes[key], level: 'silly' });
 
           if (display == null) { display = ''; }
           if (attributes[key].display && attributes[key].display.width) {
@@ -968,7 +970,7 @@ async function listTable(
           <TD style="max-width: ${maxWidth}">${display}</TD>`;
         }
       }
-      trace.log(tableData.canEdit);
+      trace.log(i,tableData.canEdit);
 
       //  link to detail line 
       if ((tableData.canEdit && !hideEdit) || !hideDetails) {
@@ -984,6 +986,7 @@ async function listTable(
         target=record[tableData.primaryKey];
       }
 
+      trace.log(i,records.length);
 
       if (!hideDetails) {
         output += `
@@ -1000,7 +1003,7 @@ async function listTable(
       }
       output += `
       </tr>`;
-    }
+     }
 
     /* ************************************************
     *

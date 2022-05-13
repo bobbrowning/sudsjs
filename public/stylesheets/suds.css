@@ -232,12 +232,20 @@ ul.homeSectionList {
 .sudsFormTab {
   font-size   : medium;
   margin-right: 20px;
+}
+
+.sudsFormTabLink {
+  font-size   : medium;
+  margin-right: 20px;
+  color: rgba(0, 110, 255, 0.932);
+  cursor: pointer;
 
 }
 
 .sudsFormTabSelected {
   font-size  : medium;
   font-weight: bold;
+  color: black;
 }
 
 .sudsParentData {

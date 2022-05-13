@@ -8,6 +8,7 @@
   errorMsg: { type: 'string' },
 
 },*/
+
 let suds = require('../../../config/suds');
 
 let documentation = {
@@ -25,11 +26,22 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   trace = require('track-n-trace');
   trace.log(arguments);
   let results = '';
-
-  [values, labels] = await getLabelsValues(attributes, record);
+  let onchange='';
+  if (attributes.input.onchange) {
+    onchange = attributes.input.onchange;
+    onchange=onchange.replace(/{{fieldValue}}/,fieldValue)
+  }
+ [values, labels] = await getLabelsValues(attributes, record);
   trace.log(labels,values,fieldValue);
   results = `
-          <select name="${fieldName}"  class="form-control" aria-label="${attributes.friendlyName}"  id="${fieldName}" style="width: ${attributes.input.width}" >
+          <select 
+          name="${fieldName}"  
+          class="form-control" 
+          aria-label="${attributes.friendlyName}"  
+          id="${fieldName}" 
+          style="width: ${attributes.input.width}"
+          onchange="${onchange}"
+           >
           <option value="">${lang.select}</option>`;
   for (let i = 0; i < values.length; i++) {
     selected = '';
@@ -41,7 +53,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   results += `
         </select>
         <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
-`;
+ `;
 
   return (results);
 }
