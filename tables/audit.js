@@ -11,36 +11,10 @@ module.exports = {
   permission: { view: ['admin', 'demo'] },
   list: {
     columns: ['id', 'createdAt', 'tableName', 'mode', 'row'],
-  },
+  }, 
+  standardHeader: true,
   attributes: {
-    id: {
-      friendlyName: 'Number',                            // Visible name 
-      type: 'number',
-      autoincrement: true,
-      primaryKey: true,
-    },
-    createdAt: {
-      friendlyName: 'Date created',
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { createdAt: true }
-    },                                      // You don't actually enter these
-    updatedAt: {                            // but if you did they would be dates. 
-      friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { updatedAt: true }
-    },
-    updatedBy: {
-      friendlyName: 'Last updated by',
-      description: `The person who last updated the row.`,
-      type: 'number',
-      model: 'user',
-      process: { updatedBy: true }
-    },
-    tableName: {
+     tableName: {
       type: 'string',
       database: { type: 'varchar', length: 50, },
     },

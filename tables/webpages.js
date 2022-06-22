@@ -87,6 +87,7 @@ module.exports = {
      *   description is used in the tooltip for that field in the update form as well as 
      *     being documentation.  If omitted the friendlyName is used.
      */
+     standardHeader: true,
     attributes: {
         pageno: {
             friendlyName: 'Page No',
@@ -99,21 +100,21 @@ module.exports = {
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },   // when displayed on the table list only the first 16 characters are shown.
             database: { type: 'biginteger' },                          // special type when creating the database
-            process: { createdAt: true }                               // This is created by the system               
+            process: { type: 'createdAt' }                               // This is created by the system               
         },
         updatedAt: {
             friendlyName: 'Date last updated',
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             database: { type: 'biginteger' },
-            process: { updatedAt: true }
+            process: { type: 'updatedAt' }
         },
         updatedBy: {
             friendlyName: 'Last updated by',
             description: `The person who last updated the row.`,
             type: 'number',
             model: 'user',                                             // This is a foreign key linking to the user table
-            process: { updatedBy: true },                              // The link is made automatically
+            process: { type: 'updatedBy' },                              // The link is made automatically
         },
 
         title: {

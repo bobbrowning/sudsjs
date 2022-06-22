@@ -15,6 +15,9 @@ module.exports = function (table, permission) {
     return ({});
   }
 
+  /** compatibility with legacy data */
+  if (tableData.rowTitle) {tableData.stringify=tableData.rowTitle};
+
   for (let key of Object.keys(tableData)) {
     // merged is a merge of the attributes in the model with the extra attributes in the 
     // suds config file.  These give field properties for things like the input type 
@@ -25,23 +28,29 @@ module.exports = function (table, permission) {
       trace.log(key, merged[key], { level: 'verbose' });
     }
   }
+  
+  standardHeader = {};
+  if (tableData.standardHeader) {
+    standardHeader = require('../../config/standard-header');
+  }
+  let combined= { ...standardHeader, ...tableData.attributes }
 
   /* add primary key as a top level value in the tableData object. */
-  for (let key of Object.keys(tableData.attributes)) {
-    if (tableData.attributes[key].primaryKey) {
+  for (let key of Object.keys(combined)) {
+    if (combined[key].primaryKey) {
       merged.primaryKey = key;
     }
-    if (tableData.attributes[key].process && tableData.attributes[key].process.createdAt) {
+    if (combined[key].process && combined[key].process.type=='createdAt') {
       merged.createdAt=key;
     }
-    if (tableData.attributes[key].process && tableData.attributes[key].process.updatedAt) {
+    if (combined[key].process && combined[key].process.type=='updatedAt') {
       merged.updatedAt=key;
     }
   }
   /* If we haven't found one then use the first autoincrement field we find */
   if (!merged.primaryKey) {
-    for (let key of Object.keys(tableData.attributes)) {
-      if (tableData.attributes[key].autoincrement) {
+    for (let key of Object.keys(combined)) {
+      if (combined[key].autoincrement) {
         merged.primaryKey = key;
         break;
       }

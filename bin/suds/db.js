@@ -81,6 +81,25 @@ function connect() {
 function stringifyId (id) {
  return id;
 }
+
+
+/**
+ * 
+ * Quick attributes object without any processing
+ * @param {string} table 
+ * @returns 
+ */
+ function rawAttributes(table) {
+  let tableData = require('../../tables/' + table);
+  standardHeader = {};
+  if (tableData.standardHeader) {
+    standardHeader = require('../../config/standard-header');
+  }
+  let combined= { ...standardHeader, ...tableData.attributes };
+  return(combined);
+}
+
+
 /** ******************************************
  * 
  *        GET INSTRUCTION
@@ -137,7 +156,7 @@ function getInstruction(table, spec) {
       qfield = `"${qfield}"`;
     }
 
-    trace.log({ searchField: searchField, qfield: qfield, compare: compare, value: value })
+    trace.log({ table: table, searchField: searchField, qfield: qfield, compare: compare, value: value })
 
 
     /* OK this is a kludge.  But sometimes you want to allow people to search by */
@@ -158,9 +177,10 @@ function getInstruction(table, spec) {
       bindings[b++] = `%${value}%`
       continue;
     }
+    let attributes=rawAttributes(table);
     bindings[b++] = value;
     if (compare == 'like') { instruction += `${qfield} like ?` }
-    if (tableData.attributes[searchField].type == 'string') { value = '"' + value + '"' }
+    if (attributes[searchField].type == 'string') { value = '"' + value + '"' }
     if (compare == 'equals' || compare == 'eq') { instruction += `${qfield} = ?` }
     if (compare == 'less' || compare == 'lt') { instruction += `${qfield} < ?` }
     if (compare == 'more' || compare == 'gt') { instruction += `${qfield} > ?` }
@@ -469,8 +489,10 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   if (!limit && spec.limit) { limit = spec.limit }
   let rows = {};
   let tableData = tableDataFunction(table);
+  trace.log(table, tableData);
   if (!sortKey && spec.sort) { sortKey = spec.sort[0]; }
   if (!sortKey) { sortKey = tableData.primaryKey; }
+  trace.log(sortKey);
   if (!direction && spec.sort) { direction = spec.sort[1]; }
   if (!direction) { direction = 'DESC'; }
   if (spec && spec.searches && spec.searches.length) {
@@ -479,7 +501,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     }
     let instruction = spec.instruction[0];
     let bindings = spec.instruction[1];
-    trace.log({ instruction: instruction, bindings: bindings, edit: tableData.canEdit, limit: limit });
+    trace.log({ instruction: instruction, bindings: bindings, limit: limit, sortKey: sortKey, direction: direction });
     if (limit && limit != -1) {
       rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
     }
@@ -498,7 +520,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   }
 
   trace.log(rows);
-  let attributes = require(`../../tables/${table}`)['attributes'];
+  let attributes = rawAttributes(table);
   trace.log(attributes, { level: 'verbose' });
   for (let i = 0; i < rows.length; i++) {
     record = rows[i];
@@ -510,8 +532,6 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
       }
     }
   }
-
-
   return (rows);
 }
 

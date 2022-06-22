@@ -17,7 +17,7 @@ module.exports = async function (req, res) {
     let next = '';
     if (allParms.next) {
         next = allParms.next
-        if (next == 'configreport') {
+        if (next == 'configreport' || next == 'admin') {
             next = '/' + next;
         }
         else {

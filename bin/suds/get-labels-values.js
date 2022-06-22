@@ -28,10 +28,10 @@ module.exports = async function (attributes, record) {
     let tableData = tableDataFunction(linkedTable);
     let pk = tableData.primaryKey;
     if (!pk) { pk = 'id'; }
-    let rowTitle = function (record) { return (record[pk]) };
-    if (tableData.rowTitle
+    let stringify = function (record) { return (record[pk]) };
+    if (tableData.stringify
     ) {
-      rowTitle = tableData.rowTitle;
+      stringify = tableData.stringify;
     }
     let search = {};
     if (attributes.input.search) {
@@ -55,11 +55,11 @@ module.exports = async function (attributes, record) {
       trace.log(records[i]);
       values[i] = records[i][pk];
       //   values[i]=db.stringifyId(values[i]);
-      if (typeof (rowTitle) == 'function') {
-        labels[i] = rowTitle(records[i]);
+      if (typeof (stringify) == 'function') {
+        labels[i] = stringify(records[i]);
       }
       else {
-        labels[i] = records[i][rowTitle];
+        labels[i] = records[i][stringify];
       }
     }
   }

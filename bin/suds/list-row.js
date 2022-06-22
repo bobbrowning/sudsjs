@@ -79,13 +79,13 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
   let tableName = tableData.friendlyName;
   trace.log(record);
 
-  let rowTitle = `Row: ${id}`;              //  Row title defailts to Row: x  
-  if (tableData.rowTitle) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
-    if (typeof (tableData.rowTitle) == 'string') {
-      rowTitle = record[tableData.rowTitle];
+  let stringify = `Row: ${id}`;              //  Row title defailts to Row: x  
+  if (tableData.stringify) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
+    if (typeof (tableData.stringify) == 'string') {
+      stringify = record[tableData.stringify];
     }
     else {
-      rowTitle = await tableData.rowTitle(record);
+      stringify = await tableData.stringify(record);
     }
   }
 
@@ -94,11 +94,11 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
   trace.log({
     table: table,
     tableData: tableData,
-    rowTitle: rowTitle,
+    stringify: stringify,
     tableName: tableName,
     parent: parent,
     parentKey: parentKey,
-    rowTitleType: typeof (tableData.rowTitle),
+    stringifyType: typeof (tableData.stringify),
   });
 
   /** **********************************************
@@ -187,19 +187,22 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
         let primaryKey = tableData.primaryKey;
         let sortField = tableData.createdAt;
         trace.log(tableData);
-        let records = await db.getRows(child, { searches: [[via, 'eq', id]] }, 0, activityLimit, sortField, 'DESC');
+        let records = await db.getRows(child, { searches: [[via, 'eq', id],['updatedAt','gt',0]] }, 0, activityLimit, sortField, 'DESC');
         for (let record of records) {
-          let rowTitle = ''
-          if (tableData.rowTitle) {
-            rowTitle = await tableData.rowTitle(record);
+          trace.log(record);
+          let stringify = ''
+          if (tableData.stringify) {
+            stringify = await tableData.stringify(record);
           }
-          activityLog[i++] = [child, tableData.friendlyName, record[primaryKey], record[sortField], rowTitle, attributes[key].friendlyName]
+          activityLog[i++] = [child, tableData.friendlyName, record[primaryKey], record[sortField], stringify, attributes[key].friendlyName]
         }
       }
     }
+    trace.log(activityLog)
     let searches = {
       andor: 'and',
       searches: [
+        ['updatedAt','gt',0],
         ['tableName', 'eq', table],
         ['row', 'eq', id],
         ['mode', 'ne', 'populate']
@@ -209,11 +212,11 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
       let auditRecords = await db.getRows('audit', searches, 0, activityLimit, 'updatedAt', 'DESC');
       trace.log(auditRecords);
       for (let record of auditRecords) {
-        let rowTitle = lang[record.mode];
+        let stringify = lang[record.mode];
         let reason = '';
 
         //   if (record.createdAt==record.updatedAt) {reason=lang.new}
-        activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, rowTitle, reason]
+        activityLog[i++] = [table, tableData.friendlyName, id, record.createdAt, stringify, reason]
       }
     }
 
@@ -532,7 +535,7 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
 
   if (message) { output += `<h2>${message}</h2>` }
   output += `
-      <h1>${tableName}<br />${rowTitle}</h1>`;
+      <h1>${tableName}<br />${stringify}</h1>`;
 
   /* ************************************************
    *
@@ -934,7 +937,10 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
   trace.log({ output: output, level: 'silly' });
   let created = new Date(record['createdAt']).toDateString();
   let updated = new Date(record['updatedAt']).toDateString();
-  let footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}`;
+  let updatedBy={fullName:'Nobody'}
+    if (record['updatedBy']) {let updatedBy=await db.getRow('user',record['updatedBy']);}
+   trace.log(updatedBy)
+  footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}  ${lang.updatedBy} ${updatedBy.fullName}`;
   return ({ output: output, footnote: footnote });
 
 }

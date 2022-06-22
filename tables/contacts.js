@@ -76,34 +76,9 @@ module.exports = {
       return;
     },
   },
+  
+  standardHeader: true,
   attributes: {
-    id: {
-      friendlyName: 'Contact No',                            // Visible name 
-      type: 'number',
-      primaryKey: true,
-      autoincrement: true,
-    },
-    createdAt: {
-      friendlyName: 'Date created',
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { createdAt: true }
-    },                                      // You don't actually enter these
-    updatedAt: {                            // but if you did they would be dates. 
-      friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { updatedAt: true }
-    },
-    updatedBy: {
-      friendlyName: 'Last updated by',
-      description: `The person who last updated the row.`,
-      type: 'number',
-      model: 'user',
-      process: { updatedBy: true }
-    },
 
     user: {
       description: 'The person or organisation contacted',
@@ -148,7 +123,6 @@ module.exports = {
             ['userType', 'equals', 'I']
           ],
         },
-        minLength: 3,               // min characters entered before search (defaults to 2)
         placeholder: 'Number or type name (case sensitive)',
         idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
         default: '#loggedInUser',    // 

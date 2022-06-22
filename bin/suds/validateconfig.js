@@ -9,11 +9,9 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./'+suds.dbDriver);
+let db = require('./' + suds.dbDriver);
 const fs = require('fs');
-const { register } = require('../../config/suds');
-
-
+const standardHeader = require('../../config/standard-header');
 
 module.exports = async function (req, res) {
     console.log(__dirname);
@@ -38,8 +36,8 @@ module.exports = async function (req, res) {
 
     errors = '';
     warnings = '';
-    errorCount=-0;
-    warningCount=0;
+    errorCount = -0;
+    warningCount = 0;
     /* ****************************************
     *
     *  Validate  suds.config
@@ -73,6 +71,9 @@ module.exports = async function (req, res) {
         'port',
         'get',
         'post',
+        'csrf',
+        'useHTML5Validation',
+        'subSchemaGroups',
         'validate',
         'baseURL',
         'mainPage',
@@ -204,15 +205,18 @@ module.exports = async function (req, res) {
         'recordTypeColumn',
         'addRow',
         'recordType'
-  
+
     ];
     let validTableData = [
+        'rowTitle',
+        'stringify',
+        'standardHeader',
         'friendlyName',
         'description',
         'extendedDescription',
         'permission',
         'addRow',
-        'rowTitle',
+        'stringify',
         'list',
         'groups',
         'attributes',
@@ -239,7 +243,7 @@ module.exports = async function (req, res) {
         'derive',
         'sort',
     ];
-    let validTypes=[
+    let validTypes = [
         'string',
         'number',
         'boolean'
@@ -256,7 +260,7 @@ module.exports = async function (req, res) {
     for (let i = 0; i < suds.inputFieldTypes.length; i++) {
         validInputFieldTypes.push(suds.inputFieldTypes[i]);
     }
-   for (let i = 0; i < suds.inputTypeHandlers.length; i++) {
+    for (let i = 0; i < suds.inputTypeHandlers.length; i++) {
         validInputFieldTypes.push(suds.inputTypeHandlers[i]);
     }
 
@@ -273,6 +277,16 @@ module.exports = async function (req, res) {
         trace.log({ table: table, break: '#' });
 
         let tableObject = require(`../../tables/${table}`);
+        /* ****************************************
+        *
+        *  consolidate attributes of this table
+        *
+        **************************************** */
+        let attributes = tableObject.attributes;
+        if (tableObject.standardHeader) {
+            attributes = { ...standardHeader, ...tableObject.attributes };
+        }
+
         console.log('checking attribute: ', table, tableObject);
         /* ****************************************
         *
@@ -341,17 +355,15 @@ module.exports = async function (req, res) {
                 let columns = tableObject.groups[group].columns;
                 if (columns) {
                     if (!Array.isArray(columns)) {
-                        seterror(`In project ${project}: 
-              Table: ${table}  
+                        seterror(`In table: ${table}  
               Group: ${group} 
               Sorry columns ${columns} is not an array
               `);
                     }
                     else {
                         for (let column of columns) {
-                            if (!tableObject.attributes[column]) {
-                                seterror(`In project ${project}: 
-            Table: ${table}  
+                            if (!attributes[column]) {
+                                seterror(`In table: ${table}  
             Group: ${group} 
             Sorry ${column} is not a valid field
             `);
@@ -376,7 +388,7 @@ module.exports = async function (req, res) {
             let columns = tableObject.list.columns;
             trace.log(table, columns);
             for (let i = 0; i < columns.length; i++) {
-                if (!tableObject.attributes[columns[i]]) {
+                if (!attributes[columns[i]]) {
                     seterror(`
       Table: ${table} 
       In columns for listing: ${columns[i]} is not a valid attribute
@@ -400,41 +412,33 @@ module.exports = async function (req, res) {
         }
 
 
-
-
-
         /* ****************************************
           *
-          *  loop through attributes of this table
+          *  All the attributes /  properties valid?
           *
           **************************************** */
-        if (tableObject.attributes) {
-            let attributes = tableObject.attributes;
+        validateAttributes(attributes);
 
+        function validateAttributes(attributes) {
 
-            /* ****************************************
-              *
-              *  All the attributes /  properties valid?
-              *
-              **************************************** */
-            trace.log(attributes);
             for (let attribute of Object.keys(attributes)) {
+                trace.log(attributes[attribute]);
 
-                if (!tableObject.attributes[attribute]) {
+                if (typeof attributes[attribute] != 'object') {
                     seterror(`
             Table: ${table}  
             ${attribute} is not a valid attribute
             `);
 
                 }
-             
-             if (attributes[attribute].type && !validTypes.includes(attributes[attribute].type)){
-                seterror(`
+
+                if (attributes[attribute].type && !validTypes.includes(attributes[attribute].type)) {
+                    seterror(`
                 Table: ${table}  
                 Column: ${attribute} 
                 ${attributes[attribute].type} is not  valid type
-                `);      
-             }
+                `);
+                }
 
 
                 for (let property of Object.keys(attributes[attribute])) {
@@ -454,14 +458,14 @@ module.exports = async function (req, res) {
                   **************************************** */
                 if (attributes[attribute].input && attributes[attribute].input.type) {
 
-                    if (!validInputFieldTypes.includes(attributes[attribute].input.type)){
+                    if (!validInputFieldTypes.includes(attributes[attribute].input.type)) {
                         seterror(`
                         Table: ${table}  
                         Column: ${attribute} 
                         ${attributes[attribute].input.type} is not  valid input type
-                        `);      
-                     }
-        
+                        `);
+                    }
+
 
                     /* ****************************************
                      *
@@ -508,7 +512,7 @@ module.exports = async function (req, res) {
               This column has a collectionList  section, but does not 
               have a collection set in the model.
               `);
-                        continue;
+                        return;
                     }
                     for (key of Object.keys(attributes[attribute].collectionList)) {
                         if (!validChildData.includes(key)) {
@@ -532,8 +536,10 @@ module.exports = async function (req, res) {
 
                     }
                 }
+                return;
             }
         }
+
     }
 
 
@@ -597,7 +603,7 @@ module.exports = async function (req, res) {
        *
        **************************************** */
     let output = "<h2>Checking the SUDSjs config files for obvious errors</h2>"
-   
+
     if (errorCount) {
         output += errors;
     }
@@ -615,17 +621,17 @@ module.exports = async function (req, res) {
     output += `\n<p><a href="${suds.mainPage}">Admin page</a></p>`;
 
 
-    let summary=   `${Date().slice(0,21)}
+    let summary = `${Date().slice(0, 21)}
     ${errorCount} Errors
     ${warningCount} Warnings
     `;
     fs.writeFile('lastvalidate.txt', summary, err => {
         if (err) {
-          console.error(err)
-          return
+            console.error(err)
+            return
         }
-       console.log(summary)
-      });
+        console.log(summary)
+    });
 
     res.send(output);
     return;

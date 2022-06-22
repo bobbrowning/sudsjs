@@ -20,16 +20,35 @@ async function displayField(attributes, value, children, permission, parent) {
   if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace.log(arguments);
   let display = '';
-
+  
 
   if (attributes.type == 'object') {
+  
     if (attributes.array && Array.isArray(value)) {
       trace.log(value);
       display += '<ol>';
       for (let i = 0; i < value.length; i++) {
         display += '<li>';
+        let disp='inline';
+        if (attributes.stringify) {
+          disp='none';
+          display+=`
+          <span onclick="document.getElementById('${attributes.key}_${i}').style.display='inline'">`
+          if (typeof attributes.stringify == 'function') {
+            display+=await attributes.stringify(value[i]);
+          }
+          else {
+            display+=value[i][attributes.stringify];
+          }
+          display+=` <span class="text-primary" style="cursor: pointer; "> more...</span>
+          </span>`;
+        }
+        display+=`
+        <div id="${attributes.key}_${i}"  style="display:${disp}">`;
         display += await displayField(attributes, value[i], children, permission, parent)
-        display += '</li>';
+        display += `
+        </div>
+        </li>`;
       }
       display += '</ol>';
       trace.log(display);
@@ -81,7 +100,7 @@ async function displayField(attributes, value, children, permission, parent) {
 
 
     /** This is not a real field on the database, but itendifies a child column */
-    trace.log(attributes.collection, children)
+    trace.log(attributes.collection, children,value)
     if (attributes.collection) {
       let num = children;
 
@@ -135,7 +154,7 @@ async function displayField(attributes, value, children, permission, parent) {
         trace.log(err)
       }
       if (helper) {
-        trace.log('using helper', attributes.display.type);
+        trace.log('using helper', attributes.display.type,value);
         return (await helper(attributes, value))
       }
     }

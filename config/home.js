@@ -20,7 +20,7 @@ module.exports = {
   contactManager: {
     title: 'Contact management',                         // Title of the section
     img: '/images/suds/contact.jpg',                     // Optional image 
-    permission: ['all'],                                 // permission sets that will see this
+    permission: ['clerical', 'sales', 'purchasing', 'admin','demo'],       // permission sets that will see this
     description: 'Keep in touch',                        // explanitory text under the heading.
     links: [
       {
@@ -107,6 +107,19 @@ module.exports = {
     ],
   },
 
+// Training academy
+
+training: {
+  title: 'Training',
+  img: '/images/suds/www.jpg',
+  permission: ['admin', 'demo','trainer'],
+  links: [
+    { table: 'subjects', title: 'Subjects' },
+    { table: 'studentnorm', title: 'Students - normalized' },
+    { table: 'results', title: 'Exam results' },
+ /*   { table: 'studentdenorm', title: 'Students - denormalized' },*/
+  ],
+},
 
 
   //  Setup / admin section
@@ -153,8 +166,7 @@ module.exports = {
       },
       { table: 'contacts', title: 'All external contacts' },
       { table: 'productjoin', title: 'Product Join Table' },
-      { table: 'salesorderlines', title: 'Sales order lines' },
-      { table: 'purchaseorderlines', title: 'Purchase order lines' },
+       { table: 'purchaseorderlines', title: 'Purchase order lines' },
     ],
   },
 

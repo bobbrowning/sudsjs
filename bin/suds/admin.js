@@ -377,6 +377,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
             trace.log(table, id);
             let rec = {
                 updatedBy: req.session.userId,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
                 tableName: table,
                 mode: mode,
                 row: id,

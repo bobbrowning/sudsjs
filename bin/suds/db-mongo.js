@@ -42,11 +42,8 @@ let suds = require('../../config/suds');
 const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 let lang = require('../../config/language')['EN'];
-const { MongoClient, ReadConcernLevel } = require("mongodb");
+const MongoClient = require("mongodb").MongoClient;
 let ObjectId = require('mongodb').ObjectId;
-const { traceDeprecation } = require('process');
-const { syncBuiltinESMExports } = require('module');
-const { readFileSync } = require('fs');
 
 /** *********************************************
  * 
@@ -76,6 +73,23 @@ async function connect() {
     console.log("Database connected failed", err);
   }
 }
+
+/**
+ * 
+ * Quick attributes object without any processing
+ * @param {string} table 
+ * @returns 
+ */
+function rawAttributes(table) {
+  let tableData = require('../../tables/' + table);
+  standardHeader = {};
+  if (tableData.standardHeader) {
+    standardHeader = require('../../config/standard-header');
+  }
+  let combined= { ...standardHeader, ...tableData.attributes };
+  return(combined);
+}
+
 
 /** *********************************************
  * 
@@ -133,9 +147,10 @@ function xstringifyId(id) {
 function getInstruction(table, spec) {
 
   trace.log({ input: arguments });
-  let tableData = require('../../tables/' + table);
-  trace.log({ tableData: tableData, level: 'verbose' });
-  /* Rationalise the searchspec object */
+
+
+  let attributes=rawAttributes(table);
+ /* Rationalise the searchspec object */
   if (!spec.andor) { spec.andor = 'and'; }
   // if (!spec.sort) {
   //   spec.sort = [Object.keys(tableData.attributes)[0], 'DESC'];  // sort defaults to first field (normally ID) 
@@ -147,19 +162,36 @@ function getInstruction(table, spec) {
   let query = {};
   if (spec.andor == 'or') { query = { $or: [] } }
 
+
   let b = 0;
   for (i = 0; i < searches.length; i++) {
     let item = {};
     let searchField = searches[i][0];
     let compare = searches[i][1];
     let value = searches[i][2];
-    if (tableData.attributes[searchField].model || searchField == '_id') {
+    let ta;
+    let qfield = searchField;
+    let path = [searchField];
+    if (searchField.includes('.')) {
+      trace.log(`*********************** ${searchField} *****************`);
+      path = searchField.split('.');
+      let step = attributes[path[0]];
+      for (let i = 1; i < path.length; i++) {
+        step = step.object[path[i]];
+        trace.log({ step: step });
+      }
+      ta = step;
+      trace.log(ta);
+    }
+    else {
+      ta = attributes[searchField];
+    }
+    if (ta.model || searchField == '_id') {
       if (typeof (value) == 'string') {
-        try { value = ObjectId(value) } catch (err) { trace.error(table, tableData.attributes[searchField].qualifiedName, value, err) }
+        try { value = ObjectId(value) } catch (err) { trace.error(table, searchField, value, err) }
       }
     }
-    let qfield = searchField;
-    trace.log({ searchField: searchField, qfield: qfield, compare: compare, value: value })
+    trace.log({ searchField: searchField, path: path, qfield: qfield, compare: compare, value: value })
 
     if (compare == 'startsWith' || compare == 'startswith') {
       let re = new RegExp(`${value}.*`);
@@ -177,6 +209,10 @@ function getInstruction(table, spec) {
     if (compare == 'le') { item = { $le: value } }
     if (compare == 'ge') { item = { $ge: value } }
     if (compare == 'ne') { item = { $ne: value } }
+
+
+
+
     if (spec.andor == 'and') {
       query[qfield] = item;
     }
@@ -188,7 +224,7 @@ function getInstruction(table, spec) {
 
   }
 
-  trace.log({ instruction: query });
+  trace.log({ table: table, instruction: query });
   return (query);
 }
 
@@ -201,6 +237,9 @@ function getInstruction(table, spec) {
  * Yeah I know wouldn't be necessary with Typescript.
  * Any id fields change to objectID 
  * 
+ * record is the input record  this is transferred to rec so 
+ * as to eliminate non-schema fields
+ * 
  * @param {string} table - Table name
  * @param {object} record
  * @param {object} tableData - Table data from the schema
@@ -209,49 +248,78 @@ function getInstruction(table, spec) {
  * 
  */
 function fixWrite(table, record, attributes, mode) {
-  trace.log({ table: table, record: record, mode: mode })
+  trace.log({ table: table, record: record, mode: mode,break: '+', })
   let rec = {};
   if (record._id && typeof (record._id) == 'string') {
     rec['_id'] = ObjectId(record._id);
     trace.log({ id: rec._id });
   }
   for (let key of Object.keys(attributes)) {
-    if (key == '_id') { continue; }
-    if (attributes[key].type == 'object') {
-      if (attributes[key].object.type == 'dictionary') {
-        rec[key] = fixWrite(table, record[key], attributes[key].object.elements, mode);
-        continue;
-      }
-    }
-    trace.log(attributes[key].array, record[key]);
+    if (attributes[key].collection) { continue }  // Not a real field
+    if (key == '_id') { continue; }       // Done already
     if (attributes[key].array && !Array.isArray(record[key])) {
       record[key] = [record[key]];
     }
-    trace.log(record[key]);
-    //   if (!attributes[key]) { continue }   // skip field if not in database
-    if (attributes[key].collection) { continue }
-    trace.log({ key: key, type: attributes[key].type, val: record[key], num: Number(record[key]), isNan: isNaN(rec[key]), level: 'verbose' })
-    /** For new records, guarantee that they have every field */
-    if (record[key] == undefined) {
-      if (mode == 'new') {
-        rec[key] = null;
+    trace.log({
+      key: key,
+      type: attributes[key].type,
+      array: attributes[key].array,
+      collection: attributes[key].collection,
+      val: record[key],
+      num: Number(record[key]),
+      isNan: isNaN(rec[key]),
+      level: 'verbose'
+    })
+
+    if (attributes[key].array) {
+      trace.log(record[key]);
+      if (!Array.isArray(record[key])) {
+        if (record[key]) {
+          record[key] = [record[key]];
+        }
+        else {
+          record[key] = [];
+        }
       }
-      else {
-        continue;
-      }
-    } else {
-      rec[key] = record[key];
-      if (attributes[key].type == 'number') {
-        rec[key] = Number(record[key]);
-        if (isNaN(rec[key])) { rec[key] = 0; }
-      }
-      if (attributes[key].model) {
-        if (rec[key] && rec[key] != '0' && typeof (rec[key]) == 'string') { rec[key] = ObjectId(rec[key]) }
-      }
-      if (attributes[key].type == 'boolean') {
-        if (rec[key]) { rec[key] = true } else { rec[key] = false }
+      rec[key]=[];
+      for (let i = 0; i < record[key].length; i++) {
+        if (attributes[key].type == 'object') {
+          trace.log({ key: key, i: i, subrecord: record[key][i] })
+          rec[key][i]=fixWrite(table, record[key][i], attributes[key].object, mode)
+        }
       }
     }
+    else {
+      trace.log(attributes[key].type)
+      if (attributes[key].type == 'object') {
+        trace.log('down a level');
+        rec[key] = fixWrite(table, record[key], attributes[key].object, mode);
+        trace.log(rec[key]);
+      }
+      //   if (!attributes[key]) { continue }   // skip field if not in database
+      /** For new records, guarantee that they have every field */
+      else {
+        trace.log(typeof record[key]);
+        if (typeof record[key] === 'undefined' && mode == 'new') {
+          record[key] = null;
+        }
+        trace.log('final processing');
+        if (typeof record[key] !== 'undefined') {
+          rec[key] = record[key];
+          if (attributes[key].type == 'number') {
+            rec[key] = Number(record[key]);
+            if (isNaN(rec[key])) { rec[key] = 0; }
+          }
+          if (attributes[key].model) {
+            if (rec[key] && rec[key] != '0' && typeof (rec[key]) == 'string') { rec[key] = ObjectId(rec[key]) }
+          }
+          if (attributes[key].type == 'boolean') {
+            if (rec[key]) { rec[key] = true } else { rec[key] = false }
+          }
+        }
+      }
+    }
+    trace.log({ key: key, old: record[key], new: rec[key] })
   }
   trace.log({ fixed: rec });
   return (rec);
@@ -271,40 +339,44 @@ function fixRead(record, attributes) {
   for (let key of Object.keys(record)) {
     trace.log({ key: key, data: record[key], level: 'verbose' })
     if (!attributes[key]) { continue };                          // do nothing if item not in schema
-    if (attributes[key].type == 'object' && attributes[key].object.type == 'dictionary') {
-      fixRead(record[key], attributes[key].object.elements)
-    }
-    else {
-      if (attributes[key].array) {
-        trace.log(record[key]);
-        if (!Array.isArray(record[key])) {
-          if (record[key]){
+    trace.log({array:attributes[key].array, data: record[key]});
+    if (attributes[key].array) {
+      trace.log(record[key]);
+      if (!Array.isArray(record[key])) {
+        if (record[key]) {
           record[key] = [record[key]];
-          }
-          else 
-          {
-            record[key]=[];
-          }
         }
-        for (let i=0; i<record[key].length; i++)
-        {
-          if (attributes[key].type == 'object' && attributes[key].object.type == 'dictionary') {
-            fixRead(record[key][i], attributes[key].object.elements)
-          }
-          if (attributes[key].model && record[key][i]) {
-            record[key][i] = record[key][i].toString();
-          }  
+        else {
+          record[key] = [];
         }
       }
+      for (let i = 0; i < record[key].length; i++) {
+        if (attributes[key].type == 'object') {
+          trace.log({ key: key, i: i, subrecord: record[key][i] })
+          fixRead(record[key][i], attributes[key].object)
+        }
+        if (attributes[key].model && record[key][i]) {
+          record[key][i] = record[key][i].toString();
+        }
+      }
+    }
+    else {
+      trace.log(attributes[key].type, record[key]);
+      if (attributes[key].type == 'object') {
+        fixRead(record[key], attributes[key].object)
+      }
       else {
+        trace.log({model:attributes[key].model, data: record[key]});
         if (attributes[key].model && record[key]) {
           record[key] = record[key].toString();
-          trace.log({ key: key, level: 'verbose' })
+          trace.log({ key: key, data: record[key], level: 'verbose' })
         }
       }
     }
     trace.log({ key: key, data: record[key], level: 'verbose' })
   }
+  trace.log(record);
+  
 }
 /** 
  * 
@@ -373,8 +445,8 @@ async function totalRows(table, spec, col) {
   catch (err) {
     console.log(err);
   }
-  trace.log({total:total});
-  if (!total.length) return(0);
+  trace.log({ total: total });
+  if (!total.length) return (0);
   return (total[0].result);
 }
 
@@ -505,10 +577,10 @@ async function deleteRow(permission, table, id) {
  * @param {string} table 
  * @param {object} record 
  */
-async function updateRow(table, record,subschemas) {
+async function updateRow(table, record, subschemas) {
   trace.log({ inputs: arguments })
   const collection = database.collection(table);
-  let attributes = mergeAttributes(table,'',subschemas);
+  let attributes = mergeAttributes(table, '', subschemas);
   let rec = fixWrite(table, record, attributes, 'update');
   let filter = { _id: rec._id };
   try {
@@ -554,7 +626,8 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   trace.log({ instruction: instruction, limit: limit, offset: offset });
   if (sortKey) {
     let sortObj = {};
-    if (direction = 'DESC') { sortObj[sortKey] = -1 } else { sortObj[sortKey] = 1 }
+    trace.log({ direction: direction });
+    if (direction == 'DESC') { sortObj[sortKey] = -1 } else { sortObj[sortKey] = 1 }
     options['sort'] = sortObj;
   }
   if (limit && limit != -1) {
@@ -569,7 +642,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
 
   //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
   trace.log(rows);
-  let attributes = require(`../../tables/${table}`)['attributes'];
+  let attributes = rawAttributes(table);
   trace.log(attributes, { level: 'silly' });
   for (let i = 0; i < rows.length; i++) {
     fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed

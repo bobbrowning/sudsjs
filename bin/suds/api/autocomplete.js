@@ -34,21 +34,34 @@ module.exports = async function (req, res) {
    * Sort out the field to be displayed, or the function that returns the 
    * displayed text. 
    */
-  let display = allParms.display;
-  let displayFunction = false;
   let tableData = tableDataFunction(linkedTable, permission);
-  trace.log(tableData.canView);
+  trace.log(tableData);
   if (!permission || !tableData.canView) {
     let names = [['You do not have permission to access this table'], [0]];
     trace.log('#43 ', names);
     return res.json(names);
   }
-
-  if (tableData.rowTitle) {
-    displayFunction = tableData.rowTitle;
+  /** display is field to be displayed
+   * displayFunction is function to create string
+   */
+  let display = false;
+  let displayFunction = false;
+  if (allParms.display) {
+    display = allParms.display;
+  }
+  else {
+    if (tableData.stringify) {
+      if (typeof tableData.stringify == 'string') {
+        display = tableData.stringify;
+      }
+      else {
+        displayFunction = tableData.stringify;
+      }
+    }
   }
   if (!display && !displayFunction) {
-    display = 'record found';
+    trace.log(allParms.display, tableData.stringify)
+    return res.json([['No stringify field or function has been defined - please check the configuration'],[]]);
   }
   trace.log(display);
   let term = allParms.term;
@@ -83,7 +96,7 @@ module.exports = async function (req, res) {
   let labels = [];
   let values = [];
   let records = await db.getRows(linkedTable, search);
-  trace.log(records);
+  trace.log({ records: records, display: display });
 
   for (i = 0; i < records.length; i++) {
     let show;
@@ -91,15 +104,15 @@ module.exports = async function (req, res) {
       show = records[i][display];
     }
     else {
-      if (typeof (tableData.rowTitle) == 'string') {
-        show = records[i][tableData.rowTitle];
+      if (typeof (tableData.stringify) == 'string') {
+        show = records[i][tableData.stringify];
       }
       else {
-        show = tableData.rowTitle(records[i]);
+        show = tableData.stringify(records[i]);
       }
       //     show = displayFunction(records[i]);
     }
-    trace.log('34', i, display, records[i]);
+    trace.log(tableData.stringify, i, show, records[i]);
     /*
         names[i] = {};
         names[i].label = records[i][tableData.primaryKey] + ':' + show;
@@ -117,11 +130,11 @@ module.exports = async function (req, res) {
         show = record[display];
       }
       else {
-        if (typeof (tableData.rowTitle) == 'string') {
-          show = record[tableData.rowTitle];
+        if (typeof (tableData.stringify) == 'string') {
+          show = record[tableData.stringify];
         }
         else {
-          show = tableData.rowTitle(record);
+          show = tableData.stringify(record);
         }
         //          show = await displayFunction(record);
       }

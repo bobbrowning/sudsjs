@@ -16,34 +16,9 @@ module.exports = {
    columns: ['id','supplier','date','status','total'],
  },
  open: 'purchaseorderlines',
+ standardHeader: true,
   attributes: {
-    id: {
-      friendlyName: 'Order No',                            // Visible name 
-      type: 'number',
-      primaryKey: true,
-      autoincrement: true,
-    },
-    createdAt: {
-      friendlyName: 'Date created',
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { createdAt: true }
-    },                                      // You don't actually enter these
-    updatedAt: {                            // but if you did they would be dates. 
-      friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
-      type: 'number',
-      display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
-      process: { updatedAt: true }
-    },
-    updatedBy: {
-      friendlyName: 'Last updated by',
-      description: `The person who last updated the row.`,
-      type: 'number',
-      model: 'user',
-      process: { updatedBy: true }
-    },
+ 
 
     supplier: {
       description: 'Supplier ID',

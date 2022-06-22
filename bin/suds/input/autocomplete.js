@@ -73,11 +73,11 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
           title = record[display];
         }
         else {
-            if (typeof (tableData.rowTitle) == 'string') {
-              title = record[tableData.rowTitle];
+            if (typeof (tableData.stringify) == 'string') {
+              title = record[tableData.stringify];
             }
             else {
-              title = tableData.rowTitle(record);
+              title = tableData.stringify(record);
             }
         }
       }
@@ -85,8 +85,8 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   }
 
 
-  minLength = 2;
-  if (attributes.input.minLength) { minLength = attributes.input.minLength };
+//  minLength = 2;
+//  if (attributes.input.minLength) { minLength = attributes.input.minLength };
   if (attributes.input.limit) { limit = attributes.input.limit }
   let placeholder = '';
   if (lang.type) { placeholder = lang.type }

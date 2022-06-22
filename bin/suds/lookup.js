@@ -33,19 +33,19 @@ module.exports =
       trace.log(attributes.model, value)
       if (value && value != 'NaN' && value != '0') {
         let tableData = tableDataFunction(attributes.model);
-        if (tableData.rowTitle) {
-          trace.log(tableData.rowTitle);
+        if (tableData.stringify) {
+          trace.log(tableData.stringify);
           let record = await db.getRow(attributes.model, value);     // linked parent record
           trace.log(record);
           if (record.err) {
             display = `<span class="text-danger">${record.errmsg}</span>`;
           }
           else {
-            if (typeof (tableData.rowTitle) == 'string') {
-              display = record[tableData.rowTitle];
+            if (typeof (tableData.stringify) == 'string') {
+              display = record[tableData.stringify];
             }
             else {
-              display = tableData.rowTitle(record);
+              display = tableData.stringify(record);
             }
           }
 

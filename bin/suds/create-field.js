@@ -1,11 +1,22 @@
 let suds = require('../../config/suds');
 let generic = require('./input/generic').fn;
 
-
-
-
 module.exports = createField;
 
+
+/**
+ * 
+ * Create one field in an input form. 
+ * @param {string} key           Field namre 
+ * @param {*} fieldValue         Value
+ * @param {object} attributes    Attributes on this field 
+ * @param {string} errorMsg  
+ * @param {string} mode 
+ * @param {string} record 
+ * @param {object} tableData 
+ * @param {array} tabs 
+ * @returns 
+ */
 async function createField (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
 
   trace = require('track-n-trace');

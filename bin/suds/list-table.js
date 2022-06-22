@@ -5,7 +5,8 @@ let createField = require('./create-field');
 let tableDataFunction = require('./table-data');
 // let countRows = require('./count-rows');
 // let getRows = require('./get-rows');
-let getSearchLink = require('./search-link');
+let getSearchLink = require('./search-link').searchLink;
+let getAttribute = require('./search-link').getAttribute;
 let displayField = require('./display-field');
 let humaniseFieldname = require('./humanise-fieldname');
 let suds = require('../../config/suds');
@@ -166,6 +167,7 @@ async function listTable(
     andor = searchSpec.andor;
     searches = getSearchLink(attributes, searchSpec);
   }
+  trace.log(searchSpec);
 
   let parentSearch = '';                    // link added if this is a child listing and we go over the limit
   if (parent) {
@@ -260,15 +262,16 @@ async function listTable(
   let andtest = [];
   for (i = 0; i < searches.length; i++) {
     let searchField = searches[i][0];
+    let attribute=getAttribute(searchField,attributes);
     let compare = searches[i][1];
     let value = searches[i][2];
     let displayValue = value;
     let displayCompare = compare;
     let friendlyName = await humaniseFieldname(searchField);
-    if (attributes[searchField].friendlyName) { friendlyName = attributes[searchField].friendlyName }
-    displayValue = await displayField(attributes[searchField], value, 0, permission);
+    if (attribute.friendlyName) { friendlyName = attribute.friendlyName }
+    displayValue = await displayField(attribute, value, 0, permission);
     /*
-    if (attributes[searchField].input.type == 'date' && attributes[searchField].type == 'number') {
+    if (attribute.input.type == 'date' && attribute.type == 'number') {
       let date = new Date(value);
       value = date.getTime();
       displayValue = date.toDateString();
@@ -277,11 +280,11 @@ async function listTable(
 
 
     displayCompare = lang[compare];
-    if (attributes[searchField].input.type == 'date') {
+    if (attribute.input.type == 'date') {
       if (compare == 'lt') { displayCompare = 'earlier than' }
       if (compare == 'gt') { displayCompare = 'later than' }
     }
-    if (attributes[searchField].type == 'string') {
+    if (attribute.type == 'string') {
       if (compare == 'lt') { displayCompare = 'sorts lower than' }
       if (compare == 'gt') { displayCompare = 'sorts greater than' }
       displayValue = `'${displayValue}'`;
@@ -977,7 +980,7 @@ async function listTable(
         output += `
          <td>`;
       }
-
+      trace.log(tableData.primaryKey, record[tableData.primaryKey])
       let target;
       if (suds.dbtype == 'nosql'){
         target=db.stringifyId(record[tableData.primaryKey])

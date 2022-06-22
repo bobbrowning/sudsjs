@@ -13,38 +13,9 @@ module.exports = {
     list: {
         columns: ['id', 'text']
     },
-
+    standardHeader: true,
     attributes: {
-        /*  Standard columns in all tables */
-        id: {
-            friendlyName: 'Record key',
-            type: 'number',
-            primaryKey: true,
-            autoincrement: true,
-        },
-        createdAt: {
-            friendlyName: 'Date created',
-            type: 'number',
-            display: { type: 'datetime', truncateForTableList: 16 },
-            database: { type: 'biginteger' },
-            process: { createdAt: true }
-        },                                      // You don't actually enter these
-        updatedAt: {
-            friendlyName: 'Date last updated',
-            type: 'number',
-            display: { type: 'datetime', truncateForTableList: 16 },
-            database: { type: 'biginteger' },
-            process: { updatedAt: true }
-        },
-        updatedBy: {
-            friendlyName: 'Last updated by',
-            description: `The person who last updated the row.`,
-            type: 'number',
-            model: 'user',
-            process: { updatedBy: true }
-
-        },
-
+ 
         /* Application columns */
         text: {
             friendlyName: 'Regular input field (hover here for tooltip).',

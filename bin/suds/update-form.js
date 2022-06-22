@@ -221,13 +221,16 @@ module.exports = async function (
   trace.log({ subschemas: subschemas });
   await createForm();
   trace.log({ stage: 'form created', level: 'min' });
-
+  trace.log(record);
 
   let footnote = '';
   if (mode != 'new') {
     let created = new Date(record['createdAt']).toDateString();
     let updated = new Date(record['updatedAt']).toDateString();
-    footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}`;
+    let updatedBy={fullName:'Nobody'}
+    if (record['updatedBy']) {let updatedBy=await db.getRow('user',record['updatedBy']);}
+    trace.log(updatedBy)
+    footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}  ${lang.updatedBy} ${updatedBy.fullName}`;
   }
   else { footnote = ''; }
   trace.log(form);
@@ -305,13 +308,17 @@ module.exports = async function (
     let next = 0;
     for (let i = 0; i < length; i++) {
       let subFieldName = `${fieldName}.${i + 1}`
-      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName] })
+      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName],delete: entered[subFieldName + '.delete'] })
       if (attributes.type != 'object') {
         /** Skip blank entries. */
         if (!entered[subFieldName]) { continue }
+        /** Skip deleted entries */
+        if (entered[subFieldName + '.delete']) { continue }
         arry[next++] = entered[subFieldName];
       }
       else {
+        /** Skip deleted entries */
+        if (entered[subFieldName + '.delete']) { continue }
         arry[next++] = unpackObject(subFieldName, attributes);
       }
 
@@ -480,9 +487,9 @@ module.exports = async function (
     for (let key of Object.keys(attributes)) {
       if (!attributes[key].canEdit) { continue; }  // can't process if not editable
       if (attributes[key].collection) { continue; }  // not intersted in collections
-      if (attributes[key].process && attributes[key].process.createdAt) { continue; }  // can't validate auto updated fields
-      if (attributes[key].process && attributes[key].process.updatedAt) { continue; }  // can't validate auto updated fields
-      if (attributes[key].process && attributes[key].process.updatedBy) { continue; }  // can't validate auto updated fields
+      if (attributes[key].process && attributes[key].process.type == 'createdAt') { continue; }  // can't validate auto updated fields
+      if (attributes[key].process && attributes[key].process.type == 'updatedAt') { continue; }  // can't validate auto updated fields
+      if (attributes[key].process && attributes[key].process.type == 'updatedBy') { continue; }  // can't validate auto updated fields
       trace.log({ key: key, value: record[key] });
       /* Bug in Summernote - intermittently doubles up the input!   */
       /* You might look for an alternative for serious production  */
@@ -492,10 +499,10 @@ module.exports = async function (
       }
 
 
-      if (attributes[key].process && attributes[key].process.updatedBy) { record[key] = loggedInUser; }
+      if (attributes[key].process && attributes[key].process.type == 'updatedBy') { record[key] = loggedInUser; }
       if (attributes[key].process
         && record[key]
-        && attributes[key].process.JSON) {
+        && attributes[key].process.type == 'JSON') {
         trace.log(record[key]);
         record[key] = JSON.stringify(record[key]);
         trace.log(record[key]);
@@ -596,8 +603,8 @@ module.exports = async function (
       operation = 'update';
       trace.log({ Updating: id, table: table });
       for (let key of Object.keys(attributes)) {
-        if (attributes[key].process.updatedAt) { record[key] = Date.now() }
-        if (attributes[key].process.updatedBy) { record[key] = loggedInUser }
+        if (attributes[key].process.type == 'updatedAt') { record[key] = Date.now() }
+        if (attributes[key].process.type == 'updatedBy') { record[key] = loggedInUser }
       }
       try {
         trace.log(record);
@@ -627,7 +634,9 @@ module.exports = async function (
           if (attributes[key].type == 'string') { rec[key] = ''; }
           if (attributes[key].type == 'number') { rec[key] = 0; }
           if (attributes[key].type == 'boolean') { rec[key] = false; }
-          if (attributes[key].process.updatedBy) { rec[key] = loggedInUser }
+          if (attributes[key].process.type == 'updatedBy') { rec[key] = loggedInUser }
+          if (attributes[key].process.type == 'createdAt') { rec[key] = Date.now(); }
+          if (attributes[key].process.type == 'updatedAt') { rec[key] = Date.now(); }
         }
       }
       trace.log('New record', table, rec);
@@ -665,7 +674,10 @@ module.exports = async function (
    * */
   async function postProcess() {
     trace.log('postprocess', record, operation);
-    if (tableData.edit.postProcess) { await tableData.edit.postProcess(record, operation) }
+    if (tableData.edit.postProcess) {
+      await tableData.edit.postProcess(record, operation)
+      trace.log(record)
+    }
     trace.log('switching to list record', id, record[tableData.primaryKey], tableData.primaryKey);
     let output = await listRow(
       permission,
@@ -699,10 +711,10 @@ module.exports = async function (
     let formList = [];
     trace.log(permission);
     for (const key of Object.keys(attributes)) {
-      trace.log({key:key,canedit:attributes[key].canEdit})
-      if (attributes[key].process.createdAt
-        || attributes[key].process.updatedAt
-        || attributes[key].process.updatedBy
+      trace.log({ key: key, canedit: attributes[key].canEdit })
+      if (attributes[key].process.type == 'createdAt'
+        || attributes[key].process.type == 'updatedAt'
+        || attributes[key].process.type == 'updatedBy'
       ) { continue; }
       if (attributes[key].primaryKey && !includeId) { continue }
       if (attributes[key].collection) { continue; }  // not intersted in collections
@@ -900,7 +912,9 @@ module.exports = async function (
       formField += `
       
       <div style="display: ${display}" id="${subqualname}.fld" >   <!-- Array item number ${i} -->           
-        <b>${attributes.friendlyName} number ${i + 1}</b><br>
+        <b>${attributes.friendlyName} number ${i + 1}</b>
+        <span style="padding-left: 50px; font-weight: normal">${lang.delete}&nbsp;&nbsp;  <input type="checkbox" name="${subqualname}.delete"></span>
+        <br>
           ${field}`;
       if (i >= data.length - 1) {
         if (i >= data.length + bite - 1) {
@@ -1172,7 +1186,10 @@ ${attributes.helpText}`;
       if (!attributes[key].canEdit) { continue; }  // can't validate if not editable
       if (attributes[key].input.hidden) { continue; }
 
-      if (attributes[key].primaryKey || key == 'createdAt' || key == 'updatedAt') { continue; }  // can't validate auto updated fields
+      if (attributes[key].primaryKey 
+        || attributes[key].process.type == 'createdAt'
+        || attributes[key].process.type == 'updatedAt'
+        ) { continue; }  // can't validate auto updated fields
       if (attributes[key].array) {
         form += await createArrayValidation(attributes[key], key, record[key], key, columnGroup);
       }
@@ -1477,13 +1494,13 @@ ${attributes.helpText}`;
       trace.log(linkRec);
       let linkTableData = tableDataFunction(link, permission);
       let linkName = link;
-      if (linkTableData.rowTitle) {
-        if (typeof (linkTableData.rowTitle) == 'string') {
-          linkName = linkRec[linkTableData.rowTitle];
+      if (linkTableData.stringify) {
+        if (typeof (linkTableData.stringify) == 'string') {
+          linkName = linkRec[linkTableData.stringify];
 
         }
         else {
-          linkName = linkTableData.rowTitle(linkRec);
+          linkName = linkTableData.stringify(linkRec);
         }
       }
       form += `
