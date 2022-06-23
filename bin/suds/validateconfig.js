@@ -108,9 +108,12 @@ module.exports = async function (req, res) {
         'documentation',
         'headerTags',
         'dbkey',
+        'dbType',
+        'dbDriverKey',
     ];
+    console.log('Checking suds.js: '); 
     for (let key of Object.keys(suds)) {
-        console.log('checking suds: ', key);
+        console.log('- checking : ', key);
         item = suds[key];
         if (!validSections.includes(key)) {
             seterror(`In suds.js: 
@@ -204,8 +207,10 @@ module.exports = async function (req, res) {
         'helpText',
         'recordTypeColumn',
         'addRow',
-        'recordType'
-
+        'recordType',
+        'array',
+        'object',
+        'stringify',
     ];
     let validTableData = [
         'rowTitle',
@@ -225,6 +230,7 @@ module.exports = async function (req, res) {
         'open',
         'recordTypeColumn',
         'demoRow',
+        'subschema',
     ];
     let validChildData = [
         'tab',
@@ -246,7 +252,8 @@ module.exports = async function (req, res) {
     let validTypes = [
         'string',
         'number',
-        'boolean'
+        'boolean',
+        'object',
     ];
     let validPermissions = Object.keys(suds.permissionSets);
     validPermissions.push('all');
@@ -264,7 +271,7 @@ module.exports = async function (req, res) {
         validInputFieldTypes.push(suds.inputTypeHandlers[i]);
     }
 
-    console.log('checking tables');
+    console.log('Checking tables');
 
     /* ****************************************
       *
@@ -275,7 +282,7 @@ module.exports = async function (req, res) {
     for (let table of suds.tables) {
         let summernotes = 0;
         trace.log({ table: table, break: '#' });
-
+        console.log('- checking ',table)
         let tableObject = require(`../../tables/${table}`);
         /* ****************************************
         *
@@ -287,7 +294,7 @@ module.exports = async function (req, res) {
             attributes = { ...standardHeader, ...tableObject.attributes };
         }
 
-        console.log('checking attribute: ', table, tableObject);
+
         /* ****************************************
         *
         *  Check table items 
@@ -417,13 +424,14 @@ module.exports = async function (req, res) {
           *  All the attributes /  properties valid?
           *
           **************************************** */
-        validateAttributes(attributes);
+  
+        validateAttributes(table, attributes);
 
-        function validateAttributes(attributes) {
+        function validateAttributes(table, attributes) {
 
             for (let attribute of Object.keys(attributes)) {
-                trace.log(attributes[attribute]);
-
+              console.log('-- checking attributes ',attribute) 
+ 
                 if (typeof attributes[attribute] != 'object') {
                     seterror(`
             Table: ${table}  
@@ -431,6 +439,21 @@ module.exports = async function (req, res) {
             `);
 
                 }
+                if (attributes[attribute].type == 'object') {
+                    if (!attributes[attribute].object) { 
+                        seterror(`
+                        Table: ${table}  
+                        Column: ${attribute} 
+                        Needs an object property with sub-fields defined
+                        `);
+                    }
+                    else {
+                        console.log('descending one level')
+                        validateAttributes(table, attributes[attribute].object)
+                    }
+                }
+
+                trace.log('table', attribute, attributes[attribute].type);
 
                 if (attributes[attribute].type && !validTypes.includes(attributes[attribute].type)) {
                     seterror(`
@@ -536,8 +559,9 @@ module.exports = async function (req, res) {
 
                     }
                 }
-                return;
+
             }
+            return;
         }
 
     }

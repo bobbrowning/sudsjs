@@ -117,7 +117,7 @@ training: {
     { table: 'subjects', title: 'Subjects' },
     { table: 'studentnorm', title: 'Students - normalized' },
     { table: 'results', title: 'Exam results' },
- /*   { table: 'studentdenorm', title: 'Students - denormalized' },*/
+    { table: 'studentdenorm', title: 'Students - denormalized' },
   ],
 },
 

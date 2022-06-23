@@ -96,6 +96,160 @@ module.exports = {
   forgotten: { page: '/forgotten', },
 
 
+  /** **********************************************
+   * 
+   *           Database
+   *           --------
+   * 
+   *  The generic database driver is db.js. The database object set below
+   * is used to initialise the knex library when the software is loaded. 
+   * See knex documentation for details https://knexjs.org/#Installation-client
+   * MongoDB uses a different driver db-mongo.js
+   * 
+   *********************************************** */
+
+
+
+  /** **************** SQLite3 configuration ***************
+  *
+  
+
+  dbDriver: 'db.js',
+  dbkey: 'number',
+  database: {
+    client: 'sqlite3',
+    connection: {
+      filename: './suds.db',
+    },
+    useNullAsDefault: true,
+  },
+*/
+
+  /** **************** MongoDB configuration ***************
+   * 
+   *  don't forget the primary key in the security -> autorisation object needs changing
+   *  also the tables directory needs to be swapped for the mongodb set...
+*/  
+dbDriver: 'db-mongo.js',
+dbDriverKey: 'objectId',
+dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+database: {
+  uri: `mongodb://localhost:27017`,
+  name: 'suds',
+},
+
+
+
+
+
+/** *********   Postgresql config ***************************
+ * commented out as we are using sqlite for the demo version... 
+ * However I have done some testing with mysql and postgresql 
+/*
+dbDriver: 'db.js',
+dbkey: 'number',
+ database:
+ {
+   client: 'postgresql',
+   connection: {
+     host: 'localhost',
+     user: 'postgres',
+     password: 'xxxxxxxxx',
+     database: 'suds',
+   },
+ },
+
+/** *********   mysql config ***************************
+
+dbDriver: 'db.js',
+dbkey: 'number',
+   database:
+    {
+     client: 'mysql',
+      connection: {
+        host: 'localhost',
+        user: 'bob',
+        password: 'xxxxxxxxxx',
+        database: 'suds',
+      },
+    },
+*/
+
+
+
+
+/** List of tables in the database.. */
+tables: [
+  'user',
+  'audit',
+  'webpages',
+  'contacts',
+  'products',
+  'salesorders',
+  'studentnorm',
+  'subjects',
+  'results',
+  'purchaseorders',
+  'productjoin',
+  'purchaseorderlines',
+  'fieldtypes',
+  'productvariant',
+  /* only for mongo version */
+ 'studentdenorm',
+  'subschema', 
+],
+
+
+/** Subschema Groups */
+subSchemaGroups: [
+  'productSpecifications',
+],
+
+/** 
+ * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
+ * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
+ *    SELECT FROM table WHERE table.col=xxx  
+ * 
+ * Theoretically this means you can use SQL reserved words as column names but I am 
+ * not convinced this always works with sqlite. 
+ * 
+ * Qualified names  doesn't seem to work at all with postgresql so try quoting 
+ * them below instead.
+ * 
+ * To avoid these issues, use lower case and avoid reserved words. 
+ * 
+ */
+
+qualifyColName: false,
+
+/** This puts quotes around the column name in where instructions.
+ * You may need this if your column names include upper case because 
+ * postgresql folds all column names to lower case unless quoted.
+ * 
+ */
+quoteColName: true,
+
+/** 
+ * This provides session middleware. See https://www.npmjs.com/package/express-session
+ * 
+ * You will need to replace it depending on what database you are using    
+ * see https://www.npmjs.com/package/express-session#compatible-session-stores
+ * 
+ * Warning: connect.session() MemoryStore used here is not designed 
+ * for a production environment, as it will leak memory, and
+ *  will not scale past a single process.
+ * 
+ * */
+session: function () {
+  let session = require('express-session')
+  return session({
+    secret: 'head shoe',
+    resave: 'false',
+    saveUninitialized: true,
+  });
+},
+
+
 
   /* ****************************************************
   *
@@ -110,7 +264,7 @@ module.exports = {
   authorisation: {
     table: 'user',
     /** Columns in authorisation table */
-    primaryKey: 'id',                            /* *********** change to _id for mongodb ******************* */
+    primaryKey: '_id',                            /* *********** change to _id for mongodb, id otherwise ******************* */
     passwordHash: 'password',
     salt: 'salt',
     permissionSet: 'permission',
@@ -471,159 +625,6 @@ bottom bar.`,
       'unique',
       'uploadFile',
     ],
-  },
-
-
-  /** **********************************************
-   * 
-   *           Database
-   *           --------
-   * 
-   *  The generic database driver is db.js. The database object set below
-   * is used to initialise the knex library when the software is loaded. 
-   * See knex documentation for details https://knexjs.org/#Installation-client
-   * 
-   *********************************************** */
-
-
-
-  /** **************** SQLite3 configuration ***************
-  *
-  */
-
-  dbDriver: 'db.js',
-  dbkey: 'number',
-  database: {
-    client: 'sqlite3',
-    connection: {
-      filename: './suds.db',
-    },
-    useNullAsDefault: true,
-  },
-
-
-  /** **************** MongoDB configuration ***************
-   * 
-   *  don't forget the primary key in the security -> autorisation object needs changing
-   *  also the tables directory needs to be swapped for the mongodb set...
-  
-  dbDriver: 'db-mongo.js',
-  dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
-  database: {
-    uri: `mongodb://localhost:27017`,
-    name: 'suds',
-  },
-
-*/
-
-
-
-  /** *********   Postgresql config ***************************
-   * commented out as we are using sqlite for the demo version... 
-   * However I have done some testing with mysql and postgresql 
- /*
-dbDriver: 'db.js',
-dbkey: 'number',
-   database:
-   {
-     client: 'postgresql',
-     connection: {
-       host: 'localhost',
-       user: 'postgres',
-       password: 'xxxxxxxxx',
-       database: 'suds',
-     },
-   },
-
-  /** *********   mysql config ***************************
-
- dbDriver: 'db.js',
-dbkey: 'number',
-     database:
-      {
-       client: 'mysql',
-        connection: {
-          host: 'localhost',
-          user: 'bob',
-          password: 'xxxxxxxxxx',
-          database: 'suds',
-        },
-      },
-*/
-
-
-
-
-  /** List of tables in the database.. */
-  tables: [
-    'user',
-    'audit',
-    'webpages',
-    'contacts',
-    'products',
-    'salesorders',
-    'studentnorm',
-    'subjects',
-    'results',
-    'salesorderlines',
-    'purchaseorders',
-    'productjoin',
-    'purchaseorderlines',
-    'fieldtypes',
-    'productvariant',
-    /* only for mongo version
-   'studentdenorm',
-    'subschema', */
-  ],
-
-
-  /** Subschema Groups */
-  subSchemaGroups: [
-    'productSpecifications',
-  ],
-
-  /** 
-   * Normally SQL statements are like this "SELECT FROM table WHREE col=xxx"    
-   * Set qualifyColName to true and the SQL will use qualified names, so it looks like this  
-   *    SELECT FROM table WHERE table.col=xxx  
-   * 
-   * Theoretically this means you can use SQL reserved words as column names but I am 
-   * not convinced this always works with sqlite. 
-   * 
-   * Qualified names  doesn't seem to work at all with postgresql so try quoting 
-   * them below instead.
-   * 
-   * To avoid these issues, use lower case and avoid reserved words. 
-   * 
-   */
-
-  qualifyColName: false,
-
-  /** This puts quotes around the column name in where instructions.
-   * You may need this if your column names include upper case because 
-   * postgresql folds all column names to lower case unless quoted.
-   * 
-   */
-  quoteColName: true,
-
-  /** 
-   * This provides session middleware. See https://www.npmjs.com/package/express-session
-   * 
-   * You will need to replace it depending on what database you are using    
-   * see https://www.npmjs.com/package/express-session#compatible-session-stores
-   * 
-   * Warning: connect.session() MemoryStore used here is not designed 
-   * for a production environment, as it will leak memory, and
-   *  will not scale past a single process.
-   * 
-   * */
-  session: function () {
-    let session = require('express-session')
-    return session({
-      secret: 'head shoe',
-      resave: 'false',
-      saveUninitialized: true,
-    });
   },
 
 

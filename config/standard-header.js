@@ -1,5 +1,5 @@
 module.exports = {
-    id: {
+    _id: {
         friendlyName: 'ID',
         primaryKey: true,
         permission: { view: ['admin'], edit: ['all'] },

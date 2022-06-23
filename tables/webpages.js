@@ -18,8 +18,8 @@ module.exports = {
     the appropriate fields for that type.  A redirect page simply results in the target page
     being presented to the user.`,
 
-    /** Only the superuser can edit this table. */
-    permission: { view: ['admin', 'web', 'demo'] },
+
+    permission: { view: ['admin', 'demo', 'web'], edit: ['web'] },
 
     /** One column can be assigned as the record  type. 
      *  Different record types may be able to view different groups of columns. 
@@ -32,7 +32,7 @@ module.exports = {
     /** 'normal' columns for a table listing.  The detailed listing of each row will have 
      *   every column the user is permitted to see. */
     list: {
-        columns: ['pageno', 'title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
+        columns: ['_id', 'title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
     },
 
     /** This determines how each row is to be described in things like links. 
@@ -47,7 +47,7 @@ module.exports = {
         },
         settings: {
             friendlyName: 'Settings',
-            columns: ['author','status', 'parent', 'onMenu', 'expires', 'embargo', 'view',],
+            columns: ['author', 'status', 'parent', 'onMenu', 'expires', 'embargo', 'view',],
         },
         redirect: {
             friendlyName: 'Redirect/alias',
@@ -56,7 +56,7 @@ module.exports = {
         },
         content: {
             friendlyName: 'Page Content',
-            columns: ['headline','pageContent'],
+            columns: ['headline', 'pageContent'],
             recordTypes: ['H'],                               //  Only for HTML 
         },
         files: {
@@ -72,9 +72,9 @@ module.exports = {
         },
         technical: {
             friendlyName: 'Technical settings',
-            columns: ['titleTag','metaDescription','headerTags',],
+            columns: ['titleTag', 'metaDescription', 'headerTags',],
             recordTypes: ['H'],                               //  Only for HTML 
-         },
+        },
 
     },
 
@@ -87,35 +87,8 @@ module.exports = {
      *   description is used in the tooltip for that field in the update form as well as 
      *     being documentation.  If omitted the friendlyName is used.
      */
-     standardHeader: true,
+    standardHeader: true,
     attributes: {
-        pageno: {
-            friendlyName: 'Page No',
-            type: 'number',
-            primaryKey: true,
-            autoincrement: true,
-        },
-        createdAt: {
-            friendlyName: 'Date created',
-            type: 'number',
-            display: { type: 'datetime', truncateForTableList: 16 },   // when displayed on the table list only the first 16 characters are shown.
-            database: { type: 'biginteger' },                          // special type when creating the database
-            process: { type: 'createdAt' }                               // This is created by the system               
-        },
-        updatedAt: {
-            friendlyName: 'Date last updated',
-            type: 'number',
-            display: { type: 'datetime', truncateForTableList: 16 },
-            database: { type: 'biginteger' },
-            process: { type: 'updatedAt' }
-        },
-        updatedBy: {
-            friendlyName: 'Last updated by',
-            description: `The person who last updated the row.`,
-            type: 'number',
-            model: 'user',                                             // This is a foreign key linking to the user table
-            process: { type: 'updatedBy' },                              // The link is made automatically
-        },
 
         title: {
             type: 'string',
@@ -237,7 +210,7 @@ module.exports = {
                 T: 'This window',
                 W: 'Another window',
             },
-            input: {type: 'radio'}
+            input: { type: 'radio' }
         },
 
         /**   HTML page  only  */
@@ -292,20 +265,20 @@ module.exports = {
         },
         titleTag: {
             type: 'string',
-            friendlyName: 'title for the &lt;title&gt; tag', 
+            friendlyName: 'title for the &lt;title&gt; tag',
         },
         metaDescription: {
             type: 'string',
             friendlyName: 'meta data - description tag',
             description: 'Description of this page fr search engines.',
-            input: {type: 'textarea'},
+            input: { type: 'textarea' },
         },
-       headerTags: {
+        headerTags: {
             type: 'string',
             friendlyName: 'Other header tags',
             description: 'Additional tags for the heading section of the page.',
-            input: {type: 'textarea'},
-            display: {type: 'html'},
+            input: { type: 'textarea' },
+            display: { type: 'html' },
         },
         /** This is not a real column in the database. But it defines how child rows are to be displayed.    */
         subpages: {
@@ -314,7 +287,7 @@ module.exports = {
             via: 'parent',                               // The column in the child record that links to this
             collectionList: {                            // How child records are to be displayed
                 heading: 'Sub pages',                    //Heading to the listing 
-                columns: ['pageno', 'title', 'slug', 'pagetype', 'status', 'onMenu'],
+                columns: ['_id', 'title', 'slug', 'pagetype', 'status', 'onMenu'],
                 sort: ['onMenu', 'ASC'],
             },
         },

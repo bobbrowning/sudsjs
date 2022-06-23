@@ -9,11 +9,13 @@ module.exports = {
 
   permission: { view: ['admin', 'demo'] },
   list: {
-    columns: ['_id', 'createdAt', 'group', 'subschemaName', 'friendlyName'],
+    columns: ['_id', 'createdAt', 'group','friendlyName'],
   },
-  preProcess: function (record) {
-    record.subschema = JSON.stringify(eval(record.subschema));
-    return;
+  edit: {
+    preProcess: function (record) {
+      record.subschema = JSON.stringify(eval(record.subschema));
+      return;
+    },
   },
   rowTitle: 'friendlyName',
   standardHeader: true,

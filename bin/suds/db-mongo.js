@@ -86,8 +86,8 @@ function rawAttributes(table) {
   if (tableData.standardHeader) {
     standardHeader = require('../../config/standard-header');
   }
-  let combined= { ...standardHeader, ...tableData.attributes };
-  return(combined);
+  let combined = { ...standardHeader, ...tableData.attributes };
+  return (combined);
 }
 
 
@@ -112,10 +112,28 @@ function standardiseId(id) {
  * ******************************************** */
 
 function xstringifyId(id) {
-  if (typeof (id) == 'string') { return id }
-  else { return id.toString(); }
+  let value;
+  if (suds.dbDriverKey == 'objectId') {
+    value = id.toString();
+  }
+  else {
+    value = id;
+  }
+  return value;
 }
-
+function objectifyId(id) {
+  let value;
+  if (suds.dbDriverKey == 'objectId') {
+    try { value = ObjectId(id) } catch (err) {
+      value = '000000000000';                      // valid but won't return anything
+      trace.error(err)
+    }
+  }
+  else {
+    value = id;
+  }
+  return value;
+}
 
 /** ******************************************
  * 
@@ -149,8 +167,8 @@ function getInstruction(table, spec) {
   trace.log({ input: arguments });
 
 
-  let attributes=rawAttributes(table);
- /* Rationalise the searchspec object */
+  let attributes = rawAttributes(table);
+  /* Rationalise the searchspec object */
   if (!spec.andor) { spec.andor = 'and'; }
   // if (!spec.sort) {
   //   spec.sort = [Object.keys(tableData.attributes)[0], 'DESC'];  // sort defaults to first field (normally ID) 
@@ -187,9 +205,7 @@ function getInstruction(table, spec) {
       ta = attributes[searchField];
     }
     if (ta.model || searchField == '_id') {
-      if (typeof (value) == 'string') {
-        try { value = ObjectId(value) } catch (err) { trace.error(table, searchField, value, err) }
-      }
+        value = objectifyId(value) 
     }
     trace.log({ searchField: searchField, path: path, qfield: qfield, compare: compare, value: value })
 
@@ -248,10 +264,10 @@ function getInstruction(table, spec) {
  * 
  */
 function fixWrite(table, record, attributes, mode) {
-  trace.log({ table: table, record: record, mode: mode,break: '+', })
+  trace.log({ table: table, record: record, mode: mode, break: '+', })
   let rec = {};
   if (record._id && typeof (record._id) == 'string') {
-    rec['_id'] = ObjectId(record._id);
+    rec['_id'] = objectifyId(record._id);
     trace.log({ id: rec._id });
   }
   for (let key of Object.keys(attributes)) {
@@ -281,11 +297,11 @@ function fixWrite(table, record, attributes, mode) {
           record[key] = [];
         }
       }
-      rec[key]=[];
+      rec[key] = [];
       for (let i = 0; i < record[key].length; i++) {
         if (attributes[key].type == 'object') {
           trace.log({ key: key, i: i, subrecord: record[key][i] })
-          rec[key][i]=fixWrite(table, record[key][i], attributes[key].object, mode)
+          rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
         }
       }
     }
@@ -311,7 +327,7 @@ function fixWrite(table, record, attributes, mode) {
             if (isNaN(rec[key])) { rec[key] = 0; }
           }
           if (attributes[key].model) {
-            if (rec[key] && rec[key] != '0' && typeof (rec[key]) == 'string') { rec[key] = ObjectId(rec[key]) }
+            if (rec[key] && rec[key] != '0' && typeof (rec[key]) == 'string') { rec[key] = objectifyId(rec[key]) }
           }
           if (attributes[key].type == 'boolean') {
             if (rec[key]) { rec[key] = true } else { rec[key] = false }
@@ -339,7 +355,7 @@ function fixRead(record, attributes) {
   for (let key of Object.keys(record)) {
     trace.log({ key: key, data: record[key], level: 'verbose' })
     if (!attributes[key]) { continue };                          // do nothing if item not in schema
-    trace.log({array:attributes[key].array, data: record[key]});
+    trace.log({ array: attributes[key].array, data: record[key] });
     if (attributes[key].array) {
       trace.log(record[key]);
       if (!Array.isArray(record[key])) {
@@ -366,7 +382,7 @@ function fixRead(record, attributes) {
         fixRead(record[key], attributes[key].object)
       }
       else {
-        trace.log({model:attributes[key].model, data: record[key]});
+        trace.log({ model: attributes[key].model, data: record[key] });
         if (attributes[key].model && record[key]) {
           record[key] = record[key].toString();
           trace.log({ key: key, data: record[key], level: 'verbose' })
@@ -376,7 +392,7 @@ function fixRead(record, attributes) {
     trace.log({ key: key, data: record[key], level: 'verbose' })
   }
   trace.log(record);
-  
+
 }
 /** 
  * 
@@ -544,7 +560,7 @@ async function deleteRow(permission, table, id) {
   let mainPage = suds.mainPage;
   let tableData = tableDataFunction(table);
   if (typeof (id) == 'string') {
-    id = ObjectId(id);
+    id = objectifyd(id);
     trace.log({ id: id });
   }
   if (!mainPage) { mainPage = '/'; }
@@ -638,8 +654,14 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   }
 
   trace.log(instruction, options);
-  rows = await collection.find(instruction, options).toArray();
-
+  try {
+    rows = await collection.find(instruction, options).toArray();
+  }
+  catch (err) {
+    console.err(`Error reading ${table} returning empty set.  
+    ${err}`);
+    rows = [];
+  }
   //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
   trace.log(rows);
   let attributes = rawAttributes(table);
@@ -668,7 +690,7 @@ async function getRow(table, val, col) {
   }
   else {
     if (!col) { col = tableData.primaryKey };
-    if (col == '_id' && typeof val == 'string') { val = ObjectId(val) }
+    if (col == '_id' && typeof val == 'string' && val.length == 12) { val = objectifyId(val) }
     trace.log(col, val);
     spec = { searches: [[col, 'eq', val]] };
   }

@@ -359,18 +359,20 @@ module.exports = async function (req, res) {
   for (let i = 0; i < tables.length; i++) {
     table = tables[i];
     properties = attributesStore[table];
-    for (let property of Object.keys(properties)) {
-      if (properties[property].model) {
-        let parent = properties[property].model;
-        parentChild.push([parent, table, property, properties[property].friendlyName]);
+    addToList(properties);
+    function addToList(properties) {
+      for (let property of Object.keys(properties)) {
+        if (properties[property].object) {
+          addToList(properties[property].object);
+        }
+        else {
+          if (properties[property].model) {
+            let parent = properties[property].model;
+            parentChild.push([parent, table, property, properties[property].friendlyName]);
+          }
+        }
       }
     }
-
-
-
-
-
-
   }
 
   /* ****************************************
@@ -922,6 +924,21 @@ module.exports = async function (req, res) {
               output += "This is the primary key."
             }
             break;
+
+            case 'array':
+              if (properties[col][prop]) {
+                output += "This is an array ."
+              }
+              break;
+  
+              case 'object':
+                output+=`Object contains:
+                <ul>`;
+                for (let subprop of Object.keys(properties[col][prop])) {
+                  output+=`<li>${subprop}</li>`
+                } 
+                output+=`</ul>`;
+              break;
 
           /** Autoincrement */
           case 'autoincrement':
