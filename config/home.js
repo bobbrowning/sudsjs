@@ -114,10 +114,14 @@ training: {
   img: '/images/suds/www.jpg',
   permission: ['admin', 'demo','trainer'],
   links: [
-    { table: 'subjects', title: 'Subjects' },
+    { table: 'subjects', title: 'Subjects normalized' },
+    { table: 'papers', title: 'Papers - normalised' },
     { table: 'studentnorm', title: 'Students - normalized' },
-    { table: 'results', title: 'Exam results' },
-    { table: 'studentdenorm', title: 'Students - denormalized' },
+   /* { table: 'results', title: 'Exam results' },*/
+   { table: 'subjectsdenorm', title: 'Subjects denormalized' },
+   { table: 'studentdenorm', title: 'Students - denormalized' },
+    { table: 'subschema', title: 'Subschema' },   
+    { table: 'studentsubschema', title: 'Students - using subschema' },
   ],
 },
 
@@ -130,7 +134,8 @@ training: {
     description: 'Used by system admin',
     links: [
       { table: 'user', title: 'All users' },
-      { report: 'auditTrail', title: 'Audit trail', },
+      { table: 'subschema', title: 'Subschema' },   
+     { report: 'auditTrail', title: 'Audit trail', },
       { www: '/createtables', title: 'Create new database tables' },
       { www: '/configreport', title: 'Configuration report' },
       { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
@@ -178,8 +183,7 @@ training: {
     permission: ['demo'],
     description: 'Documentation - under development',
     links: [
-      { table: 'subschema', title: 'Subschema' },   
-      { user: 'docs', title: 'Module path/name' },
+       { user: 'docs', title: 'Module path/name' },
      ],
   },
 

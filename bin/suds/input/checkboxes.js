@@ -29,7 +29,14 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   [values, labels] = await getLabelsValues(attributes, record);
   let checked = [];
   if (attributes.array) {
-    checked = fieldValue
+    if (attributes.array.type == 'single' 
+    && fieldValue
+    && fieldValue.length){
+      checked=JSON.parse(fieldValue)
+    }
+    else{
+     checked = fieldValue
+    }
   }
   else {
     if (fieldValue && attributes.process=='JSON') { checked = JSON.parse(fieldValue); }

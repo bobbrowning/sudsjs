@@ -90,7 +90,7 @@ module.exports = async function (
   tableName = tableData.friendlyName;
   trace.log(permission);
   attributes = mergeAttributes(table, permission, subschemas);  // attributes and extraattributes merged plus permissions
-
+  trace.log(attributes);
   if (id && typeof id == 'string' && suds.dbkey == 'number') { id = Number(id); }
   if (id == '0') { id = 0; }
   trace.log({
@@ -108,6 +108,7 @@ module.exports = async function (
   }
 
   /**  */
+  trace.log('before unpack');
   let record = unpackInput(entered, {}, attributes, '');
   trace.log({ stage: 'unpacked', level: 'min' });
   trace.log(record);
@@ -168,7 +169,7 @@ module.exports = async function (
   form = '';
 
   formList = fieldList(attributes, false);
-  trace.log({ formList: formList });
+  trace.log({ formList: formList, permission: permission });
 
 
   openTab = '';
@@ -195,7 +196,7 @@ module.exports = async function (
 
 
   for (const key of formList) {
-    trace.log(key, record[key]);
+    trace.log(key, record[key], attributes[key].array, attributes[key].type);
     if (attributes[key].array && attributes[key].array.type != 'single') {
       [formData[key], headerTag] = await createFieldArray(key, attributes[key], record[key], '');
     }
@@ -209,7 +210,7 @@ module.exports = async function (
       }
     }
     //  [formData[key], headerTag] = await createFieldHTML(key, attributes[key], record[key], '');
-    trace.log(key, formData[key], headerTag);
+    trace.log({ key: key, form: formData[key], tag: headerTag, level: 'verbose' });
     trace.log({ stage: `form field ${key} created`, level: 'min' });
     if (!headerTags.includes(headerTag)) {
       headerTags += headerTag;
@@ -227,8 +228,8 @@ module.exports = async function (
   if (mode != 'new') {
     let created = new Date(record['createdAt']).toDateString();
     let updated = new Date(record['updatedAt']).toDateString();
-    let updatedBy={fullName:'Nobody'}
-    if (record['updatedBy']) {let updatedBy=await db.getRow('user',record['updatedBy']);}
+    let updatedBy = { fullName: 'Nobody' }
+    if (record['updatedBy']) { let updatedBy = await db.getRow('user', record['updatedBy']); }
     trace.log(updatedBy)
     footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}  ${lang.updatedBy} ${updatedBy.fullName}`;
   }
@@ -257,23 +258,31 @@ module.exports = async function (
   ***************************************************** */
 
   function unpackInput() {
-    trace.log(entered);
+    trace.log(entered, permission);
+
     let formList = fieldList(attributes, true);
+    trace.log(formList);
     let record = {};
     for (let key of formList) {
-      trace.log(key, attributes[key]);
+      trace.log(key, attributes[key], entered[key]);
+
       /** array type 'single' refers to checkboxes, where the array is treated as a single field
        * that has multiple values. There may be other types of input in the future.   */
       if (attributes[key].array) {
         record[key] = unpackArray(key, attributes[key]);
+        trace.log(key, record[key]);
+        if (attributes[key].array.type == 'single') {
+          record[key] = JSON.stringify(record[key]);
+        }
       }
       else {
         if (attributes[key].type == 'object') {
           record[key] = unpackObject(key, attributes[key]);
+          trace.log(key, record[key])
         }
         else {
-          trace.log(key, entered[key], typeof entered[key]);
           if (typeof entered[key] != 'undefined') {
+            trace.log(key, entered[key], typeof entered[key]);
             record[key] = entered[key];
           }
         }
@@ -301,14 +310,18 @@ module.exports = async function (
    ****************************************************** */
   function unpackArray(fieldName, attributes) {
     let arry = [];
-    let bite = 10;
-    if (attributes.array.bite) { bite = attributes.array.bite }
-    let length = parseInt(entered[fieldName + '.length']);
+    let length = 0;
+    if (!entered[fieldName + '.length']) {
+      length = 0;
+      return [];
+    }
+    length = parseInt(entered[fieldName + '.length']);
+
     trace.log({ length: length });
     let next = 0;
     for (let i = 0; i < length; i++) {
       let subFieldName = `${fieldName}.${i + 1}`
-      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName],delete: entered[subFieldName + '.delete'] })
+      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName], delete: entered[subFieldName + '.delete'] })
       if (attributes.type != 'object') {
         /** Skip blank entries. */
         if (!entered[subFieldName]) { continue }
@@ -397,9 +410,10 @@ module.exports = async function (
   * 
   ****************************************************** */
   function blankFormData() {
+    trace.log(record);
     let err = '';
     for (let key of Object.keys(attributes)) {
-      if (attributes[key].collection) { continue; }  // not intersted in collections
+      if (attributes[key].collection) { continue; }  // not interested in collections
       let value;
       if (!record[key]) {                           // might be pre-set
         value = attributes[key].input.default;
@@ -442,6 +456,32 @@ module.exports = async function (
 
 
   /**
+   * Addsubs - creeate object with additioonal attributes from subschemas
+   * Subshemas are assumed to be a JSON object containsing an array of subschem keys
+   * Only works with Document Databases
+   *  
+   * @param {object} record 
+   * @returns {array} subschemas list, additional attributes
+   */
+  async function addSubs(record) {
+    additionalAttributes = {};
+    if (tableData.subschema                      // if there is a subschema array
+      && record[tableData.subschema.key]         // and there is a value in the record
+      && record[tableData.subschema.key].length  // 
+    ) {
+      subschemas = record[tableData.subschema.key];
+      if (attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single') {
+        subschemas = JSON.parse(subschemas)
+      }
+      additionalAttributes = await addSubschemas(subschemas);
+      trace.log(subschemas, additionalAttributes)
+      attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
+      trace.log({ subschemas: subschemas, attributes: attributes, maxdepth: 2, permission: permission })
+    }
+    return [subschemas, additionalAttributes];
+  }
+
+  /**
    * 
    * Populate data to update record or display
    * @returns {object} Record retrieved
@@ -452,13 +492,7 @@ module.exports = async function (
     trace.log(arguments)
     if (!id) { return {} }
     let record = await db.getRow(table, id);     // populate record from database
-    if (tableData.subschema && record[tableData.subschema.key] && record[tableData.subschema.key].length) {
-      subschemas = record[tableData.subschema.key];
-
-      additionalAttributes = await addSubschemas(subschemas)
-      attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
-      trace.log({ subschemas: subschemas, attributes: attributes, maxdepth: 2 })
-    }
+    await addSubs(record);
     trace.log({ subschemas: subschemas });
 
     trace.log({ record: record, id: id });
@@ -608,7 +642,8 @@ module.exports = async function (
       }
       try {
         trace.log(record);
-        await db.updateRow(table, record, subschemas);                                         // ref record from database
+        [subschemas, additionalAttributes] = await addSubs(record);
+        await db.updateRow(table, record, subschemas, additionalAttributes);                                          // ref record from database
         message = lang.rowUpdated + tableName;
       }
       catch (err) {
@@ -708,10 +743,11 @@ module.exports = async function (
 
 
   function fieldList(attributes, includeId) {
+    trace.log(attributes);
     let formList = [];
     trace.log(permission);
     for (const key of Object.keys(attributes)) {
-      trace.log({ key: key, canedit: attributes[key].canEdit })
+      trace.log({ key: key, canedit: attributes[key].canEdit, permission: permission })
       if (attributes[key].process.type == 'createdAt'
         || attributes[key].process.type == 'updatedAt'
         || attributes[key].process.type == 'updatedBy'
@@ -872,12 +908,13 @@ module.exports = async function (
     trace.log(arguments);
     let formField = '';
     let headerTag = '';
-    let bite = 10;
+    let bite = 1;
     if (attributes.array.bite) { bite = attributes.array.bite }
     if (!data) { data = []; }
-    trace.log(data);
+    trace.log({ data: data, length: data.length });
     formField += `
-      <input type="hidden" id="${qualifiedName}.length" name= "${qualifiedName}.length" value="${data.length}">   <!-- Number of data items in array -->`
+    <div id="${qualifiedName}.envelope">                                 <!-- ---------------- ${qualifiedName} envelope start -------------------- -->
+    <input type="hidden" id="${qualifiedName}.length" name= "${qualifiedName}.length" value="${data.length}">   <!-- Number of data items in array -->`
     if (!data.length) {
       formField += `
         <br /><button type="button" id="${qualifiedName}.0.button"
@@ -886,9 +923,9 @@ module.exports = async function (
         >Add a ${attributes.friendlyName} </button><br />`;
 
     }
-
+    trace.log(formField)
     for (let i = 0; i < data.length + bite; i++) {
-      trace.log('before');
+      trace.log('before', i, data[i]);
       let field;
       let subdata = data[i];
       let tag;
@@ -911,7 +948,7 @@ module.exports = async function (
       /** if i is GT data.length then this is an empty field */
       formField += `
       
-      <div style="display: ${display}" id="${subqualname}.fld" >   <!-- Array item number ${i} -->           
+      <div style="display: ${display}" id="${subqualname}.fld" >   <!-- ----------- Array item  ${subqualname} start --------------- -->           
         <b>${attributes.friendlyName} number ${i + 1}</b>
         <span style="padding-left: 50px; font-weight: normal">${lang.delete}&nbsp;&nbsp;  <input type="checkbox" name="${subqualname}.delete"></span>
         <br>
@@ -934,10 +971,11 @@ module.exports = async function (
         }
       }
       formField += `
-              </div> <!-- Array item number ${i} ends -->  `;
+              </div>                      <!-- ---------------- Array item  ${subqualname} ends ------------------ -->  `;
       headerTag += tag;
       trace.log('after');
     }
+    formField += `</div>              <!-- ---------------- ${qualifiedName} envelope end -------------------- -->`
     trace.log(formField, headerTag);
     return [formField, headerTag];
   }
@@ -1186,10 +1224,10 @@ ${attributes.helpText}`;
       if (!attributes[key].canEdit) { continue; }  // can't validate if not editable
       if (attributes[key].input.hidden) { continue; }
 
-      if (attributes[key].primaryKey 
+      if (attributes[key].primaryKey
         || attributes[key].process.type == 'createdAt'
         || attributes[key].process.type == 'updatedAt'
-        ) { continue; }  // can't validate auto updated fields
+      ) { continue; }  // can't validate auto updated fields
       if (attributes[key].array) {
         form += await createArrayValidation(attributes[key], key, record[key], key, columnGroup);
       }

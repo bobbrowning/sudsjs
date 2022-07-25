@@ -1,23 +1,31 @@
+/**
+ * standard record header
+ * 
+ * If the following is added to the schemaa for a file the following fields are included 
+ * at the start of every record. 
+ * 
+ * standardheader: true,
+ * 
+ */
+
 module.exports = {
     _id: {
-        friendlyName: 'ID',
+        friendlyName: 'Document ID',
         primaryKey: true,
-        permission: { view: ['admin'], edit: ['all'] },
+        permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
     },
     createdAt: {
         friendlyName: 'Date created',
         type: 'number',
         display: { type: 'datetime', truncateForTableList: 16 },
-        database: { type: 'biginteger' },
-        input: { type: 'date' },
-        process: { type: 'createdAt' },
+        input: { type: 'date' },            // input by the system not the user.
+        process: { type: 'createdAt' },     
         permission: { view: ['admin'] },
-    },                                      // You don't actually enter these
-    updatedAt: {                            // but if you did they would be dates. 
-        friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
+    },                                     
+    updatedAt: {                             
+        friendlyName: 'Date last updated',    
         type: 'number',
         display: { type: 'datetime', truncateForTableList: 16 },
-        database: { type: 'biginteger' },
         input: { type: 'date' },
         process: { type: 'updatedAt'},
         permission: { view: ['admin'] },   },

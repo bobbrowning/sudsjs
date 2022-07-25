@@ -9,7 +9,7 @@ module.exports = {
 
   description: `One record for each product that the organisation deals in.`,
 
-  rowTitle: function (record) {
+  stringify: function (record) {
     let suds = require('../config/suds')
     let formatter = new Intl.NumberFormat(
       suds.currency.locale,
@@ -86,7 +86,7 @@ module.exports = {
     },
     productGroup: {
       type: 'string',
-      array: { type: 'single' },
+      array: { type: 'multiple' },
       friendlyName: 'Product Groups',
       description: 'Check those that apply',
       model: 'subschema',

@@ -9,7 +9,7 @@ module.exports = {
    description: 'Used to link products, such as product/spares or product/accessories.',
 
   permission: { all: ['admin', 'purchasing','demo'], view: ['sales'] },
-  rowTitle: function (record) {
+  stringify: function (record) {
     let suds = require('../config/suds')
      let formatter = new Intl.NumberFormat(
       suds.currency.locale,
@@ -23,7 +23,7 @@ module.exports = {
   },
   standardHeader: true,
   attributes: {
- 
+
     product: {
       model: 'products',
       input: {

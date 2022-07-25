@@ -18,15 +18,15 @@ module.exports = async function (attributes, fieldValue) {
   linkedTable = attributes.input.model;
   if (attributes.input.linkedTable) linkedTable = attributes.input.linkedTable;    /* Historical */
   let fieldValues = [];
-  if (attributes.array && attributes.array.type != 'object') {
-    fieldValues = fieldValue;
-  }
-  else {
-    if (fieldValue && attributes.process == 'JSON') { fieldValues = JSON.parse(fieldValue); }
+  if ((fieldValue && attributes.array && attributes.array.type == 'single')
+    ||
+    fieldValue && attributes.process == 'JSON') {
+    fieldValues = JSON.parse(fieldValue);
+
   }
   if (!Array.isArray(fieldValues)) { fieldValues = [fieldValues] };
   trace.log(fieldValues);
-  if (attributes.values  || attributes.model) {
+  if (attributes.values || attributes.model) {
     [values, labels] = await getLabelsValues(attributes, {});
     trace.log({ values: values, labels: labels, });
     for (let i = 0; i < fieldValues.length; i++) {
@@ -48,7 +48,7 @@ module.exports = async function (attributes, fieldValue) {
       ` }
       results += fieldValues[i];
 
-      
+
     }
   }
 

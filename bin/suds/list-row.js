@@ -65,17 +65,22 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
   let attributes = await mergeAttributes(table, permission,subschemas);  // Merve field attributes in model with config.suds tables
   trace.log({ attributes: attributes, level: 'verbose' })
   let record = await db.getRow(table, id);     // populate record from database
+ if (record.err) {
+    return (`<h1>Unexpected error reading ${id} from ${table} Error:${record.err} ${record.msg}</h1>`);
+  }
   if (tableData.subschema) {
     subschemas = record[tableData.subschema.key];
+    trace.log({subschemas:subschemas});
+    if (subschemas && attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single'){
+      subschemas=JSON.parse(subschemas);
+    }
+    trace.log(subschemas);
    additionalAttributes= await addSubschemas(subschemas)
     attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
     trace.log({subschemas:subschemas,attributes:attributes,maxdepth:2})
   }
 
-  if (record.err) {
-    return (`<h1>Unexpected error ${record.errmsg}/h1>`);
-  }
-  let output = '';
+   let output = '';
   let tableName = tableData.friendlyName;
   trace.log(record);
 

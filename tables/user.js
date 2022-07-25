@@ -23,7 +23,7 @@ module.exports = {
 
   /** This column provides a text string that in some way identifies the  
    *  row to people. In this case it is the full name  */
-  rowTitle: 'fullName',
+  stringify: 'fullName',
 
 
   /**  This allows you to vary the input form depending on the record type.  */
@@ -32,7 +32,7 @@ module.exports = {
   /** Columns on the table listing. All columns are in the detail page
    *  This can be over-ridden in a report. */
   list: {
-    columns: ['id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
+    columns: ['_id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
   },
 
   /** The columns can be split into groups for editing and display purposes   
@@ -49,7 +49,7 @@ module.exports = {
       friendlyName: 'Activity Log',
       activityLog: true,                                                       // This is the activity log
       limit: 15,                                                               // Maximum entries shown (defaults to 10)
-      activities: ['contacts', 'salesorders', 'salesorderlines','products','purchaseorders','purchaseorderlines'],              // These shild records are included
+      activities: ['contacts', 'salesorders', 'products', 'purchaseorders', 'purchaseorderlines'],              // These shild records are included
       permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
     },
     profile: {
@@ -66,7 +66,7 @@ module.exports = {
       friendlyName: 'Sales',
       description: `Lists the sales orders and products ordered by the customer.  New sales orders can be added.`,
       open: 'salesorders',
-      columns: ['salesorders', 'lastSale', 'salesorderlines'],
+      columns: ['salesorders', 'lastSale'],
       permission: { all: ['admin', 'sales', 'demo'] },
       recordTypes: ['L', 'C', 'P'],                                          // Only shown for Leads, prospects and customers
     },
@@ -86,17 +86,17 @@ module.exports = {
     security: {
       friendlyName: 'Security',
       permission: { all: ['admin'] },
-      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission', ],
+      columns: ['password', 'salt', 'forgottenPasswordToken', 'forgottenPasswordExpire', 'isSuperAdmin', 'lastSeenAt', 'permission',],
     },
     other: {                                        // This is a *special* name. 
       friendlyName: 'Other',                         // This will scoop up the rest
     },
   },
 
+  /**  Treatment of each column */
   standardHeader: true,
-    /**  Treatment of each column */
   attributes: {
- 
+
     fullName: {
 
       type: 'string',
@@ -236,7 +236,7 @@ module.exports = {
     /* in this case the model specifies that the organisation is the key of another   */
     /* 'user' row.  This will create a select with values from the user table.        */
     /* but only usersd with isOrg set to 'B'  (business)  will be listed. The label   */
-    /* for each entry comes from the rowTitle function above.                         */
+    /* for each entry comes from the stringify function above.                         */
     /* See below for the 'isOrg' column treatment                                     */
     organisation: {
       friendlyName: 'Organisation',
@@ -297,9 +297,7 @@ module.exports = {
       type: 'string',
       friendlyName: 'Notes',
       input: {
-        type: 'textarea',
-        rows: 6,
-        cols: 60,
+        type: 'ckeditor4',
         placeholder: `Please enter any notes about this user.`,
       }
     },
@@ -339,7 +337,7 @@ module.exports = {
         order: 'date',                                 // The order in which the are listed (default updatedAt)
         direction: 'DESC',                                  // ASC or DESC  default DESC
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
-        columns: ['id', 'date', 'notes', 'nextActionDate', 'nextAction', 'closed'],
+        columns: ['_id', 'date', 'notes', 'nextActionDate', 'nextAction', 'closed'],
         addChildTip: 'Add a new contact for this user.',
         derive: {
           lines: { type: 'count', friendlyName: 'Number of contacts' },
@@ -366,25 +364,6 @@ module.exports = {
           totsales: { type: 'total', column: 'totalValue', friendlyName: 'Total sales', display: { currency: true } },
           ave: { type: 'average', column: 'totalValue', friendlyName: 'Average value per order', display: { currency: true } },
         }
-      }
-    },
-
-    /* These are products supplied if the user is a supplier.                      */
-
-    salesorderlines: {
-      collection: 'salesorderlines',
-      friendlyName: 'Products ordered',
-      via: 'customer',
-      addRow: false,
-      collectionList: {
-        columns: ['orderNo', 'product', 'units', 'price', 'total'],
-        derive: {
-          lines: { type: 'count', friendlyName: 'Number of order lines ' },
-          sales: { type: 'total', column: 'total', friendlyName: 'Total sales', display: { currency: true } },
-          ave: { type: 'average', column: 'total', friendlyName: 'Average value per product line', display: { currency: true } },
-          units: { type: 'total', column: 'units', friendlyName: 'No of units', },
-          aveunits: { type: 'composite', divide: ['sales', 'units'], display: { currency: true }, friendlyName: 'Average unit price', },
-        },
       }
     },
 

@@ -3,12 +3,18 @@
  * Student table - normalised moned
  * 
  */
+
+let db = require('../bin/suds/db-mongo');
+let lookup = require('../bin/suds/lookup-value');
+
+
 module.exports = {
     description: 'Student - normalised model',
 
     friendlyName: 'Student',
     stringify: 'name',
-    permission: { all: ['admin', 'demo','trainer'] },
+    permission: { all: ['admin', 'demo', 'trainer'] },
+    list: { columns: ['name', 'address', 'results'], },
     standardHeader: true,
     attributes: {
         name: {
@@ -34,29 +40,38 @@ module.exports = {
         results: {
             array: { type: 'multiple' },
             type: 'object',
-            stringify: function (data) {
-                return (`${data.subject} - ${data.score}`)
+            stringify: async function (data) {
+                let subject = await db.getRow('subjectsdenorm', data.subject);
+                return (`${subject.name}`)
             },
             object: {
-                Subject: {
+                subject: {
                     type: 'string',
-                     model: 'subjects',
-                    input: {
-                        type: 'select',
-                    },
+                    model: 'subjectsdenorm',
+                    input: { type: 'select', },
                 },
-                score: {
-                    type: 'string',
-                    input: { type: 'select' },
-                    values: {
-                        A: 'Top',
-                        B: 'Pass',
-                        F: 'Fail',
-
+                paper: {
+                    type: 'object',
+                    array: { type: 'multiple' },
+                    object: {
+                        paper: {
+                            type: 'string',
+                            input: {
+                                type: 'select',
+                                onevents: {
+                                    onload: `fillPaperSelect('{{fieldName}}','{{fieldValue}}')`,
+                                    onfocusin: `fillPaperSelect('{{fieldName}}')`,
+                                },
+                            },
+                        },
+                        score: {
+                            type: 'number',
+                            input: { type: 'number', max: 100 },
+                        }
                     }
                 }
             }
-
         }
+
     }
 }

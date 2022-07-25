@@ -1,10 +1,10 @@
 
-function clicked(fieldName, label, value,onchange) {
+function clicked(fieldName, label, value, onchange) {
     document.getElementById(`autoid_${fieldName}`).value = value;
     document.getElementById(`${fieldName}`).value = label;
     document.getElementById(`${fieldName}-autocomplete-list`).remove();
     console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
-    if (onchange){
+    if (onchange) {
         eval(onchange);
     }
 }
@@ -12,6 +12,27 @@ function clicked(fieldName, label, value,onchange) {
 function apiWait(qualifiedName) {
     console.log(qualifiedName);
     document.getElementById(`err_${qualifiedName}`).innerHTML = 'Will be validated when you leave this field';
+}
+
+/**
+ * Create an on=bject with all of the 'useful' field values
+ * Ignore numeric field names
+ * ignore csrf
+ * 
+ */
+function getFieldValues() {
+    let debug = true;
+    let data={};
+    for (let key of Object.keys(document.mainform.elements)) {
+        if (!isNaN(key)) { continue; }
+        if (key == 'csrf') {continue;}
+        let field = document.mainform[key];
+        let value = field.value;
+      //  if (field.options) { value = field.options[field.selectedIndex].value }
+         data[key] = value;
+    }
+    if (debug) console.log(data) 
+    return data;
 }
 
 
@@ -45,9 +66,7 @@ function apiCheck(qualifiedName, route, table, id,) {
     });
 }
 
-
-
-
+/*
 function nextArrayItem(nextItem, counter, button) {
     console.log(arguments);
     if (document.getElementById(nextItem).style.display == 'inline') { return }
@@ -56,8 +75,39 @@ function nextArrayItem(nextItem, counter, button) {
     document.getElementById(counter).value++;
     console.log(document.getElementById(counter).value);
 }
+*/
+function nextArrayItem(item) {
+    let debug = false;
+    if (debug) console.log(arguments);
+    if (debug) console.log(item + '.length');
+    let last = document.getElementById(item + '.length').value;
+    last = parseInt(last) + 1;
+    if (debug) console.log(last, `${item}.${last}.fld`);
+    let nexthtml = document.getElementById(`${item}.${last}.fld`).innerHTML;
+    let next = last + 1;
+    nexthtml = `
+    <div style="display: none" id="${item}.${next}.fld" >
+    ${nexthtml}
+    </div>
+    `;
+    let re = new RegExp(`${item}.${last}`.replace(/\./g, '\\.'), 'g')
+    if (debug) console.log(re)
+    nexthtml = nexthtml.replace(re, `${item}.${next}`);
+    let re2 = new RegExp(`#${last}`)
+    nexthtml = nexthtml.replace(re2, `#${next}`);
+    if (debug) console.log(document.getElementById('results.1.paper.1.paperName').value);
+    document.getElementById(item + '.more').innerHTML += nexthtml;
+    if (debug) console.log(document.getElementById('results.1.paper.1.paperName').value);
 
-function auto(route, fieldName, linkedTable, display, limit, searchparm,onchange) {
+    document.getElementById(`${item}.${last}.fld`).style.display = 'inline';
+    document.getElementById(item + '.length').value = last.toString();
+    if (debug) console.log(document.getElementById(item + '.length').value)
+
+    //   console.log(document.getElementById(item + '.envelope'))
+
+}
+
+function auto(route, fieldName, linkedTable, display, limit, searchparm, onchange) {
     /*the autocomplete function takes two arguments,
     the text field element and an array of possible autocompleted values:*/
     let debug = false;

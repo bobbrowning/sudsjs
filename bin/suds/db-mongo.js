@@ -205,21 +205,30 @@ function getInstruction(table, spec) {
       ta = attributes[searchField];
     }
     if (ta.model || searchField == '_id') {
-        value = objectifyId(value) 
+      value = objectifyId(value)
     }
     trace.log({ searchField: searchField, path: path, qfield: qfield, compare: compare, value: value })
 
+    insensitive = '';
+    if (suds.caseInsensitive) { insensitive = 'i'; }
     if (compare == 'startsWith' || compare == 'startswith') {
-      let re = new RegExp(`${value}.*`);
+      let re = new RegExp(`${value}.*`, insensitive);
       item = { $regex: re }
-      //      continue;
+      //      continue; 
     }
     if (compare == 'contains' || compare == 'like') {
-      let re = new RegExp(`.*${value}.*`);
+      let re = new RegExp(`.*${value}.*`, insensitive);
       item = { $regex: re }
       //     continue;
     }
-    if (compare == 'equals' || compare == 'eq') { item = value }
+    if (compare == 'equals' || compare == 'eq') {
+      if (typeof value == 'string' && suds.caseInsensitive) {
+        /* Make it case insensitive */
+        let re = new RegExp(`^${value}$`, 'i')
+        item = { '$regex': re }
+      }
+      else { item = value }
+    }
     if (compare == 'less' || compare == 'lt') { item = { $lt: value } }
     if (compare == 'more' || compare == 'gt') { item = { $gt: value } }
     if (compare == 'le') { item = { $le: value } }
@@ -265,15 +274,20 @@ function getInstruction(table, spec) {
  */
 function fixWrite(table, record, attributes, mode) {
   trace.log({ table: table, record: record, mode: mode, break: '+', })
+  trace.log({attributes: attributes, level: 'verbose'});
   let rec = {};
-  if (record._id && typeof (record._id) == 'string') {
+  if (record._id && typeof (record._id) == 'string' && mode != 'new') {
     rec['_id'] = objectifyId(record._id);
     trace.log({ id: rec._id });
   }
   for (let key of Object.keys(attributes)) {
+    trace.log(key);
     if (attributes[key].collection) { continue }  // Not a real field
     if (key == '_id') { continue; }       // Done already
-    if (attributes[key].array && !Array.isArray(record[key])) {
+    trace.log(key,Array.isArray(record[key]),record[key]);
+    if (attributes[key].array
+      && attributes[key].array.type != 'single'
+      && !Array.isArray(record[key])) {
       record[key] = [record[key]];
     }
     trace.log({
@@ -288,27 +302,34 @@ function fixWrite(table, record, attributes, mode) {
     })
 
     if (attributes[key].array) {
-      trace.log(record[key]);
-      if (!Array.isArray(record[key])) {
-        if (record[key]) {
-          record[key] = [record[key]];
+      if (attributes[key].array.type != 'single') {
+        trace.log(record[key],Array.isArray(record[key]));
+        if (!Array.isArray(record[key])) {
+          if (record[key]) {
+            record[key] = [record[key]];
+          }
+          else {
+            record[key] = [];
+          }
         }
-        else {
-          record[key] = [];
+        rec[key] = [];
+        trace.log(record[key]);
+        for (let i = 0; i < record[key].length; i++) {
+          if (attributes[key].type == 'object' && record[key][i]) {
+            trace.log({ key: key, i: i, subrecord: record[key][i] })
+            rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
+          }
         }
       }
-      rec[key] = [];
-      for (let i = 0; i < record[key].length; i++) {
-        if (attributes[key].type == 'object') {
-          trace.log({ key: key, i: i, subrecord: record[key][i] })
-          rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
-        }
+      else {
+        /** single means the record value will be a JSON string.  So don't go any deeper.. */
+        rec[key] = record[key];
       }
     }
     else {
       trace.log(attributes[key].type)
-      if (attributes[key].type == 'object') {
-        trace.log('down a level');
+      if (attributes[key].type == 'object' && record[key]) {
+        trace.log('down a level',key,record[key]);
         rec[key] = fixWrite(table, record[key], attributes[key].object, mode);
         trace.log(rec[key]);
       }
@@ -367,7 +388,7 @@ function fixRead(record, attributes) {
         }
       }
       for (let i = 0; i < record[key].length; i++) {
-        if (attributes[key].type == 'object') {
+        if (attributes[key].type == 'object' && record[key][i]) {
           trace.log({ key: key, i: i, subrecord: record[key][i] })
           fixRead(record[key][i], attributes[key].object)
         }
@@ -378,7 +399,7 @@ function fixRead(record, attributes) {
     }
     else {
       trace.log(attributes[key].type, record[key]);
-      if (attributes[key].type == 'object') {
+      if (attributes[key].type == 'object' && record[key]) {
         fixRead(record[key], attributes[key].object)
       }
       else {
@@ -560,7 +581,7 @@ async function deleteRow(permission, table, id) {
   let mainPage = suds.mainPage;
   let tableData = tableDataFunction(table);
   if (typeof (id) == 'string') {
-    id = objectifyd(id);
+    id = objectifyId(id);
     trace.log({ id: id });
   }
   if (!mainPage) { mainPage = '/'; }
@@ -593,10 +614,10 @@ async function deleteRow(permission, table, id) {
  * @param {string} table 
  * @param {object} record 
  */
-async function updateRow(table, record, subschemas) {
+async function updateRow(table, record, subschemas,additionalAttributes) {
   trace.log({ inputs: arguments })
   const collection = database.collection(table);
-  let attributes = mergeAttributes(table, '', subschemas);
+  let attributes = mergeAttributes(table, '', subschemas,additionalAttributes);
   let rec = fixWrite(table, record, attributes, 'update');
   let filter = { _id: rec._id };
   try {
@@ -697,7 +718,7 @@ async function getRow(table, val, col) {
   trace.log(spec);
   let records = await getRows(table, spec);
   trace.log({ table: table, value: val, records: records });
-  if (!records.length) { record = { err: 1 } }
+  if (!records.length) { record = { err: 1, msg: 'Record not found' } }
   else { record = records[0] }
   trace.log('fixed read', record);
   return (record);

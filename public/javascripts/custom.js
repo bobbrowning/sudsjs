@@ -1,3 +1,97 @@
+
+
+
+let examCache = {};
+let lastExam = {};
+
+/** 
+ * Fill in paper select values depending on the exam. 
+ * */
+async function fillPaperSelect(fieldName, fieldValue) {
+    let debug = 0;
+    if (debug) console.log(fieldName, fieldValue);
+    /***  Get the current value of the field 
+     * if one is provided as a parameter this is called when the page loads.
+     */
+    if (!fieldValue) {
+        fieldValue = document.mainform[fieldName].value;
+    }
+    /***  Find the name of the exam field*/
+    let route = fieldName.split('.');
+    if (debug) console.log(fieldName, route, fieldValue);
+    let examName = `${route[0]}.${route[1]}.subject`;
+    examValue = document.mainform[examName].value;
+    if (debug) console.log(examCache);
+    if (debug) console.log(examValue);
+    /*** If the examination has not changed and this is not a new paper selection field then no 
+     * need to repopulate the select.  
+     */
+    //   if (debug) console.log(document.mainform[fieldName]);
+    //   if (lastExam[fieldName] === examName && document.mainform[fieldName].select.labels.length) { return }
+
+    //   lastExam[fieldName] = examName;
+    let labels = [];
+    let values = [];
+    if (debug > 1) console.log(examCache[examValue]);
+    /*** Don't want to keep going to the api. */
+    if (examCache[examValue]) {
+
+        labels = values = examCache[examValue];
+    }
+    else {
+        if (debug) console.log(document.mainform[fieldName].options);
+        document.mainform[fieldName].options[0].label = 'Please wait....';
+        csrf = document.mainform['csrf'].value;
+        if (debug) console.log(examName, examValue);
+        /*** not convinced the csrf check is working... outstanding issue  */
+        let url = `/apicustomrouter?app=exampaper&exam=${examValue}&csrf=${csrf}`;
+
+        if (debug) console.log(url);
+        url = encodeURI(url);
+        try {
+            let response = await fetch(url);
+            let data = await response.json();
+            if (debug) console.log(data);
+            [labels, values] = data;
+            if (debug) console.log('caching', examName, labels);
+            examCache[examValue] = labels;
+        }
+        catch (error) {
+            console.log(error);
+            labels = values = ['error']
+        };
+    }
+
+    if (debug) console.log(document.mainform[fieldName].length)
+    let L = document.mainform[fieldName].options.length - 1;
+    for (let i = L; i > 0; i--) {
+        if (debug) console.log(i, document.mainform[fieldName][i])
+        document.mainform[fieldName].remove(i);
+        if (debug) console.log('removed', i);
+    }
+
+    if (debug) console.log(labels, values, document.mainform[fieldName].options);
+    if (labels) {
+        for (let i = 0; i < labels.length; i++) {
+            if (debug) console.log('adding', i, labels[i], document.mainform[fieldName].options)
+            var option;
+            if (labels[i] == fieldValue) {
+                option = new Option(labels[i], values[i], true, true);
+            }
+            else {
+                option = new Option(labels[i], values[i]);
+            }
+            document.mainform[fieldName].add(option);
+        }
+        document.mainform[fieldName].options[0].label = 'Please select ....';
+    }
+    return;
+
+
+}
+
+
+
 function fillVariant(selected) {
     let debug = false;
     if (debug) { console.log(selected) }
@@ -34,14 +128,14 @@ function fillSubVariant(variant_id, selected) {
     let id = document.getElementById(`autoid_product`).value;
     if (debug) { console.log('id=', id) }
     if (!id) { return };
-    if (!variant_id) { 
+    if (!variant_id) {
         if (document.getElementById('variant').value) {
-        variant_id=document.getElementById('variant').value;
+            variant_id = document.getElementById('variant').value;
         }
         else {
             return
         }
-     }
+    }
     subvariant = document.getElementById('subVariant');
     if (debug) console.log(subvariant);
     while (subvariant.options.length > 1) { subvariant.remove(1); }

@@ -4,45 +4,49 @@
  * @description :: A model definition represents a database table/collection.
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
  */
- let db = require('../bin/suds/db');
+let db = require('../bin/suds/db-mongo');
 
 module.exports = {
-  friendlyName: 'Sales orders',  
-   
+  friendlyName: 'Sales orders',
+
   description: 'Customer orders',
 
-   permission: { all: ['sales', 'admin','demo'], view: ['purchasing'] },
+  permission: { all: ['sales', 'admin', 'demo'], view: ['purchasing'] },
 
 
-  rowTitle: function (record) {
-    return `Order no:${record.id} - Value: £${record.totalValue}`;
+  stringify: function (record) {
+    return `Order no:${record._id} - Value: £${record.totalValue}`;
   },
 
-  
+
   list: {
-    columns: ['updatedAt', 'id', 'customer','status', 'date'],
+    columns: ['updatedAt', '_id', 'customer', 'status', 'date','orderlines'],
     open: 'salesorderlines',
   },
   edit: {
-    postProcess: async function (record, operation) {
-      if (operation == 'addNew') {
+    preProcess: async function (record, operation) {
         await db.updateRow('user', {
-          id: record.customer,
+          _id: record.customer,
           userType: 'C',
-          lastSale: record.id,
+          lastSale: record._id,
         });
+      record.totalValue = 0;
+      for (let i = 0; i < record.orderlines.length; i++) {
+        console.log(record.orderlines[i].price);
+        record.totalValue += Number(record.orderlines[i].price) * Number(record.orderlines[i].units);
       }
+      console.log(record);
       return;
-    },
+    }
   },
   standardHeader: true,
-    attributes: {
- 
+  attributes: {
+
 
     customer: {
       description: 'Customer',
       model: 'user',
-       input: {
+      input: {
         type: 'autocomplete',
         search: 'fullName',
         required: true,
@@ -56,10 +60,11 @@ module.exports = {
       type: 'string',
       description: 'Date (ISO Format) of order',
       example: '2020-10-29 13:59:58.000',
-      input: { type: 'date',      
-      required: true,
-      default: '#today',
-    },
+      input: {
+        type: 'date',
+        required: true,
+        default: '#today',
+      },
       friendlyName: 'Sale date',
     },
     notes:
@@ -73,13 +78,64 @@ module.exports = {
       description: 'Status of the order',
       type: 'string',
       values: {
-        O:'Ordered', 
-        P:'Processing', 
-        D:'Dispatched',
+        O: 'Ordered',
+        P: 'Processing',
+        D: 'Dispatched',
       },
       input: {
         type: 'select',
-       }
+      }
+    },
+    orderlines: {
+      array: { type: 'multiple' },
+      friendlyName: 'Products in the order',
+      type: 'object',
+      stringify: async function (data) {
+        let record = await db.getRow('products', data.product);
+        shortname = record.name.substr(0, 40)
+        return `${data.units} X ${shortname}`
+      },
+      object: {
+        product: {
+          description: 'Product',
+          model: 'products',
+          input: {
+            type: 'autocomplete',
+            required: true,
+            search: {
+              andor: 'and',
+              searches: [
+                ['name', 'contains', '#input'],
+              ],
+            },
+            placeholder: 'Number or type name (case sensitive)',
+            idPrefix: 'Product number: ',
+          },
+          display: {
+            linkedTable: 'products',      // if omitted will be picked up from the model
+            makeLink: true,             // hypertext link to the linked table
+          },
+        },
+        units: {
+          type: 'number',
+          //     required: true,
+          description: 'Number of units ordered',
+          friendlyName: 'Number of units',
+          input: {
+            type: 'number',
+            step: 1,
+
+            max: 100,
+          },
+        },
+        price: {
+          friendlyName: 'Unit price',
+          type: 'number',
+          input: { step: .01, },
+          display: { currency: true },
+        },
+      },
+
     },
     totalValue: {
       type: 'number',
@@ -90,16 +146,7 @@ module.exports = {
     //  ╔═╗╔═╗╔═╗╔═╗╔═╗╦╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
     //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
-    salesorderlines: {
-      collection: 'salesorderlines',
-      via: 'orderNo',
-      collectionList: {                                            // Contact notes are listed below the person's record
-        limit: 999,                                 // number of child records listed in the detail page
-        open: true,                                // Open this on automatically
-        heading: 'Sales Order lines',               //Heading to the listing 
-        columns: ['createdAt', 'product', 'units', 'price', 'total'],
-      },
-    },
+
   },
 
 }

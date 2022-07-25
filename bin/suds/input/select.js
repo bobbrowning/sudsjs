@@ -26,22 +26,50 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   trace = require('track-n-trace');
   trace.log(arguments);
   let results = '';
-  let onchange='';
+  let onchange = '';
   if (attributes.input.onchange) {
     onchange = attributes.input.onchange;
-    onchange=onchange.replace(/{{fieldValue}}/,fieldValue)
+    onchange = onchange.replace(/{{fieldValue}}/, fieldValue)
   }
- [values, labels] = await getLabelsValues(attributes, record);
-  trace.log(labels,values,fieldValue);
+  let onload = '';
+  let onevent = '';
+  let onevents = '';
+  if (attributes.input.onevents) {
+    for (let evname of Object.keys(attributes.input.onevents)) {
+      let evaction = attributes.input.onevents[evname];
+      evaction = evaction.replace(/{{fieldValue}}/, fieldValue)
+      evaction = evaction.replace(/{{fieldName}}/, fieldName);
+      if (evname == 'onload') {
+        onload = `
+    <script defer>
+       ${evaction} 
+    </script>
+    `;
+      }
+      else {
+        onevents += `
+              ${evname}="${evaction}"`;
+      }
+
+    }
+    if (onchange) {
+      onevents += `
+              onchange="${onchange}" `;
+    }
+  }
+
+
+  [values, labels] = await getLabelsValues(attributes, record);
+  trace.log(labels, values, fieldValue);
   results = `
           <select 
-          name="${fieldName}"  
-          class="form-control" 
-          aria-label="${attributes.friendlyName}"  
-          id="${fieldName}" 
-          style="width: ${attributes.input.width}"
-          onchange="${onchange}"
-           >
+            name="${fieldName}"  
+            class="form-control" 
+            aria-label="${attributes.friendlyName}"  
+            id="${fieldName}" 
+            style="width: ${attributes.input.width}"
+            ${onevents}
+          >
           <option value="">${lang.select}</option>`;
   for (let i = 0; i < values.length; i++) {
     selected = '';
@@ -52,6 +80,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   }
   results += `
         </select>
+        ${onload}
         <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
  `;
 

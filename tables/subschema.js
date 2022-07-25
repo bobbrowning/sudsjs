@@ -17,7 +17,7 @@ module.exports = {
       return;
     },
   },
-  rowTitle: 'friendlyName',
+  stringify: 'friendlyName',
   standardHeader: true,
   attributes: {
 
@@ -28,11 +28,12 @@ module.exports = {
         database: { type: 'varchar', length: 50, },
       },
       values: function () {
-        return require('../config/suds').subSchemaGroups;
+        return require('../config/suds').subschemaGroups;
       },
 
     },
     friendlyName: { type: 'string' },
+    description: {type: 'string', input: {type: 'textarea'}}, 
     item: {
       array: { type: 'multiple', bite: 5 },
       type: 'object',
