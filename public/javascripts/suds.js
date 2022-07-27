@@ -76,31 +76,61 @@ function nextArrayItem(nextItem, counter, button) {
     console.log(document.getElementById(counter).value);
 }
 */
+
+/**
+ * This function copies the last html for an array and add one to the 
+ * array number in the html to product a new div for the next item. 
+ * It is hidden 
+ * 
+ *    * The structure of the HTML for an array item/object called xxxx
+   * with two sets of values is as follows
+   * 
+   * There is always a blank entry as the last one in the array
+   * which is hidden. So a new document will always have at least 
+   * one array entry.
+   * 
+   * <hidden-field id=xxxx.length value 2> 
+   * <div id=xxxx.1.fld>
+   *      HTML for xxxx.1
+   * <div id=xxxx.2.fld>
+   *      HTML for xxxx.2
+   * <div id=xxxx.3.fld>
+   *      HTML for xxxx.3
+   * 
+   * When a new item is added with the 'new xxxx' button 
+   * 1 the last .fld div is copied
+   * 2 the index nunber incremented in the copy 
+   * 3 the .length hidden field is incrememented. 
+   * 4 the old last entry (now penultimate) entry is un-hidden
+   * 
+ * 
+ * 
+ * @param {string} item (xxxx in this example)
+ */
 function nextArrayItem(item) {
-    let debug = false;
+    let debug = true;
     if (debug) console.log(arguments);
-    if (debug) console.log(item + '.length');
-    let last = document.getElementById(item + '.length').value;
-    last = parseInt(last) + 1;
+    if (debug) console.log(item + '.length');                                     // Field containing number of items in the array currently
+    let last = document.getElementById(item + '.length').value;                   // Number of items currently
+    last = parseInt(last) + 1;                                                    // Add one - and make it an integer rather than string
     if (debug) console.log(last, `${item}.${last}.fld`);
-    let nexthtml = document.getElementById(`${item}.${last}.fld`).innerHTML;
-    let next = last + 1;
-    nexthtml = `
+    let nexthtml = document.getElementById(`${item}.${last}.fld`).innerHTML;      // The HTML in the last+1 (blank) item
+    let next = last + 1;                                                          // this will be the new blank item
+    nexthtml = `                                                                   
     <div style="display: none" id="${item}.${next}.fld" >
     ${nexthtml}
     </div>
     `;
-    let re = new RegExp(`${item}.${last}`.replace(/\./g, '\\.'), 'g')
+    let re = new RegExp(`${item}.${last}`.replace(/\./g, '\\.'), 'g')             // regular expression /xxxx\.3/
     if (debug) console.log(re)
-    nexthtml = nexthtml.replace(re, `${item}.${next}`);
-    let re2 = new RegExp(`#${last}`)
+    nexthtml = nexthtml.replace(re, `${item}.${next}`);                           // replace xxxx.3 by xxxx.4
+    let re2 = new RegExp(`#${last}`)                                              // replace #3 by #4 ???? why?
     nexthtml = nexthtml.replace(re2, `#${next}`);
-    if (debug) console.log(document.getElementById('results.1.paper.1.paperName').value);
-    document.getElementById(item + '.more').innerHTML += nexthtml;
-    if (debug) console.log(document.getElementById('results.1.paper.1.paperName').value);
-
-    document.getElementById(`${item}.${last}.fld`).style.display = 'inline';
-    document.getElementById(item + '.length').value = last.toString();
+    if (debug) console.log(item + '.more');
+    document.getElementById(item + '.more').innerHTML += nexthtml;                // add the new html we have created to the .more div
+  
+    document.getElementById(`${item}.${last}.fld`).style.display = 'inline';      // expose the old blank html section
+    document.getElementById(item + '.length').value = last.toString();            // update the last counter
     if (debug) console.log(document.getElementById(item + '.length').value)
 
     //   console.log(document.getElementById(item + '.envelope'))

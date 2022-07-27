@@ -20,30 +20,36 @@ async function displayField(attributes, value, children, permission, parent) {
   if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
   trace.log(arguments);
   let display = '';
-  
 
+  /** If the item is an object we navigate through the structure  by
+   * calling the funtion recurively.
+   */
   if (attributes.type == 'object') {
-  
+    /** If a top-level object is also an array (i.e. an array of objects).
+     *  If a stringify function/field is given for the object, then
+     * then list one line for each item which is obtained by the stringify 
+     * function/item for the object with 'more...to expand
+     */
     if (attributes.array && Array.isArray(value)) {
       trace.log(value);
       display += '<ol>';
       for (let i = 0; i < value.length; i++) {
         display += '<li>';
-        let disp='inline';
+        let disp = 'inline';
         if (attributes.stringify) {
-          disp='none';
-          display+=`
+          disp = 'none';
+          display += `
           <span onclick="document.getElementById('${attributes.key}_${i}').style.display='inline'">`
           if (typeof attributes.stringify == 'function') {
-            display+=await attributes.stringify(value[i]);
+            display += await attributes.stringify(value[i]);
           }
           else {
-            display+=value[i][attributes.stringify];
+            display += value[i][attributes.stringify];
           }
-          display+=` <span class="text-primary" style="cursor: pointer; "> more...</span>
+          display += ` <span class="text-primary" style="cursor: pointer; "> more...</span>
           </span>`;
         }
-        display+=`
+        display += `
         <div id="${attributes.key}_${i}"  style="display:${disp}">`;
         display += await displayField(attributes, value[i], children, permission, parent)
         display += `
@@ -54,6 +60,7 @@ async function displayField(attributes, value, children, permission, parent) {
       trace.log(display);
       return display;
     }
+    /** Otherwise work your way through the object */
     else {
       trace.log('descending one level', Object.keys(attributes.object), value);
       if (!value) { return '' }
@@ -74,6 +81,7 @@ async function displayField(attributes, value, children, permission, parent) {
     }
   }
   else {
+
     display = await displayItem(attributes, value, children, permission);
     trace.log(display);
     return display;
@@ -100,7 +108,7 @@ async function displayField(attributes, value, children, permission, parent) {
 
 
     /** This is not a real field on the database, but itendifies a child column */
-    trace.log(attributes.collection, children,value)
+    trace.log(attributes.collection, children, value)
     if (attributes.collection) {
       let num = children;
 
@@ -154,7 +162,7 @@ async function displayField(attributes, value, children, permission, parent) {
         trace.log(err)
       }
       if (helper) {
-        trace.log('using helper', attributes.display.type,value);
+        trace.log('using helper', attributes.display.type, value);
         return (await helper(attributes, value))
       }
     }
@@ -171,15 +179,18 @@ async function displayField(attributes, value, children, permission, parent) {
       trace.log({ value: value, data: data });
       let display = value;
       if (Array.isArray(data)) {
-        display = '';
+        display = '<ol>';
         for (let i = 0; i < data.length; i++) {
           key = data[i];
-          if (i > 0) { display += '; ' }
           trace.log(key);
           let lookedup = await lookup(attributes, key);
           trace.log(lookedup);
-          display += `${lookedup}`;
+          display += `
+          <li>
+          ${lookedup}
+          </li>`;
         }
+        display += '</ol>';
       }
       else {
         display = '';
@@ -191,7 +202,7 @@ async function displayField(attributes, value, children, permission, parent) {
     }
 
     /** File upload */
-    trace.log({attributes: attributes,maxdepth: 2});
+    trace.log({ attributes: attributes, maxdepth: 2 });
     trace.log({ value: value, type: attributes.type, });
     if (attributes.input && attributes.input.type == 'uploadFile') {
       display = '';
@@ -227,7 +238,7 @@ async function displayField(attributes, value, children, permission, parent) {
     /** The field is a key to another table.  */
     trace.log({ value: value, model: attributes.model });
     if (attributes.model) {
-      let look = (await lookup(attributes, value));
+      let look = await lookup(attributes, value);
       trace.log(look);
       return look;
     };
@@ -243,8 +254,6 @@ async function displayField(attributes, value, children, permission, parent) {
     return (display);
   }
 }
-
-
 
 
 

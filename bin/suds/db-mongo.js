@@ -319,7 +319,11 @@ function fixWrite(table, record, attributes, mode) {
             trace.log({ key: key, i: i, subrecord: record[key][i] })
             rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
           }
+          else {
+            rec[key][i]=record[key][i]
+          }
         }
+        trace.log(record[key],rec[key]);
       }
       else {
         /** single means the record value will be a JSON string.  So don't go any deeper.. */

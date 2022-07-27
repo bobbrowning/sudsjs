@@ -258,7 +258,7 @@ module.exports = async function (
   ***************************************************** */
 
   function unpackInput() {
-    trace.log(entered, permission);
+    trace.log({entered:entered, permission:permission});
 
     let formList = fieldList(attributes, true);
     trace.log(formList);
@@ -894,7 +894,30 @@ module.exports = async function (
    * If it is an object it runs through the keys calling itself 
    * recursively.
    * 
-   * If not an object it creates the HTML usin createOneFieldHTML 
+   * If not an object it creates the HTML usin createOneFieldHTML
+   * 
+   * The structure of the HTML for an array item/object called xxxx
+   * with two sets of values is as follows
+   * 
+   * There is always a blank entry as the last one in the array
+   * which is hidden. So a new document will always have at least 
+   * one array entry.
+   * 
+   * <hidden-field id=xxxx.length value 2> 
+   * <div id=xxxx.1.fld>
+   *      HTML for xxxx.1
+   * <div id=xxxx.2.fld>
+   *      HTML for xxxx.2
+   * <div id=xxxx.3.fld>
+   *      HTML for xxxx.3
+   * 
+   * When a new item is added with the 'new xxxx' button 
+   * 1 the last .fld div is copied
+   * 2 the index nunber incremented in the copy 
+   * 3 the .length hidden field is incrememented. 
+   * 4 the old last entry (now penultimate) entry is un-hidden
+   * 
+   * This all happens in the suds.js file in the public/javascript directory.
    * 
    * 
    * @param {*} key 
@@ -914,17 +937,9 @@ module.exports = async function (
     trace.log({ data: data, length: data.length });
     formField += `
     <div id="${qualifiedName}.envelope">                                 <!-- ---------------- ${qualifiedName} envelope start -------------------- -->
-    <input type="hidden" id="${qualifiedName}.length" name= "${qualifiedName}.length" value="${data.length}">   <!-- Number of data items in array -->`
-    if (!data.length) {
-      formField += `
-        <br /><button type="button" id="${qualifiedName}.0.button"
-        onclick="nextArrayItem('${qualifiedName}.1.fld','${qualifiedName}.length','${qualifiedName}.0')" 
-        class="btn btn-primary btn-sm"
-        >Add a ${attributes.friendlyName} </button><br />`;
-
-    }
+       <input type="hidden" id="${qualifiedName}.length" name= "${qualifiedName}.length" value="${data.length}">   <!-- Number of data items in array -->`
     trace.log(formField)
-    for (let i = 0; i < data.length + bite; i++) {
+    for (let i = 0; i < data.length + 1; i++) {
       trace.log('before', i, data[i]);
       let field;
       let subdata = data[i];
@@ -950,32 +965,23 @@ module.exports = async function (
       
       <div style="display: ${display}" id="${subqualname}.fld" >   <!-- ----------- Array item  ${subqualname} start --------------- -->           
         <b>${attributes.friendlyName} number ${i + 1}</b>
-        <span style="padding-left: 50px; font-weight: normal">${lang.delete}&nbsp;&nbsp;  <input type="checkbox" name="${subqualname}.delete"></span>
+        <span style="padding-left: 50px; font-weight: normal">${lang.delete}&nbsp;&nbsp;  
+        <input type="checkbox" name="${subqualname}.delete"></span>
         <br>
-          ${field}`;
-      if (i >= data.length - 1) {
-        if (i >= data.length + bite - 1) {
-          formField += `
-          <br /><button type="button" id="${subqualname}.button"
-          class="btn btn-secondary btn-sm" disabled
-          >Another - please save and re-edit the record.</button><br />`;
-
-        }
-        else {
-          formField += `
-        <br /><button type="button" id="${subqualname}.button"
-        onclick="nextArrayItem('${nextItem}.fld','${qualifiedName}.length','${subqualname}')" 
-        class="btn btn-primary btn-sm"
-        >Another ${attributes.friendlyName} </button><br />`;
-
-        }
-      }
-      formField += `
-              </div>                      <!-- ---------------- Array item  ${subqualname} ends ------------------ -->  `;
+          ${field}
+      </div>                      <!-- ---------------- Array item  ${subqualname} ends ------------------ -->  `;
       headerTag += tag;
       trace.log('after');
-    }
-    formField += `</div>              <!-- ---------------- ${qualifiedName} envelope end -------------------- -->`
+    } 
+    formField += `
+    <div id="${qualifiedName}.more">      <!-- space for additional array entries -->
+    </div>
+       <br />
+       <button type="button"  onclick="nextArrayItem('${qualifiedName}')" class="btn btn-primary btn-sm">
+           Add  ${attributes.friendlyName} 
+       </button>
+       <br />
+    </div>              <!-- ---------------- ${qualifiedName} envelope end -------------------- -->`
     trace.log(formField, headerTag);
     return [formField, headerTag];
   }

@@ -2,6 +2,7 @@
  * Subjects collection
   */
 module.exports = {
+   friendlyName: 'Exam Subjects (denormalised version)',
    permission: { all: ['admin', 'demo', 'trainer'] },
    stringify: 'name',    // Summarise record content
    standardHeader: true, // Standard document header
@@ -19,7 +20,7 @@ module.exports = {
       papers: {
          array: { type: 'multiple' },
          type: 'string',
-         friendlyName: 'Paper name',
+         friendlyName: 'Papers',
       },
    },
 }

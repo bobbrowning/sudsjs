@@ -205,6 +205,7 @@ module.exports = {
         subvariants: {
           type: 'object',
           friendlyName: 'Colour',
+          stringify: 'friendlyName',
           array: { type: 'multiple', bite: 5 },
           object: {
             friendlyName: { type: 'string' },
