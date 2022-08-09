@@ -126,7 +126,7 @@ async function listTable(
             }
       */
     }
-    trace.log(searchSpec)
+    trace.log(searchSpec) 
   }
 
   trace.log(searchSpec);

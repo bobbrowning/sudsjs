@@ -3,39 +3,30 @@
  * Student table - normalised moned
  * 
  */
- let db = require('../bin/suds/db-mongo');
+let db = require('../bin/suds/db-mongo');
 module.exports = {
     description: 'Exam results',
 
     friendlyName: 'Exam results',
-    permission: { all: ['admin', 'demo', 'trainer'] },
+    permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
     standardHeader: true,
-    columns: ['studentId','subject','paper','score'],
-    preForm: async function (record, mode) {
-          console.log('preform routine',record);
-         if (record.exam) {
-         let ex = await db.getRow('examstaken', record.exam,);
-          record.studentId = ex.studentId;
-          record.subject = ex.subject;
-        }
-        return;
-      },
-     attributes: {
-        exam: {
-           model: 'examstaken',
-           friendlyName: 'Exam taken',
-           input: {type: 'hidden'},
-         },
+    columns: ['studentId', 'subject', 'paper', 'score'],
+    recordTypeColumn: 'subject',
+    recordTypeInput: 'select',
+    attributes: {
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
-            input: {type: 'hidden'},
- 
+            input: { type: 'hidden' },
+
         },
         subject: {
             type: 'string',
             model: 'subjects',
-            input: {type: 'hidden'},
+
+            input: {
+                type: 'readonly',
+            },
         },
         paper: {
             type: 'string',
@@ -45,17 +36,17 @@ module.exports = {
                 search: {
                     andor: 'and',
                     searches: [
-                         ['subject', 'equals', '$subject'],           // Refers top the global suds.poid that we set in the preForm routine
+                        ['subject', 'equals', '$subject'],           // Refers top the global that we set in the preForm routine
                     ],
                 },
-             },
+            },
         },
 
 
         score: {
             type: 'number',
-            input: { type: 'number' ,max: 100},
-         }
+            input: { type: 'number', max: 100, },
+        }
 
     }
 }

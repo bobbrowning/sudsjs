@@ -1,7 +1,7 @@
 
 /** ************************************************
  * Given an exam subject key, the program returns the 
- * list of papers as an array.
+ * list of papers as labels/values array array.
  ***************************************************** */
  let trace = require('track-n-trace');
  let suds = require('../../config/suds');
@@ -9,6 +9,16 @@
 module.exports=  async function (query) {
     let exam=query.exam;
     let examDoc = await db.getRow('subjectsdenorm',exam)
-    return ([examDoc.papers,examDoc.papers]);
+    if (examDoc.err) {
+        return(['error'],['examDoc.msg'])
+    }
+    trace.log(examDoc);
+    let values=examDoc.papers;
+    let labels=[];
+    for (let i=0;i<values.length; i++) {
+        let paperDoc=await db.getRow('papers',values[i])
+        labels[i]=paperDoc.name;
+    }
+    return ([labels,values]);
 
 }

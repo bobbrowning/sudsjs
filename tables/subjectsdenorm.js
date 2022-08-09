@@ -2,8 +2,8 @@
  * Subjects collection
   */
 module.exports = {
-   friendlyName: 'Exam Subjects (denormalised version)',
-   permission: { all: ['admin', 'demo', 'trainer'] },
+   friendlyName: 'Course Subjects (structured version)',
+   permission: { all: ['admin', 'demo', 'trainer','demod'] },
    stringify: 'name',    // Summarise record content
    standardHeader: true, // Standard document header
    list: {
@@ -19,8 +19,10 @@ module.exports = {
       },
       papers: {
          array: { type: 'multiple' },
+         model: 'papers',
          type: 'string',
-         friendlyName: 'Papers',
+         friendlyName: 'Exam papers',
+         input: {type: 'select'}
       },
    },
 }

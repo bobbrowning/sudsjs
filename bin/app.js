@@ -11,7 +11,7 @@ var indexRouter = require('../bin/routes');
 //var adminRouter = require('./routes/admin');
 var bodyParser = require('body-parser');
 
-console.log('SUDS-Express - starting app.js');
+console.log('SUDSJS - starting app.js');
 var session = require('express-session')
 
 var app = express();

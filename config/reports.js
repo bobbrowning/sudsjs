@@ -149,6 +149,20 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'organisation',],        // Columns on the table listing. All columns are in the detail page
   },
 
+   
+  studentSubschema: {
+    table: 'subschema',
+    title: 'Subschemas for student demo',
+    sort: ['updatedAt', 'DESC'],                          // Option sort field and direction. 
+     search: {
+      andor: 'and',
+      searches: [
+        ['group', 'eq', 'exams'],
+      ]                                           // Filter field and value
+    },
+  },
+
+
   
   outstandingOrders: {
     table: 'salesorders',

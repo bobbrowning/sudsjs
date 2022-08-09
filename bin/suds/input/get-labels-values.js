@@ -23,12 +23,13 @@ module.exports = async function (attributes, record) {
     let tableData = tableDataFunction(linkedTable);
     let pk = tableData.primaryKey;
     if (!pk) { pk = 'id'; }
-    let rowTitle = function (record) { return (record[pk]) };
-    if (tableData.rowTitle
+    let stringify = function (data) { return (data[pk]) };
+    if (tableData.stringify
     ) {
-      rowTitle = tableData.rowTitle;
+      if (typeof tableData.stringify == 'function') {stringify = tableData.stringify;}
+      else {stringify = function (data) { return (data[tableData.stringify]) };}
     }
-
+    trace.log(stringify);
     let search = {};
     if (attributes.input.search) {
       if (attributes.input.search.andor) { search.andor = attributes.input.search.andor }
@@ -50,7 +51,7 @@ module.exports = async function (attributes, record) {
     for (let i = 0; i < records.length; i++) {
       trace.log(records[i]);
       values[i] = records[i][pk];
-      labels[i] = rowTitle(records[i]);
+      labels[i] = await stringify(records[i]);
     }
   }
   else {

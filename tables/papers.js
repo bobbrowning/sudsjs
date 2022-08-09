@@ -6,14 +6,16 @@
  let lookup = require('../bin/suds/lookup-value');
  
 module.exports = {
-   permission: { all: ['admin', 'demo', 'trainer'] },
+   permission: { all: ['admin', 'demo', 'trainer','demor','demod'] },
+   friendlyName: 'Exam papers',
    stringify: async function (data) {
       let subject = await db.getRow('subjects', data.subject);
-      return (`${subject.name} - ${data.name}`)
+         return (data.name)
   },
 standardHeader: true, // Standard document header
    list: {
    columns: ['subject','name','notes'],
+   stringify: 'name',
    },
    attributes: {
       subject: {

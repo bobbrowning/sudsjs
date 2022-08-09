@@ -34,7 +34,7 @@ module.exports =
       if (value && value != 'NaN' && value != '0') {
         let tableData = tableDataFunction(attributes.model);
         if (tableData.stringify) {
-          trace.log(tableData.stringify);
+          trace.log(attributes.model,tableData.stringify);
           let record = await db.getRow(attributes.model, value);     // linked parent record
           trace.log(record);
           if (record.err) {
@@ -45,7 +45,7 @@ module.exports =
               display = record[tableData.stringify];
             }
             else {
-              display = tableData.stringify(record);
+              display = await tableData.stringify(record);
             }
           }
 

@@ -9,11 +9,11 @@ let lookup = require('../bin/suds/lookup-value');
 
 
 module.exports = {
-    description: 'Student - normalised model',
+    description: 'Student - structured model',
 
     friendlyName: 'Student',
     stringify: 'name',
-    permission: { all: ['admin', 'demo', 'trainer'] },
+    permission: { all: ['admin', 'demo', 'trainer','demod'] },
     list: { columns: ['name', 'address', 'results'], },
     standardHeader: true,
     attributes: {
@@ -40,6 +40,7 @@ module.exports = {
         results: {
             array: { type: 'multiple' },
             type: 'object',
+            friendlyName: 'Subject and results',
             stringify: async function (data) {
                 let subject = await db.getRow('subjectsdenorm', data.subject);
                 return (`${subject.name}`)
@@ -56,11 +57,12 @@ module.exports = {
                     object: {
                         paper: {
                             type: 'string',
+                            model: 'papers',
                             input: {
                                 type: 'select',
                                 onevents: {
                                     onload: `fillPaperSelect('{{fieldName}}','{{fieldValue}}')`,
-                                    onfocusin: `fillPaperSelect('{{fieldName}}')`,
+                                    onfocus: `fillPaperSelect('{{fieldName}}')`,
                                 },
                             },
                         },

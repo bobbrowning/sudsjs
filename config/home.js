@@ -109,23 +109,39 @@ module.exports = {
 
 // Training academy
 
-training: {
-  title: 'Training',
+relate: {
+  title: 'Demo 1',
+  description: 'Relational database',
   img: '/images/suds/www.jpg',
-  permission: ['admin', 'demo','trainer'],
+  permission: ['admin', 'demor','trainer'],
   links: [
-    { table: 'subjects', title: 'Subjects normalized' },
-    { table: 'papers', title: 'Papers - normalised' },
-    { table: 'studentnorm', title: 'Students - normalized' },
-   /* { table: 'results', title: 'Exam results' },*/
-   { table: 'subjectsdenorm', title: 'Subjects denormalized' },
-   { table: 'studentdenorm', title: 'Students - denormalized' },
-    { table: 'subschema', title: 'Subschema' },   
-    { table: 'studentsubschema', title: 'Students - using subschema' },
+    { table: 'subjects', title: 'Subjects' },
+    { table: 'papers', title: 'Papers' },
+    { table: 'studentnorm', title: 'Students' },
+    { table: 'results', title: 'Results' },
   ],
 },
-
-
+denorm: {
+  title: 'Demo 2',
+  description: 'Denormalised/structured',
+  img: '/images/suds/www.jpg',
+  permission: ['admin', 'demo','trainer','demod'],
+  links: [
+    { table: 'subjectsdenorm', title: 'Subjects' },
+    { table: 'papers', title: 'Papers' },
+    { table: 'studentdenorm', title: 'Students' },
+  ],
+},
+variable: {
+  title: 'Demo 3',
+  description: 'Variable content',
+  img: '/images/suds/www.jpg',
+  permission: ['admin', 'demo','trainer','demov'],
+  links: [
+    { table: 'subschema', title: 'Subschema' },   
+    { report: 'studentSubschema' },
+  ],
+},
   //  Setup / admin section
   setup: {
     title: 'Setup',

@@ -304,6 +304,9 @@ module.exports = {
     web: 'Web developers',
     trainer: 'Trainers',
     demo: 'Demonstration users',
+    demor: 'Demonstration of relational database',
+    demod: 'Demonstration of denormalised data',
+    demov: 'Demonstration of variable content',
   },
 
 

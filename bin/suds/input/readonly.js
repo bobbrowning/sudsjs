@@ -28,15 +28,13 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
   let display = await displayField(attributes, fieldValue);
   results = ` 
           <input type="hidden" 
-          name="${fieldName}"   
-          id="${fieldName}" 
+            name="${fieldName}"   
+            id="${fieldName}" 
             value="${fieldValue}"
-             >
-             <span  class="form-control-plaintext" >
+          >
              ${display}
-             </span>
-            <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
-          `;
+           <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
+  `;
   return (results);
 
 

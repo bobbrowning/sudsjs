@@ -1,5 +1,5 @@
 /**
- * 
+ *  
  * Student table - normalised moned
  * 
  */
@@ -13,7 +13,7 @@ module.exports = {
 
     friendlyName: 'Student',
     stringify: 'name',
-    permission: { all: ['admin', 'demo','trainer'] },
+    permission: { all: ['admin', 'demo','trainer','demov'] },
     list: {
         columns: ['name','address','subjects'], 
         subschemaName: 'exams',

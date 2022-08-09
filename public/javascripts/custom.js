@@ -3,24 +3,31 @@
 
 let examCache = {};
 let lastExam = {};
+let starting={};
 
 /** 
  * Fill in paper select values depending on the exam. 
  * */
 async function fillPaperSelect(fieldName, fieldValue) {
     let debug = 0;
-    if (debug) console.log(fieldName, fieldValue);
+   // if (fieldName='results.1.paper.1.paper') {debug=2}
+    if (debug) console.log(fieldName,fieldValue,starting);
+    if (starting[fieldName]) return;
+    if (fieldValue) starting[fieldName]=true;
+    if (debug) console.log('*******************************************\n');
     /***  Get the current value of the field 
      * if one is provided as a parameter this is called when the page loads.
      */
     if (!fieldValue) {
-        fieldValue = document.mainform[fieldName].value;
+        fieldValue = document.mainform[fieldName].value; 
     }
+    if (debug) console.log(fieldName, fieldValue);
     /***  Find the name of the exam field*/
     let route = fieldName.split('.');
     if (debug) console.log(fieldName, route, fieldValue);
     let examName = `${route[0]}.${route[1]}.subject`;
     examValue = document.mainform[examName].value;
+    if (debug) console.log(fieldName,starting);
     if (debug) console.log(examCache);
     if (debug) console.log(examValue);
     /*** If the examination has not changed and this is not a new paper selection field then no 
@@ -36,10 +43,10 @@ async function fillPaperSelect(fieldName, fieldValue) {
     /*** Don't want to keep going to the api. */
     if (examCache[examValue]) {
 
-        labels = values = examCache[examValue];
+        [labels,values] = examCache[examValue];
     }
     else {
-        if (debug) console.log(document.mainform[fieldName].options);
+        if (debug) console.log(document.mainform[fieldName].options.length);
         document.mainform[fieldName].options[0].label = 'Please wait....';
         csrf = document.mainform['csrf'].value;
         if (debug) console.log(examName, examValue);
@@ -49,19 +56,22 @@ async function fillPaperSelect(fieldName, fieldValue) {
         if (debug) console.log(url);
         url = encodeURI(url);
         try {
+            if (debug) console.log('fetching');
             let response = await fetch(url);
+            if (debug) console.log('fetched');
             let data = await response.json();
             if (debug) console.log(data);
             [labels, values] = data;
-            if (debug) console.log('caching', examName, labels);
-            examCache[examValue] = labels;
+            if (debug) console.log('caching', examName, labels,values);
+            examCache[examValue] = [labels,values];
         }
         catch (error) {
-            console.log(error);
+            console.log(error, url);
             labels = values = ['error']
         };
     }
 
+    /** Clear down the select list before rebuilding it */
     if (debug) console.log(document.mainform[fieldName].length)
     let L = document.mainform[fieldName].options.length - 1;
     for (let i = L; i > 0; i--) {
@@ -75,7 +85,7 @@ async function fillPaperSelect(fieldName, fieldValue) {
         for (let i = 0; i < labels.length; i++) {
             if (debug) console.log('adding', i, labels[i], document.mainform[fieldName].options)
             var option;
-            if (labels[i] == fieldValue) {
+            if (values[i] == fieldValue) {
                 option = new Option(labels[i], values[i], true, true);
             }
             else {
@@ -85,6 +95,7 @@ async function fillPaperSelect(fieldName, fieldValue) {
         }
         document.mainform[fieldName].options[0].label = 'Please select ....';
     }
+    starting[fieldName]=false;
     return;
 
 

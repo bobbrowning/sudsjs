@@ -7,7 +7,7 @@ module.exports = {
 
   description: `This table contains the definitions of different record types.`,
 
-  permission: { view: ['admin', 'demo'] },
+  permission: { all: ['admin', 'demo','demov'] },
   list: {
     columns: ['_id', 'createdAt', 'group','friendlyName'],
   },

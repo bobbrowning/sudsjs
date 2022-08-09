@@ -636,6 +636,7 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
             tip = attributes[key].collectionList.addChildTip
           };
           let canAddRow = await hasPermissionFunction(permission, child, 'edit');
+          trace.log(child,canAddRow);
           if (attributes[key].addRow === false) { canAddRow = false; }
 
           if (canAddRow) {

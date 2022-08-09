@@ -17,17 +17,12 @@ humaniseFieldname = require('./humanise-fieldname');
 let addSubschemas=require ('./subschemas');
 const { attributes } = require('../../tables/studentsubschema');
 let cache = {};
-let lastPermission = ':::';
 let tableData;
 
 
 module.exports = function (table, permission, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments, });
-  trace.log({ permission: permission, cached: Object.keys(cache) });
-  // if (permission != lastPermission) {     //Clear cache if the permision level change.
-  //   cache={};
-  //  }
-  lastPermission = permission;
+  trace.log({table: table, permission: permission, cached: Object.keys(cache) });
   tableData = require('../../tables/' + table);
   if (!tableData) {
     trace.fatal(`Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`)
@@ -250,7 +245,7 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
       if (merged[key].permission) {
         merged[key].canEdit = false;
         merged[key].canView = false;
-        trace.log({ text: 'end loop', key: key, merged: merged[key], level: key })
+        trace.log({ text: 'check permission', key: key, merged: merged[key], level: key })
 
         /* if there is an  'all' permission set then this applies to edit and view */
         if (merged[key].permission.all) {                         // If there is a specific view permission

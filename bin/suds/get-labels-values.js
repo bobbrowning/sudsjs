@@ -9,11 +9,7 @@ let tableDataFunction = require('./table-data');
 let db = require('./' + suds.dbDriver);
 
 module.exports = async function (attributes, record) {
-  let
-
-
-
-    trace = require('track-n-trace');
+  let trace = require('track-n-trace');
   trace.log(arguments);
   let linkedTable = '';
   if (attributes.model) { linkedTable = attributes.model; }
@@ -56,7 +52,7 @@ module.exports = async function (attributes, record) {
       values[i] = records[i][pk];
       //   values[i]=db.stringifyId(values[i]);
       if (typeof (stringify) == 'function') {
-        labels[i] = stringify(records[i]);
+        labels[i] = await stringify(records[i]);
       }
       else {
         labels[i] = records[i][stringify];

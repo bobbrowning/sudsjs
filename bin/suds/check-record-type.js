@@ -1,8 +1,8 @@
 
 
-let documentation={
- friendlyName: 'Check record type',
- description: 'Creates form  to check record type. ',
+let documentation = {
+  friendlyName: 'Check record type',
+  description: 'Creates form  to check record type. ',
 }
 
 
@@ -12,11 +12,11 @@ let mergeAttributes = require('./merge-attributes');     // Standardises attribu
 let tableDataFunction = require('./table-data');         // Extracts non-attribute data from the table definition, filling in missinh =g values
 let classes = require('../../config/classes');           // Links class codes to actual classes
 let lang = require('../../config/language')['EN'];       // Object with language data
-let db = require('./'+suds.dbDriver);                                // Database routines
+let db = require('./' + suds.dbDriver);                                // Database routines
 let createField = require('./create-field');             // Creates an input field
 let displayField = require('./display-field');           // displays a column value
 
-let fn= async function (permission, table, inputQuery,csrf) {
+let fn = async function (permission, table, inputQuery, csrf) {
 
   trace.log({ start: 'Check record type', inputs: arguments, break: '#', level: 'min' });
 
@@ -42,8 +42,22 @@ let fn= async function (permission, table, inputQuery,csrf) {
   if (inputQuery.prepopulate) {
     query += `&prepopulate=${inputQuery.prepopulate}&${inputQuery.prepopulate}=${inputQuery[inputQuery.prepopulate]}`;
   }
-     query += `&prepopulate=${key}`;
-   let [formField, headerTags] = await createField(key, '', attributes[key], '', 'checkRecordType');
+  query += `&prepopulate=${key}`;
+ /*   needs node 17
+  let attr=attributes[key];
+  if (tableData.recordTypeInput) {
+    attr=structuredClone(attributes[key]);
+     attr.input.type=tableData.recordTypeInput;
+    
+  }
+  */
+ let oldInputType=attributes[key].input.type;
+ /** Different input format for record type selection */
+ if (tableData.recordTypeInput) {
+  attributes[key].input.type=tableData.recordTypeInput; 
+ }
+  let [formField, headerTags] = await createField(key, '', attributes[key], '', 'checkRecordType');
+  attributes[key].input.type=oldInputType;
   let format = suds.input.default;
   let groupClass;
   let labelClass;
@@ -107,6 +121,6 @@ ${posttext}
 
 
 
-exports.documentation=documentation;
-exports.fn=fn;
+exports.documentation = documentation;
+exports.fn = fn;
 

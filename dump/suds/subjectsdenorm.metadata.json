@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"867b6c1aa04d402d902d7bc8855a741e","collectionName":"subjectsdenorm","type":"collection"}
