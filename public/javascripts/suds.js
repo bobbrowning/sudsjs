@@ -1,4 +1,110 @@
 
+
+
+
+let fcsCache = {};
+let starting={};
+
+/** 
+ * Fill in paper select values depending on the value in the parent . 
+ * */
+async function fillChildSelect(fieldName, apiName, fieldValue) {
+    let debug = 0;
+   if (!fieldValue) {debug=3}
+   if (debug) console.log('*******************************************\n');
+   if (debug) console.log(fieldName, apiName, fieldValue,starting);
+    
+    /** Make sure only ne of these is running at a time for each field */
+    if (starting[fieldName]) return;
+    if (fieldValue) starting[fieldName]=true;
+ 
+    /***  Get the current value of the field 
+     * if one is provided as a parameter this is called when the page loads.
+     */
+    if (!fieldValue) {
+        fieldValue = document.mainform[fieldName].value; 
+    }
+    if (debug >2) console.log(fieldName, apiName, fieldValue,starting, fcsCache);
+  
+    /***  Find the name of the parent field*/
+    let route = fieldName.split('.');
+    let parent = `${route[0]}.${route[1]}.subject`;
+    parentValue = document.mainform[parent].value;
+    if (debug) console.log(parent,parentValue);
+ 
+    /*** If the examination has not changed and this is not a new paper selection field then no 
+     * need to repopulate the select.  
+     */
+    let labels = [];
+    let values = [];
+    if (debug > 2) console.log(parentValue,fcsCache[parentValue]);
+ 
+    /*** Don't want to keep going to the api. */
+    if (fcsCache[parentValue]) {
+        if (debug >2) console.log('restoring labels,values', fcsCache[parentValue])
+        labels = fcsCache[parentValue][0];
+        values = fcsCache[parentValue][1];
+    }
+    else {
+        /*** Call the api to retrieve labels and values from the database */
+        if (debug>1) console.log(document.mainform[fieldName].options.length);
+        document.mainform[fieldName].options[0].label = 'Please wait....';
+        csrf = document.mainform['csrf'].value;
+  
+        /*** not convinced the csrf check is working... outstanding issue  */
+        let url = `/apicustomrouter?app=${apiName}&parentValue=${parentValue}&csrf=${csrf}`;
+        if (debug) console.log(url);
+        url = encodeURI(url);
+        try {
+            let response = await fetch(url);
+            let data = await response.json();
+            if (debug>2) console.log(data);
+            [labels, values] = data;
+            if (debug) console.log('caching', parent, labels,values);
+            fcsCache[parentValue] = [labels,values];
+        }
+        catch (error) {
+            console.log(error, url);
+            labels = values = ['error']
+        };
+    }
+
+    /** Clear down the select list before rebuilding it */
+    if (debug>1) console.log(document.mainform[fieldName].length)
+    let L = document.mainform[fieldName].options.length - 1;
+    for (let i = L; i > 0; i--) {
+        if (debug>1) console.log(i, document.mainform[fieldName][i])
+        document.mainform[fieldName].remove(i);
+        if (debug>1) console.log('removed', i);
+    }
+
+    if (debug>1) console.log(labels, values, document.mainform[fieldName].options);
+    if (labels) {
+        for (let i = 0; i < labels.length; i++) {
+            if (debug>1) console.log('adding', i, labels[i], document.mainform[fieldName].options)
+            var option;
+            if (values[i] == fieldValue) {
+                option = new Option(labels[i], values[i], true, true);
+            }
+            else {
+                option = new Option(labels[i], values[i]);
+            }
+            document.mainform[fieldName].add(option);
+        }
+        document.mainform[fieldName].options[0].label = 'Please select ....';
+    }
+    starting[fieldName]=false;
+    return;
+
+
+}
+
+
+
+
+
+
+
 function clicked(fieldName, label, value, onchange) {
     document.getElementById(`autoid_${fieldName}`).value = value;
     document.getElementById(`${fieldName}`).value = label;

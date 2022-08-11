@@ -19,7 +19,7 @@ module.exports = {
       },
       papers: {
          array: { type: 'multiple' },
-         model: 'papers',
+         model: 'papersdenorm',
          type: 'string',
          friendlyName: 'Exam papers',
          input: {type: 'select'}

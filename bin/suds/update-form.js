@@ -77,7 +77,8 @@ module.exports = async function (
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
 
   trace.log({ openGroup: openGroup, });
-
+  trace.log({user: loggedInUser,level: 'user'})
+   
   /** ************************************************
   *
   *   set up the data
@@ -635,7 +636,7 @@ module.exports = async function (
      * */
     if (id) {
       operation = 'update';
-      trace.log({ Updating: id, table: table });
+      trace.log({ Updating: id, table: table, user: loggedInUser });
       for (let key of Object.keys(attributes)) {
         if (attributes[key].process.type == 'updatedAt') { record[key] = Date.now() }
         if (attributes[key].process.type == 'updatedBy') { record[key] = loggedInUser }

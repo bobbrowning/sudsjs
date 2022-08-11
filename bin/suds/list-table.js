@@ -810,6 +810,27 @@ async function listTable(
 
   }   // end of search box 
 
+
+      /* ************************************************
+    *
+    *  Sort direction
+    *
+    ************************************************ */
+
+      let sortdirection;
+      if (sortKey == tableData.primaryKey) {
+        sortdirection = `${sortKey} ${direction}`;
+      }
+      else {
+        sortdirection = [];
+        sortdirection[0] = {};
+        sortdirection[0][sortKey] = direction;
+        sortdirection[1] = {};
+        sortdirection[1][tableData.primaryKey] = 'ASC';            //    tie-breaker in case multiple values of sort
+      }
+      trace.log({ sortdirection: sortdirection });
+  
+  
   /* ************************************************
    *
    *  Create output
@@ -861,6 +882,17 @@ async function listTable(
                 <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${key}&direction=${thisdirection}">`;
         }
         let tableHeading = attributes[key].friendlyName;
+        if (key == sortKey && !defaultSort ) {
+          if (direction== 'ASC') {
+             tableHeading+='&nbsp;'+lang.arrowDown;         }
+          else
+          {
+           tableHeading+='&nbsp;'+lang.arrowUp;
+
+          }
+        }
+
+
         if (attributes[key].display.tableHeading) { tableHeading = attributes[key].display.tableHeading }
         output += `
                  ${tableHeading}`;
@@ -885,25 +917,6 @@ async function listTable(
           </thead>
           <tbody>`;
 
-
-    /* ************************************************
-    *
-    *  Sort direction
-    *
-    ************************************************ */
-
-    let sortdirection;
-    if (sortKey == tableData.primaryKey) {
-      sortdirection = `${sortKey} ${direction}`;
-    }
-    else {
-      sortdirection = [];
-      sortdirection[0] = {};
-      sortdirection[0][sortKey] = direction;
-      sortdirection[1] = {};
-      sortdirection[1][tableData.primaryKey] = 'ASC';            //    tie-breaker in case multiple values of sort
-    }
-    trace.log({ sortdirection: sortdirection });
 
 
     /* ************************************************

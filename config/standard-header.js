@@ -20,7 +20,7 @@ module.exports = {
         display: { type: 'datetime', truncateForTableList: 16 },
         input: { type: 'date' },            // input by the system not the user.
         process: { type: 'createdAt' },     
-        permission: { view: ['admin'] },
+        permission: { view: ['none'] },
     },                                     
     updatedAt: {                             
         friendlyName: 'Date last updated',    
@@ -28,13 +28,13 @@ module.exports = {
         display: { type: 'datetime', truncateForTableList: 16 },
         input: { type: 'date' },
         process: { type: 'updatedAt'},
-        permission: { view: ['admin'] },   },
+        permission: { view: ['none'] },   },
     updatedBy: {
         friendlyName: 'Last updated by',
         description: `The person who last updated the row.`,
         type: 'number',
         model: 'user',
         process: { type: 'updatedBy' },
-        permission: { view: ['admin'] },
+        permission: { view: ['none'] },
     },
 }

@@ -7,7 +7,8 @@
  let suds = require('../../config/suds');
  let db = require('../suds/'+suds.dbDriver);
 module.exports=  async function (query) {
-    let exam=query.exam;
+     trace.log(query);
+    let exam=query.parentValue;
     let examDoc = await db.getRow('subjectsdenorm',exam)
     if (examDoc.err) {
         return(['error'],['examDoc.msg'])
@@ -16,7 +17,7 @@ module.exports=  async function (query) {
     let values=examDoc.papers;
     let labels=[];
     for (let i=0;i<values.length; i++) {
-        let paperDoc=await db.getRow('papers',values[i])
+        let paperDoc=await db.getRow('papersdenorm',values[i])
         labels[i]=paperDoc.name;
     }
     return ([labels,values]);

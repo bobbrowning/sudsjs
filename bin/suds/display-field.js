@@ -36,10 +36,11 @@ async function displayField(attributes, value, children, permission, parent) {
       for (let i = 0; i < value.length; i++) {
         display += '<li>';
         let disp = 'inline';
+        let unique=new Date().getTime();
         if (attributes.stringify) {
           disp = 'none';
           display += `
-          <span onclick="document.getElementById('${attributes.key}_${i}').style.display='inline'">`
+          <span onclick="document.getElementById('${unique}_${attributes.key}_${i}').style.display='inline'">`
           if (typeof attributes.stringify == 'function') {
             display += await attributes.stringify(value[i]);
           }
@@ -50,7 +51,7 @@ async function displayField(attributes, value, children, permission, parent) {
           </span>`;
         }
         display += `
-        <div id="${attributes.key}_${i}"  style="display:${disp}">`;
+        <div id="${unique}_${attributes.key}_${i}"  style="display:${disp}">`;
         display += await displayField(attributes, value[i], children, permission, parent)
         display += `
         </div>

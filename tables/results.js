@@ -17,9 +17,8 @@ module.exports = {
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
-            input: { type: 'hidden' },
-
-        },
+            input: {type: 'select'},
+          },
         subject: {
             type: 'string',
             model: 'subjects',
@@ -46,7 +45,7 @@ module.exports = {
         score: {
             type: 'number',
             input: { type: 'number', max: 100, },
-        }
+        },
 
     }
 }

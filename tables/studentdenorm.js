@@ -57,12 +57,12 @@ module.exports = {
                     object: {
                         paper: {
                             type: 'string',
-                            model: 'papers',
+                            model: 'papersdenorm',
                             input: {
                                 type: 'select',
                                 onevents: {
-                                    onload: `fillPaperSelect('{{fieldName}}','{{fieldValue}}')`,
-                                    onfocus: `fillPaperSelect('{{fieldName}}')`,
+                                    onload: `fillChildSelect('{{fieldName}}','exampaper','{{fieldValue}}')`,
+                                    onfocus: `fillChildSelect('{{fieldName}}','exampaper')`,
                                 },
                             },
                         },

@@ -128,7 +128,7 @@ denorm: {
   permission: ['admin', 'demo','trainer','demod'],
   links: [
     { table: 'subjectsdenorm', title: 'Subjects' },
-    { table: 'papers', title: 'Papers' },
+    { table: 'papersdenorm', title: 'Papers' },
     { table: 'studentdenorm', title: 'Students' },
   ],
 },

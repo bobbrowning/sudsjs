@@ -198,6 +198,7 @@ module.exports = {
     'subjects',
     'subjectsdenorm',
     'papers',
+    'papersdenorm',
     'studentdenorm',
     'studentsubschema',
     'subschema',

@@ -96,6 +96,7 @@ async function admin(req, res) {
     let user = {};
     let logNotes = '';
     permission = '#guest#';
+   
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
     }
@@ -111,7 +112,7 @@ async function admin(req, res) {
         trace.log({ 'User record': user, level: 'verbose' });
     }
 
-    /* validate permission set   */
+     /* validate permission set   */
     if (
         !(permission == '#superuser#'
             || permission == '#guest#'
@@ -128,7 +129,8 @@ The user is being treated as a guest.
     }
     // store the permision in session data.
     req.session.permission = permission;
-    trace.log(permission);
+  trace.log({user: req.session.userId, permission: permission,level: 'user'})
+     trace.log(permission);
     //   global.suds = { user: req.session.userId, permission: permission };
 
 
@@ -700,6 +702,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 }
             }
             trace.log({ mode: mode, id: id, record: record, subschemas: subschemas });
+            trace.log({user: req.session.userId,level: 'user'})
             output = await updateForm(
                 permission,
                 table,

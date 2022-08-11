@@ -32,7 +32,7 @@ module.exports = {
   /** Columns on the table listing. All columns are in the detail page
    *  This can be over-ridden in a report. */
   list: {
-    columns: ['_id', 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
+    columns: [ 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
   },
 
   /** The columns can be split into groups for editing and display purposes   

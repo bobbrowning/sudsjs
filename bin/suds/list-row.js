@@ -5,7 +5,7 @@ let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db = require('./'+suds.dbDriver);
+let db = require('./' + suds.dbDriver);
 let evalPermission = require('./eval-permission');
 
 //let countRows = require('./count-rows');
@@ -16,7 +16,7 @@ let displayField = require('./display-field');
 let humaniseFieldname = require('./humanise-fieldname');
 let hasPermissionFunction = require('./has-permission');
 let listTable = require('./list-table');
-let addSubschemas=require ('./subschemas');
+let addSubschemas = require('./subschemas');
 
 /*
   friendlyName: 'List table row',
@@ -45,8 +45,8 @@ let addSubschemas=require ('./subschemas');
   },
 
 */
-module.exports = async function (permission, table, id, open, openGroup,subschemas) {
-  trace.log({ inputs: arguments, break: '#', level: 'min',td: typeof tableDataFunction });
+module.exports = async function (permission, table, id, open, openGroup, subschemas) {
+  trace.log({ inputs: arguments, break: '#', level: 'min', td: typeof tableDataFunction });
 
 
   /* ************************************************
@@ -62,25 +62,25 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
     return `<p>Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). <a href="${suds.mainPage}">Please log in</a> and retry`;
   }
   let message = '';
-  let attributes = await mergeAttributes(table, permission,subschemas);  // Merve field attributes in model with config.suds tables
+  let attributes = await mergeAttributes(table, permission, subschemas);  // Merve field attributes in model with config.suds tables
   trace.log({ attributes: attributes, level: 'verbose' })
   let record = await db.getRow(table, id);     // populate record from database
- if (record.err) {
+  if (record.err) {
     return (`<h1>Unexpected error reading ${id} from ${table} Error:${record.err} ${record.msg}</h1>`);
   }
   if (tableData.subschema) {
     subschemas = record[tableData.subschema.key];
-    trace.log({subschemas:subschemas});
-    if (subschemas && attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single'){
-      subschemas=JSON.parse(subschemas);
+    trace.log({ subschemas: subschemas });
+    if (subschemas && attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single') {
+      subschemas = JSON.parse(subschemas);
     }
     trace.log(subschemas);
-   additionalAttributes= await addSubschemas(subschemas)
+    additionalAttributes = await addSubschemas(subschemas)
     attributes = mergeAttributes(table, permission, subschemas, additionalAttributes);
-    trace.log({subschemas:subschemas,attributes:attributes,maxdepth:2})
+    trace.log({ subschemas: subschemas, attributes: attributes, maxdepth: 2 })
   }
 
-   let output = '';
+  let output = '';
   let tableName = tableData.friendlyName;
   trace.log(record);
 
@@ -192,7 +192,7 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
         let primaryKey = tableData.primaryKey;
         let sortField = tableData.createdAt;
         trace.log(tableData);
-        let records = await db.getRows(child, { searches: [[via, 'eq', id],['updatedAt','gt',0]] }, 0, activityLimit, sortField, 'DESC');
+        let records = await db.getRows(child, { searches: [[via, 'eq', id], ['updatedAt', 'gt', 0]] }, 0, activityLimit, sortField, 'DESC');
         for (let record of records) {
           trace.log(record);
           let stringify = ''
@@ -207,7 +207,7 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
     let searches = {
       andor: 'and',
       searches: [
-        ['updatedAt','gt',0],
+        ['updatedAt', 'gt', 0],
         ['tableName', 'eq', table],
         ['row', 'eq', id],
         ['mode', 'ne', 'populate']
@@ -636,7 +636,7 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
             tip = attributes[key].collectionList.addChildTip
           };
           let canAddRow = await hasPermissionFunction(permission, child, 'edit');
-          trace.log(child,canAddRow);
+          trace.log(child, canAddRow);
           if (attributes[key].addRow === false) { canAddRow = false; }
 
           if (canAddRow) {
@@ -943,10 +943,15 @@ module.exports = async function (permission, table, id, open, openGroup,subschem
   trace.log({ output: output, level: 'silly' });
   let created = new Date(record['createdAt']).toDateString();
   let updated = new Date(record['updatedAt']).toDateString();
-  let updatedBy={fullName:'Nobody'}
-    if (record['updatedBy']) {let updatedBy=await db.getRow('user',record['updatedBy']);}
-   trace.log(updatedBy)
+
+  let updatedBy = { fullName: 'Nobody' }
+  if (record['updatedBy']) {
+    updatedBy = await db.getRow('user', record['updatedBy']);
+    trace.log({ user: record['updatedBy'], record: updatedBy.fullName, level: 'user' })
+  }
+  trace.log(updatedBy)
   footnote = `${lang.rowNumber}: ${id} ${lang.createdAt}: ${created} ${lang.updatedAt}: ${updated}  ${lang.updatedBy} ${updatedBy.fullName}`;
+  trace.log({ footnote: footnote, level: 'user' })
   return ({ output: output, footnote: footnote });
 
 }
