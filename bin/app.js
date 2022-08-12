@@ -40,7 +40,9 @@ homeDir = homeDir.replace('/bin', '');
 app.set('views', path.join(homeDir, 'views'));
 app.set('view engine', suds.viewEngine);
 
+if (suds.morgan) {
 app.use(logger('dev'));
+}
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

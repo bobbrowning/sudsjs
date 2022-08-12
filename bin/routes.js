@@ -21,13 +21,13 @@ router.get(`/page/:slug`, async function (req, res) { require('../bin/cms/list-p
 for (let key of Object.keys(suds.get)) {
   if (suds.csrf) {
     router.get(`/${key}`, csrfProtection, async function (req, res) {
-      console.log('Routing GET with csrf to:', key);
+   //   console.log('Routing GET with csrf to:', key);
       require(suds.get[key])(req, res)
     });
   }
   else {
     router.get(`/${key}`, async function (req, res) {
-      console.log('Routing GET to:', key);
+   //   console.log('Routing GET to:', key);
       require(suds.get[key])(req, res)
     });
   }
@@ -36,13 +36,13 @@ for (let key of Object.keys(suds.get)) {
 for (let key of Object.keys(suds.post)) {
   if (suds.csrf) {
     router.post(`/${key}`, csrfProtection, async function (req, res) {
-         console.log('Routing POST with csrf to:', key);
+  //       console.log('Routing POST with csrf to:', key);
       require(suds.post[key])(req, res)
     });
   }
   else {
          router.post(`/${key}`, async function (req, res) {
-         console.log('Routing POST to:', key);
+ //       console.log('Routing POST to:', key);
       require(suds.post[key])(req, res)
     });
    

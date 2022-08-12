@@ -73,7 +73,7 @@ module.exports = async function (req, res) {
         'post',
         'csrf',
         'useHTML5Validation',
-        'subSchemaGroups',
+        'subschemaGroups',
         'validate',
         'baseURL',
         'mainPage',
@@ -230,6 +230,7 @@ module.exports = async function (req, res) {
         'edit',
         'open',
         'recordTypeColumn',
+        'recordTypeInput',
         'demoRow',
         'subschema',
     ];

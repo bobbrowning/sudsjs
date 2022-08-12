@@ -113,7 +113,7 @@ relate: {
   title: 'Demo 1',
   description: 'Relational database',
   img: '/images/suds/www.jpg',
-  permission: ['admin', 'demor','trainer'],
+  permission: ['admin', 'demor','demo','trainer'],
   links: [
     { table: 'subjects', title: 'Subjects' },
     { table: 'papers', title: 'Papers' },

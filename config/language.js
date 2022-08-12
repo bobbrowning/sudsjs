@@ -120,7 +120,7 @@ module.exports = {
     rowUpdated: 'Row updated in table ',
     select: 'Please select',
     sortedBy: 'Sorted by: ',
-    startOver: 'Another search',        // atternate text on filter button
+    startOver: 'Filter',        // atternate text on filter button
     startswith: 'saterts with',
     startTyping: 'or start typing ...',
     submit: 'Submit',

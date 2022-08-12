@@ -11,7 +11,9 @@ module.exports = {
     friendlyName: 'Exams taken',
     permission: { all: ['admin', 'demo', 'trainer'] },
     standardHeader: true,
-    columns: ['studentId', 'subject', 'paper', 'score'],
+    list: {
+    columns: ['studentId', 'subject',],
+    },
     stringify: async function(record) {
         let ex = await db.getRow('subjects', record.subject,);
           return (ex.name);

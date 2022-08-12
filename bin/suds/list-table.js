@@ -233,7 +233,7 @@ async function listTable(
   let i = 0;
   for (let key of columns) {
     if (!attributes[key]) {
-      console.log(`list-table.js: Listing table ${table} - Unrecognised field ${key} in column list`);
+      console.error(`list-table.js: Listing table ${table} - Unrecognised field ${key} in column list`);
       continue;
     }
     if (attributes[key].canView && !attributes[key].collection) {
@@ -379,12 +379,13 @@ async function listTable(
      */
     let keys = Object.keys(attributes);
     for (let k = 0; k < keys.length; k++) {
-      if (!attributes[keys[k]].canView) { delete keys[k] ; continue;}
+      if (attributes[keys[k]].collection) { delete keys[k] ; continue;}
+     if (!attributes[keys[k]].canView) { delete keys[k] ; continue;}
       if (attributes[keys[k]].type == 'object') { delete keys[k]; continue }
       if (attributes[keys[k]].array) { delete keys[k] }
     }
     keys = keys.filter(Boolean);   // compress array after removing elements...
-
+    trace.log(keys);
     /**
      * 
      * Create an appropriate search for each field.
@@ -884,10 +885,10 @@ async function listTable(
         let tableHeading = attributes[key].friendlyName;
         if (key == sortKey && !defaultSort ) {
           if (direction== 'ASC') {
-             tableHeading+='&nbsp;'+lang.arrowDown;         }
+             tableHeading+='&nbsp;'+lang.arrowUp;         }
           else
           {
-           tableHeading+='&nbsp;'+lang.arrowUp;
+           tableHeading+='&nbsp;'+lang.arrowDown;
 
           }
         }

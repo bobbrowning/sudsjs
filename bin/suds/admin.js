@@ -178,7 +178,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     if (!req.query.table && !req.query.report) {
         trace.log('home page');
         req.session.reportData = {}; 
-      trace.stop();   
+      // trace.stop();   
          let output = await home(req, permission);
         let result = await sendView(res, 'admin', output);
         trace.log(result);

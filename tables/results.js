@@ -10,15 +10,17 @@ module.exports = {
     friendlyName: 'Exam results',
     permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
     standardHeader: true,
-    columns: ['studentId', 'subject', 'paper', 'score'],
+    list: {
+        columns: ['studentId', 'subject', 'paper', 'score'],
+    },
     recordTypeColumn: 'subject',
     recordTypeInput: 'select',
     attributes: {
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
-            input: {type: 'select'},
-          },
+            input: { type: 'select' },
+        },
         subject: {
             type: 'string',
             model: 'subjects',
