@@ -688,6 +688,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 }
                 trace.log(req.query.prepopulate, fieldNames);
                 for (fieldName of fieldNames) {
+                    trace.log(fieldName);
                     let value = req.query[fieldName];
                     if (req.body[fieldName]) { value = req.body[fieldName] }
                     if (attributes[fieldName].primaryKey || attributes[fieldName].model) {

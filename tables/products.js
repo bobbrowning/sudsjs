@@ -35,13 +35,13 @@ module.exports = {
     key: 'productGroup',
   },
   list: {
-    columns: ['name', 'productGroup', 'supplier'],
+    columns: ['name', 'supplier', 'productGroup'],
   },
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
   groups: {
     basic: {
       static: true,
-      columns: ['_id', 'name', 'productGroup', 'supplier'],
+      columns: ['_id', 'name', 'supplier'],
     },
     activityLog: {
       friendlyName: 'Activity Log',
@@ -52,7 +52,7 @@ module.exports = {
     },
     details: {
       friendlyName: 'Details',
-      columns: ['overview', 'image'],
+      columns: ['overview', 'image','vatable'],
     },
     variants: {
       friendlyName: 'Variants',
@@ -71,6 +71,10 @@ module.exports = {
       friendlyName: 'Full description',
       columns: ['description'],
     },
+    productGroup: {
+      friendlyName: 'Product group',
+      columns: ['productGroup'],
+    },
   },
   standardHeader: true,
   attributes: {
@@ -86,7 +90,7 @@ module.exports = {
     },
     productGroup: {
       type: 'string',
-      array: { type: 'multiple' },
+      array: { type: 'single' },
       friendlyName: 'Product Groups',
       description: 'Check those that apply',
       model: 'subschema',
@@ -98,7 +102,6 @@ module.exports = {
           ]
         }
       },
-      display: { type: 'checkboxes' },
     },
     supplier: {
       model: 'user',
@@ -180,11 +183,7 @@ module.exports = {
           type: 'string',
           input: { type: 'textarea' },
         },
-        price: {
-          type: 'number',
-
-        },
-        salesPrice: {
+         salesPrice: {
           type: 'number',
           friendlyName: 'Guide retail unit price',
           input: {
@@ -223,10 +222,14 @@ module.exports = {
       collection: 'purchaseorderlines',
       via: 'product',
       addRow: false,
+      collectionList: {
+        columns: ['product', 'variant', 'subVariant', 'units'],
+      }
     },
     sales: {
       collection: 'salesorders',
       via: 'orderlines.product',
+      addRow: false,
       collectionList: {
         columns: ['updatedAt', '_id', 'customer', 'status', 'date'],
       },

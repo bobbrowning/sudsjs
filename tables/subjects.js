@@ -5,8 +5,8 @@ module.exports = {
    permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
    stringify: 'name',          // Summarise record content (can be a function, but in this case is a field name)
    standardHeader: true,       // Standard record header (creat date, last edit date, created by)
-   open: 'papers',             // When the record list is shown, the 'papers' child records are also listed 
-   list: {
+    list: {
+      open: 'papers',             // When the record list is shown, the 'papers' child records are also listed 
       columns: ['name', 'notes'],  // In the tablular file listing only the name and notes are shown
    },
    attributes: {

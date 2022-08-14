@@ -320,6 +320,23 @@ module.exports = {
   },
 
 
+/** This creates a log using the morgan middleware.  https://www.npmjs.com/package/morgan for details.
+ *  This example will create a combined apache log in the base directory of the app (for those of a nostalgic disposition).  
+ *  There are a number of different predefined formats.  
+ *  The system currently does not support tokens or custom format functions. 
+ *  Commented out on the demo system
+   
+  morgan: {
+     format: 'common',
+     file: 'apachelog.log',
+  },
+
+*/
+morgan: {
+  format: 'dev',
+},
+
+
   /** You can block specific IPs or emails from using the system... A bit basic at present... 
    *   Blocked users are trwated as guest users.  */
   // blockIp: ['::ffff:192.168.0.56'],

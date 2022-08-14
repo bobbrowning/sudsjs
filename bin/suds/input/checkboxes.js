@@ -28,10 +28,11 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
   let values;
   [values, labels] = await getLabelsValues(attributes, record);
   let checked = [];
+  trace.log(fieldValue, typeof fieldValue)
   if (attributes.array) {
     if (attributes.array.type == 'single' 
     && fieldValue
-    && fieldValue.length){
+    && typeof fieldValue == 'string'){
       checked=JSON.parse(fieldValue)
     }
     else{

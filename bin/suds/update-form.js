@@ -77,8 +77,8 @@ module.exports = async function (
   trace.log({ start: 'Update', inputs: arguments, break: '#', level: 'min' });
 
   trace.log({ openGroup: openGroup, });
-  trace.log({user: loggedInUser,level: 'user'})
-   
+  trace.log({ user: loggedInUser, level: 'user' })
+
   /** ************************************************
   *
   *   set up the data
@@ -259,7 +259,7 @@ module.exports = async function (
   ***************************************************** */
 
   function unpackInput() {
-    trace.log({entered:entered, permission:permission});
+    trace.log({ entered: entered, permission: permission });
 
     let formList = fieldList(attributes, true);
     trace.log(formList);
@@ -267,14 +267,9 @@ module.exports = async function (
     for (let key of formList) {
       trace.log(key, attributes[key], entered[key]);
 
-      /** array type 'single' refers to checkboxes, where the array is treated as a single field
-       * that has multiple values. There may be other types of input in the future.   */
       if (attributes[key].array) {
         record[key] = unpackArray(key, attributes[key]);
         trace.log(key, record[key]);
-        if (attributes[key].array.type == 'single') {
-          record[key] = JSON.stringify(record[key]);
-        }
       }
       else {
         if (attributes[key].type == 'object') {
@@ -310,6 +305,7 @@ module.exports = async function (
    * @param {string} attributes - the arttributes of this field only
    ****************************************************** */
   function unpackArray(fieldName, attributes) {
+    trace.log(arguments);
     let arry = [];
     let length = 0;
     if (!entered[fieldName + '.length']) {
@@ -317,17 +313,32 @@ module.exports = async function (
       return [];
     }
     length = parseInt(entered[fieldName + '.length']);
+    /** array type 'single' refers to checkboxes, where the array is treated as a single field
+      * that has multiple values. There may be other types of input in the future.   */
+
+    /** this is for relational databases where checkboxes are stored as a JSON field. */
+    if (attributes.array.type == 'single'
+      && attributes.process == 'JSON') {
+      return (JSON.stringify(record[key]));
+    }
 
     trace.log({ length: length });
     let next = 0;
     for (let i = 0; i < length; i++) {
       let subFieldName = `${fieldName}.${i + 1}`
-      trace.log({ fieldName: fieldName, i: i, next: next, type: attributes.type, fieldname: subFieldName, value: entered[subFieldName], delete: entered[subFieldName + '.delete'] })
+      trace.log({ 
+        fieldName: fieldName, 
+        i: i, next: next, 
+        type: attributes.type, 
+        fieldname: subFieldName, 
+        value: entered[subFieldName], 
+        delete: entered[subFieldName + '.delete'] })
       if (attributes.type != 'object') {
         /** Skip blank entries. */
         if (!entered[subFieldName]) { continue }
         /** Skip deleted entries */
         if (entered[subFieldName + '.delete']) { continue }
+        trace.log(next,entered[subFieldName]);
         arry[next++] = entered[subFieldName];
       }
       else {
@@ -471,7 +482,11 @@ module.exports = async function (
       && record[tableData.subschema.key].length  // 
     ) {
       subschemas = record[tableData.subschema.key];
-      if (attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single') {
+      trace.log(subschemas)
+      if (attributes[tableData.subschema.key].array 
+        && attributes[tableData.subschema.key].array.type == 'single'
+        && attributes[tableData.subschema.key].process == 'JSON'
+        ) {
         subschemas = JSON.parse(subschemas)
       }
       additionalAttributes = await addSubschemas(subschemas);
@@ -973,7 +988,7 @@ module.exports = async function (
       </div>                      <!-- ---------------- Array item  ${subqualname} ends ------------------ -->  `;
       headerTag += tag;
       trace.log('after');
-    } 
+    }
     formField += `
     <div id="${qualifiedName}.more">      <!-- space for additional array entries -->
     </div>

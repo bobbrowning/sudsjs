@@ -2,7 +2,8 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+var morgan = require('morgan');
+var fs = require('fs')
 var crypto = require('crypto');
 let suds = require('../config/suds');
 let fileUpload = require('express-fileupload');
@@ -11,7 +12,6 @@ var indexRouter = require('../bin/routes');
 //var adminRouter = require('./routes/admin');
 var bodyParser = require('body-parser');
 
-console.log('SUDSJS - starting app.js');
 var session = require('express-session')
 
 var app = express();
@@ -19,8 +19,8 @@ var app = express();
 
 
 app.use(fileUpload({
-  useTempFiles : true,
-   tempFileDir : path.join(__dirname,'tmp'),
+  useTempFiles: true,
+  tempFileDir: path.join(__dirname, 'tmp'),
 }));
 
 
@@ -41,7 +41,13 @@ app.set('views', path.join(homeDir, 'views'));
 app.set('view engine', suds.viewEngine);
 
 if (suds.morgan) {
-app.use(logger('dev'));
+  if (suds.morgan.file) {
+    var accessLogStream = fs.createWriteStream(path.join(__dirname,'..', suds.morgan.file), { flags: 'a' })
+    app.use(morgan(suds.morgan.format, { stream: accessLogStream }))
+  }
+  else {
+    app.use(morgan(suds.morgan.format));
+  }
 }
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -71,7 +71,12 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
   if (tableData.subschema) {
     subschemas = record[tableData.subschema.key];
     trace.log({ subschemas: subschemas });
-    if (subschemas && attributes[tableData.subschema.key].array && attributes[tableData.subschema.key].array.type == 'single') {
+    if (
+      subschemas
+      && attributes[tableData.subschema.key].array
+      && attributes[tableData.subschema.key].array.type == 'single'
+      && attributes[tableData.subschema.key].process == 'JSON'
+    ) {
       subschemas = JSON.parse(subschemas);
     }
     trace.log(subschemas);
