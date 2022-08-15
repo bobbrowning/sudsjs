@@ -553,6 +553,7 @@ async function listTable(
 
       trace.log({ restored: attributes[key].input, level: 'verbose' });
       trace.log({ key: key, field: field, level: 'norm' });
+      if (field.includes('</script>') ) {continue}    
       output += `
         // ------------------- ${key} function---------------------     
         ${key}: function () {  

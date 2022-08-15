@@ -8,7 +8,7 @@
  let db = require('../suds/'+suds.dbDriver);
 module.exports=  async function (query) {
      trace.log(query);
-    let exam=query.parentValue;
+    let exam=query.parentValue0;
     let examDoc = await db.getRow('subjectsdenorm',exam)
     if (examDoc.err) {
         return(['error'],['examDoc.msg'])

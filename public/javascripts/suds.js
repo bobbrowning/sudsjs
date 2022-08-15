@@ -3,85 +3,106 @@
 
 
 let fcsCache = {};
-let starting={};
+let starting = {};
 
-/** 
- * Fill in paper select values depending on the value in the parent . 
- * */
-async function fillChildSelect(fieldName, apiName, fieldValue) {
-    let debug = 0;
-   if (!fieldValue) {debug=3}
-   if (debug) console.log('*******************************************\n');
-   if (debug) console.log(fieldName, apiName, fieldValue,starting);
-    
+/**
+ * Populate a select list based on parent field (or fields)
+ * 
+ * 
+ * @param {string} fieldName - field name
+ * @param {*} apiName - the name of an api in bin/custom thast will be called
+ * @param {*} parentName  can be:
+ *                 ['field1','field2'...] in which case the values in field 1 and 2 are passed to the api  These can't be in an array
+ *                 'field' the value of this field is passed to the api
+ *                 'field1.1.field2.1....  of field1.1.1... in which case the feld passed is the parent of of this field in the structure (WIP)
+ * @param {*} fieldValue - value passed to the routine is used when the page is initially loaded.
+ * @returns options set in fieldName
+ */
+async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
+    let debug = 1;
+     if (debug) console.log(`******************* start  ${fieldName} ************************`);
+    if (debug) console.log(fieldName, apiName, parentName, fieldValue, starting);
+
     /** Make sure only ne of these is running at a time for each field */
     if (starting[fieldName]) return;
-    if (fieldValue) starting[fieldName]=true;
- 
+    if (fieldValue) starting[fieldName] = true;
+
     /***  Get the current value of the field 
      * if one is provided as a parameter this is called when the page loads.
      */
     if (!fieldValue) {
-        fieldValue = document.mainform[fieldName].value; 
+        fieldValue = document.mainform[fieldName].value;
     }
-    if (debug >2) console.log(fieldName, apiName, fieldValue,starting, fcsCache);
-  
-    /***  Find the name of the parent field*/
-    let route = fieldName.split('.');
-    let parent = `${route[0]}.${route[1]}.subject`;
-    parentValue = document.mainform[parent].value;
-    if (debug) console.log(parent,parentValue);
- 
+    if (debug > 2) console.log(fieldName, apiName, fieldValue, starting, fcsCache);
+    if (!Array.isArray(parentName)) { parentName = [parentName] }
+
+    let parentParams = '';
+    let cachName = '';
+    for (let i = 0; i < parentName.length; i++) {
+        parent = findParent(fieldName, parentName[i])
+        if (debug) console.log(parent);
+
+
+        parentValue = document.mainform[parent].value;
+        if (debug) console.log(fieldName, parent, parentValue);
+        parentParams += `&parentValue${i}=${parentValue}`;
+        if (cachName) { cachName += '+' }
+        cachName += parentValue;
+        //console.lo g(document.mainform['autoid_product'].value);
+    }
     /*** If the examination has not changed and this is not a new paper selection field then no 
      * need to repopulate the select.  
      */
     let labels = [];
     let values = [];
-    if (debug > 2) console.log(parentValue,fcsCache[parentValue]);
- 
+    if (debug > 2) console.log(fieldName, parentValue, fcsCache[parentValue]);
+
     /*** Don't want to keep going to the api. */
-    if (fcsCache[parentValue]) {
-        if (debug >2) console.log('restoring labels,values', fcsCache[parentValue])
-        labels = fcsCache[parentValue][0];
-        values = fcsCache[parentValue][1];
+    if (fcsCache[cachName]) {
+        if (debug > 2) console.log('restoring labels,values', fcsCache[cachName])
+        labels = fcsCache[cachName][0];
+        values = fcsCache[cachName][1];
     }
     else {
         /*** Call the api to retrieve labels and values from the database */
-        if (debug>1) console.log(document.mainform[fieldName].options.length);
+        if (debug > 1) console.log(fieldName, document.mainform[fieldName].options.length);
         document.mainform[fieldName].options[0].label = 'Please wait....';
         csrf = document.mainform['csrf'].value;
-  
+
         /*** not convinced the csrf check is working... outstanding issue  */
-        let url = `/apicustomrouter?app=${apiName}&parentValue=${parentValue}&csrf=${csrf}`;
-        if (debug) console.log(url);
+        let url = `apicustomrouter?app=${apiName}&${parentParams}&csrf=${csrf}`;
+        if (debug) console.log(fieldName, url);
         url = encodeURI(url);
         try {
             let response = await fetch(url);
             let data = await response.json();
-            if (debug>2) console.log(data);
+            if (debug > 2) console.log(fieldName, data);
             [labels, values] = data;
-            if (debug) console.log('caching', parent, labels,values);
-            fcsCache[parentValue] = [labels,values];
+            if (debug) console.log(fieldName, 'caching', parent, labels, values);
+            fcsCache[cachName] = [labels, values];
         }
         catch (error) {
-            console.log(error, url);
+            console.log(fieldName, error, url);
             labels = values = ['error']
         };
     }
 
     /** Clear down the select list before rebuilding it */
-    if (debug>1) console.log(document.mainform[fieldName].length)
+    if (debug > 1) console.log(fieldName, document.mainform[fieldName].length)
     let L = document.mainform[fieldName].options.length - 1;
     for (let i = L; i > 0; i--) {
-        if (debug>1) console.log(i, document.mainform[fieldName][i])
+        if (debug > 1) console.log(i, document.mainform[fieldName][i])
         document.mainform[fieldName].remove(i);
-        if (debug>1) console.log('removed', i);
+        if (debug > 1) console.log('removed', i);
     }
-
-    if (debug>1) console.log(labels, values, document.mainform[fieldName].options);
+    if (!Array.isArray(values)) {
+        console.log(`*********************** no values - ${fieldName}  *********************************** `)
+        values = [];
+    }
+    if (debug > 1) console.log(fieldName, labels, values, document.mainform[fieldName].options);
     if (labels) {
         for (let i = 0; i < labels.length; i++) {
-            if (debug>1) console.log('adding', i, labels[i], document.mainform[fieldName].options)
+            if (debug > 1) console.log(fieldName, 'adding', i, labels[i], document.mainform[fieldName].options)
             var option;
             if (values[i] == fieldValue) {
                 option = new Option(labels[i], values[i], true, true);
@@ -93,7 +114,7 @@ async function fillChildSelect(fieldName, apiName, fieldValue) {
         }
         document.mainform[fieldName].options[0].label = 'Please select ....';
     }
-    starting[fieldName]=false;
+    starting[fieldName] = false;
     return;
 
 
@@ -101,14 +122,43 @@ async function fillChildSelect(fieldName, apiName, fieldValue) {
 
 
 
+/**
+* Now we need to find the parent fully qualified name 
+* e.g. 
+* aaa.2.bbb.3.ccc.4.ddd  ccc.4.ddd is this field so strip it out
+* aaa.2.bbb.3.4.ddd    this is a list of items not an object so 3.4.ddd neds to go
+* ddd  we are not in any sort of array so just use it.           
+* 
+* @param {string} fieldName 
+* @param {string} parentName 
+*/
+function findParent(fieldName, parentName,) {
 
+    let debug = 0;
+    let route = fieldName.split('.');
+    if (debug) console.log(fieldName, route, route.length);
+    let parent = '';
+    if (route.length == 1) {
+        parent = parentName;
+    }
+    else {
+        /** work in progress */
+        parent = `${route[0]}.${route[1]}.${parentName}`;
+    }
+    if (debug) console.log(fieldName, parent, typeof document.mainform[parent]);
+    if (typeof document.mainform[parent] == 'undefined') {
+        console.log(`********************** field [${parent}] not present *********** `)
+        console.log(document.mainform)
+    }
+    return parent;
+}
 
 
 
 function clicked(fieldName, label, value, onchange) {
-    document.getElementById(`autoid_${fieldName}`).value = value;
-    document.getElementById(`${fieldName}`).value = label;
-    document.getElementById(`${fieldName}-autocomplete-list`).remove();
+    document.getElementById(`autoid_${fieldName} `).value = value;
+    document.getElementById(`${fieldName} `).value = label;
+    document.getElementById(`${fieldName} -autocomplete - list`).remove();
     console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
     if (onchange) {
         eval(onchange);
@@ -117,7 +167,7 @@ function clicked(fieldName, label, value, onchange) {
 
 function apiWait(qualifiedName) {
     console.log(qualifiedName);
-    document.getElementById(`err_${qualifiedName}`).innerHTML = 'Will be validated when you leave this field';
+    document.getElementById(`err_${qualifiedName} `).innerHTML = 'Will be validated when you leave this field';
 }
 
 /**
@@ -128,16 +178,16 @@ function apiWait(qualifiedName) {
  */
 function getFieldValues() {
     let debug = true;
-    let data={};
+    let data = {};
     for (let key of Object.keys(document.mainform.elements)) {
         if (!isNaN(key)) { continue; }
-        if (key == 'csrf') {continue;}
+        if (key == 'csrf') { continue; }
         let field = document.mainform[key];
         let value = field.value;
-      //  if (field.options) { value = field.options[field.selectedIndex].value }
-         data[key] = value;
+        //  if (field.options) { value = field.options[field.selectedIndex].value }
+        data[key] = value;
     }
-    if (debug) console.log(data) 
+    if (debug) console.log(data)
     return data;
 }
 
@@ -147,9 +197,9 @@ function apiCheck(qualifiedName, route, table, id,) {
     let value = document.getElementById('mainform')[qualifiedName].value;
     if (!table) { table = '' }
     if (!id) { id = '' }
-    let url = `${route}?table=${table}&id=${id}&field=${qualifiedName}&value=` + encodeURIComponent(value);
+    let url = `${route}?table = ${table}& id=${id}& field=${qualifiedName}& value=` + encodeURIComponent(value);
     let result = [];
-    document.getElementById(`err_${qualifiedName}`).innerHTML = 'Checking';
+    document.getElementById(`err_${qualifiedName} `).innerHTML = 'Checking';
     console.log(url);
     fetch(url).then(function (response) {
         // The API call was successful!
@@ -160,10 +210,10 @@ function apiCheck(qualifiedName, route, table, id,) {
         console.log(result);
         if (result[0] == 'validationError') {
             console.log(result[1]);
-            document.getElementById(`err_${qualifiedName}`).innerHTML = result[1];
+            document.getElementById(`err_${qualifiedName} `).innerHTML = result[1];
         }
         else {
-            document.getElementById(`err_${qualifiedName}`).innerHTML = '';
+            document.getElementById(`err_${qualifiedName} `).innerHTML = '';
 
         }
     }).catch(function (err) {
@@ -222,19 +272,19 @@ function nextArrayItem(item) {
     if (debug) console.log(last, `${item}.${last}.fld`);
     let nexthtml = document.getElementById(`${item}.${last}.fld`).innerHTML;      // The HTML in the last+1 (blank) item
     let next = last + 1;                                                          // this will be the new blank item
-    nexthtml = `                                                                   
-    <div style="display: none" id="${item}.${next}.fld" >
-    ${nexthtml}
-    </div>
-    `;
-    let re = new RegExp(`${item}.${last}`.replace(/\./g, '\\.'), 'g')             // regular expression /xxxx\.3/
+    nexthtml = `
+            < div style = "display: none" id = "${item}.${next}.fld" >
+                ${nexthtml}
+    </div >
+            `;
+    let re = new RegExp(`${item}.${last} `.replace(/\./g, '\\.'), 'g')             // regular expression /xxxx\.3/
     if (debug) console.log(re)
-    nexthtml = nexthtml.replace(re, `${item}.${next}`);                           // replace xxxx.3 by xxxx.4
-    let re2 = new RegExp(`#${last}`)                                              // replace #3 by #4 ???? why?
-    nexthtml = nexthtml.replace(re2, `#${next}`);
+    nexthtml = nexthtml.replace(re, `${item}.${next} `);                           // replace xxxx.3 by xxxx.4
+    let re2 = new RegExp(`#${last} `)                                              // replace #3 by #4 ???? why?
+    nexthtml = nexthtml.replace(re2, `#${next} `);
     if (debug) console.log(item + '.more');
     document.getElementById(item + '.more').innerHTML += nexthtml;                // add the new html we have created to the .more div
-  
+
     document.getElementById(`${item}.${last}.fld`).style.display = 'inline';      // expose the old blank html section
     document.getElementById(item + '.length').value = last.toString();            // update the last counter
     if (debug) console.log(document.getElementById(item + '.length').value)
@@ -266,7 +316,7 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm, onchang
     }
     if (!val) { return false; }
 
-    let url = `${route}?linkedtable=${linkedTable}&display=${display}&limit=${limit}${searchparm}&term=${val}`;
+    let url = `${route}?linkedtable = ${linkedTable}& display=${display}& limit=${limit}${searchparm}& term=${val} `;
     fetch(url).then(function (response) {
         // The API call was successful!
         return response.json();
@@ -294,7 +344,7 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm, onchang
 
             /*make the matching letters bold:*/
             b.innerHTML = `
-            <span onclick="clicked('${fieldName}','${labels[i]}','${values[i]}','${onchange}')">${labels[i]}</span>`;
+            < span onclick = "clicked('${fieldName}','${labels[i]}','${values[i]}','${onchange}')" > ${labels[i]}</span > `;
             /*execute a function when someone clicks on the item value (DIV element):*/
             if (debug) { console.log(b.id, '\n', b.innerHTML) }
 

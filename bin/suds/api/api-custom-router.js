@@ -12,5 +12,5 @@ module.exports = async function (req, res) {
     trace.log('#api-custom-router called ', req.query);
     result= await require('../../custom/'+  req.query.app)(req.query);
     trace.log(result);
-    return res.json(result);
+    return res.json(result); 
 }

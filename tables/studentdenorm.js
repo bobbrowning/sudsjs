@@ -61,8 +61,8 @@ module.exports = {
                             input: {
                                 type: 'select',
                                 onevents: {
-                                    onload: `fillChildSelect('{{fieldName}}','exampaper','{{fieldValue}}')`,
-                                    onfocus: `fillChildSelect('{{fieldName}}','exampaper')`,
+                                    onload: `fillChildSelect('{{fieldName}}','exampaper','subject','{{fieldValue}}')`,
+                                    onfocus: `fillChildSelect('{{fieldName}}','exampaper','subject')`,
                                 },
                             },
                         },

@@ -3,14 +3,15 @@
  *
   */
 
- let db = require('../bin/suds/db');
-  let stock=require('../bin/custom/stock');
+let db = require('../bin/suds/db-mongo');
+let stock = require('../bin/custom/stock');
+const { appendFile } = require('fs');
 module.exports = {
   description: 'Purchase Order lines',
 
   friendlyName: 'Purchase Order Lines',
-  
-  permission: { all: ['purchasing', 'admin','demo'], view: ['sales'] },
+
+  permission: { all: ['purchasing', 'admin', 'demo'], view: ['sales'] },
 
   edit: {
 
@@ -28,27 +29,20 @@ module.exports = {
     /*  After the form is submitted, this routine works out the total cost.        */
     preProcess: async function (record) {
       record.total = record.units * record.unitprice;
-      await stock('purchaseorderlines',record);
+      await stock('purchaseorderlines', record);
       return;
     },
 
     /*  After the database has been updated, update the purchase order with the     */
     /*  total of the order lines                                                    */
-    postProcess: async function (record, operation) {
-      let total = await db.totalRows(
-        'purchaseorderlines',
-        { searches: [['purchaseorder', 'eq', record.purchaseorder]] },
-        'total',
-      );
-      await db.updateRow('purchaseorders', { id: record.purchaseorder, total: total });
-      return;
-    },
+
   },
 
-  list: { columns: ['id', 'product', 'product', 'units'], },
+  list: { columns: ['_id', 'product', 'product', 'units'], },
   standardHeader: true,
   attributes: {
- 
+
+
     purchaseorder: {
       description: 'Order',
       model: 'purchaseorders',
@@ -64,6 +58,7 @@ module.exports = {
       input: {
         type: 'autocomplete',
         required: true,
+        //        onchange: 'fillVariant()',
         search: {
           andor: 'and',
           searches: [
@@ -75,6 +70,46 @@ module.exports = {
         idPrefix: 'Product number: ',
       },
     },
+    variant: {
+      type: 'string',
+      input: {
+        type: 'select',
+        onevents: {
+          onload: `fillChildSelect('{{fieldName}}','get-variants','autoid_product','{{fieldValue}}')`,
+          onfocus: `fillChildSelect('{{fieldName}}','get-variants','autoid_product')`,
+        },
+
+
+
+
+
+        /*       onchange: 'fillSubVariant()',
+               after: `
+               <script defer>
+                   variant_id="{{fieldValue}}";
+                   fillVariant(variant_id);
+               </script>`,*/
+
+
+      },
+
+    },
+    subVariant: {
+      type: 'string',
+      input: {
+        type: 'select',
+        /*       after: `
+               <script defer>
+                  subvariant_id="{{fieldValue}}";
+                  fillSubVariant(variant_id,subvariant_id)
+               </script>`,*/
+        onevents: {
+          onload: `fillChildSelect('{{fieldName}}','get-subvariants',['autoid_product','variant'],'{{fieldValue}}')`,
+          onfocus: `fillChildSelect('{{fieldName}}','get-subvariants',['autoid_product','variant'])`,
+        },
+
+      }, 
+    },
     units: {
       type: 'number',
       description: 'Number of units ordered',
@@ -85,26 +120,12 @@ module.exports = {
       },
     },
     unitprice: {
+      friendlyName: 'Unit price',
       type: 'number',
-      description: 'Price of each unit',
-      friendlyName: 'Price per unit',
-      input: {
-        step: .01,
-        required: true,
-      },
-      display: {
-        currency: true,
-      }
+      input: { step: .01, },
+      display: { currency: true },
     },
-    total: {
-      type: 'number',
-      description: 'Total price',
-      friendlyName: 'Total price',
-      input: { hidden: true },
-      display: {
-        currency: true,
-      }
-    },
+
     supplier: {
       type: 'number',
       model: 'user',
