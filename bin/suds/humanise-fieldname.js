@@ -2,7 +2,8 @@ module.exports = function (fieldName) {
 
 
   let trace = require('track-n-trace');
-  const chars = fieldName.split('');
+  let  chars=fieldName.replace(/_/g,' ')
+  chars = chars.split('');
   let humanisedName = chars[0].toUpperCase();
   for (let i = 1; i < chars.length; i++) {
     if (chars[i] == chars[i].toUpperCase()) {

@@ -21,5 +21,4 @@ module.exports=  async function (query) {
         labels[i]=paperDoc.name;
     }
     return ([labels,values]);
-
 }

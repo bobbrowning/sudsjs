@@ -46,7 +46,7 @@ module.exports = {
         subjects: {
             type: 'string',
             array: { type: 'single' },
-            friendlyName: 'Exams taken',
+            friendlyName: 'Subjects taken',
             description: 'Check those that apply',
             model: 'subschema',
             input: {

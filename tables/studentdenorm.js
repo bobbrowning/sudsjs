@@ -1,6 +1,6 @@
 /**
  * 
- * Student table - normalised moned
+ * Student table - denormalized moned
  * 
  */
 

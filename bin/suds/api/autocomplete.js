@@ -25,11 +25,11 @@ let tableDataFunction = require('../table-data');
 let db = require('../' + suds.dbDriver);
 
 module.exports = async function (req, res) {
-  trace.log('#autocomplete called ', req.query);
+  trace.log('#autocomplete called ', req.query,req.session); 
   let allParms = req.query;
-  let linkedTable = allParms.linkedtable;
+  let linkedTable = req.query.linkedtable;
   let permission = req.session.permission;
-  trace.log(permission);
+  trace.log(permission,linkedTable);
   /**
    * Sort out the field to be displayed, or the function that returns the 
    * displayed text. 

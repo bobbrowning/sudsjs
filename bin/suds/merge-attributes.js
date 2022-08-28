@@ -22,6 +22,7 @@ let tableData;
 
 module.exports = function (table, permission, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments, });
+  if (!additionalAttributes) {additionalAttributes={}}
   trace.log({table: table, permission: permission, cached: Object.keys(cache) });
   tableData = require('../../tables/' + table);
   if (!tableData) {

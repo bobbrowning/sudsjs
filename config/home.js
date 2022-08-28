@@ -138,8 +138,8 @@ variable: {
   img: '/images/suds/www.jpg',
   permission: ['admin', 'demo','trainer','demov'],
   links: [
-    { table: 'subschema', title: 'Subschema' },   
-    { report: 'studentSubschema' },
+    { table: 'studentsubschema', title: 'Students' },   
+    { report: 'studentSubschema',title: 'Subschemas' },
   ],
 },
   //  Setup / admin section

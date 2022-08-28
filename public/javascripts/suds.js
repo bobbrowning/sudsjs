@@ -156,9 +156,9 @@ function findParent(fieldName, parentName,) {
 
 
 function clicked(fieldName, label, value, onchange) {
-    document.getElementById(`autoid_${fieldName} `).value = value;
-    document.getElementById(`${fieldName} `).value = label;
-    document.getElementById(`${fieldName} -autocomplete - list`).remove();
+    document.getElementById(`autoid_${fieldName}`).value = value;
+    document.getElementById(`${fieldName}`).value = label;
+    document.getElementById(`${fieldName}-autocomplete-list`).remove();
     console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
     if (onchange) {
         eval(onchange);
@@ -316,8 +316,9 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm, onchang
     }
     if (!val) { return false; }
 
-    let url = `${route}?linkedtable = ${linkedTable}& display=${display}& limit=${limit}${searchparm}& term=${val} `;
-    fetch(url).then(function (response) {
+    let url = `${route}?linkedtable=${linkedTable}&display=${display}&limit=${limit}${searchparm}&term=${val} `;
+    if (debug) {console.log(url)}
+    fetch(url).then(function (response) { 
         // The API call was successful!
         return response.json();
     }).then(function (data) {
@@ -344,7 +345,7 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm, onchang
 
             /*make the matching letters bold:*/
             b.innerHTML = `
-            < span onclick = "clicked('${fieldName}','${labels[i]}','${values[i]}','${onchange}')" > ${labels[i]}</span > `;
+            <span onclick="clicked('${fieldName}','${labels[i]}','${values[i]}','${onchange}')"> ${labels[i]}</span> `;
             /*execute a function when someone clicks on the item value (DIV element):*/
             if (debug) { console.log(b.id, '\n', b.innerHTML) }
 
