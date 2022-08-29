@@ -7,7 +7,7 @@ This is a database support system I have developed. No coding is required to all
 
 I am a retired software engineer, and this was my project in COVID lockdown to keep my brain active and keep me up to date with modern developments.  I just turned 80 so don't bank on me for long-term support, but I have no plans to check out any time soon. I hope this is useful to maybe give you ideas, or to use in NOSQL familiarisation or just steal the code. If anyone wants to work on this with a view to taking it on and getting it in production and long-term support, please contact me - bob@sudsjs.com.
 
-You can see it in action at [sudsjs.com](sudsjs.com).
+You can see it in action at [sudsjs.com](http://sudsjs.com).
 
 Functions:
 
@@ -32,7 +32,7 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 
 # Setup of the SUDS system plus test data for MongoDB community edition.
 
-Install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).
+Install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.
 
 Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
 ```
