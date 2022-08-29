@@ -6,6 +6,7 @@ pwd
 mv sudsjs-main $appName
 cd ./$appName
 pwd
+mongorestore
 npm install 
 echo "SUDS Installed - starting up"
 node bin/www

@@ -3,13 +3,19 @@
 
 ## For full details please visit http://sudsjs.com.
 
-SUDSjs is a database management system based on node,js. No or minimal coding is required and provides:
+This is a database support system I have developed. No coding is required to allow users to Create, Read, Update and Delete information.  SUDSjs gives you a quick start to creating your database and giving your back office an administration function. They can get to work on building the database while you develop the fancy customer-facing application. 
+
+I am a retired software engineer, and this was my project in COVID lockdown to keep my brain active and keep me up to date with modern developments.  I just turned 80 so don't bank on me for long-term support, but I have no plans to check out any time soon. I hope this is useful to maybe give you ideas, or to use in NOSQL familiarisation or just steal the code. If anyone wants to work on this with a view to taking it on and getting it in production and long-term support, please contact me - bob@sudsjs.com.
+
+You can see it in action at [sudsjs.com](sudsjs.com).
+
+Functions:
 
 * List / filter / sort tables, 
 * List / Edit / Delete rows. 
 * An extended permission system, 
 * An administration page,
-* Some starter applications. The test data includes a useable contact management system and web site content, management system. 
+* Some starter applications. The test data includes a useable contact management system and website content management system. 
 * This is all controlled by configuration files.
 
 This will:
@@ -18,12 +24,15 @@ This will:
 * provide a test-bed for your planned data structure before you commit resources;
 * provide a system for users to enter data while you are developing the application.
 
- 
 
-SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL, and Postgesql. There is also a basic MongoDB driver, however this currently only works with unstructured documents - no objects or arrays. 
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL,  Postgesql and MongoDB (Community edition).  The MongoDB functions support:
+* Denormalized data.
+* Arbitrarily structured documents - Dictionary items and arrays.
+* variations in the fieldset within  collection. 
 
-# Setup of the SUDS system plus test data.
+# Setup of the SUDS system plus test data for MongoDB community edition.
 
+Install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).
 
 Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
 ```
@@ -39,9 +48,7 @@ Run the bash installation script as follows.  When it asks for an app name provi
 bash sudsjs-main/install.sh
 ```
 
-# Run the system as-is
-
-The install script run the application as the final step and you should see 
+The install script runs the application as the final step and you should see 
 ```
 SUDS Installed - starting up
 SUDS-Express - starting app.js
@@ -55,9 +62,9 @@ This will load a website that is managed by SUDSjs and runs on a test SQLite dat
 To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
 
 Alternative logins are 
-* gladys@loman.demo password: gladys, permission: purchasing;
-* howard@wagner.com password howard, permission: General manager
-* willy@loman.com password willy, permission: sales
+* gladys@demo.demo password: demo, permission: purchasing;
+* howard@demo.com password demo, permission: General manager
+* willy@demo.com password demo, permission: sales
 
 
 # Stop and start the application: 
@@ -101,7 +108,7 @@ The configuration files are in the config directory. The main file to change is 
 There must be a user table defined and it must have certain fields in it. You will find these in the security section of suds.js. (If you change this you will be in uncharted territory but you can add/remove other fields in this table.) 
 If you have an audit file it has to have the same name and table definition as the one in the test database. 
 1. Set up the database name and password in the suds.js config file along with the database type.  The test data config file has a mysql/postgesql setups (without the password) commented out as an example.  
-1. Add the tables to the database with http://localhost:3000/createtables.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
+1. For relational detabases, add the tables to the database with http://localhost:3000/createtables. You don't need this for MongoDB.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
 
 
 I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this may cause problems.
