@@ -43,6 +43,7 @@ Download the zip file from https://github.com/bobbrowning/sudsjs, unzip it and r
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
 unzip master.zip
 bash sudsjs-main/install.sh
+
 ```
 
 
