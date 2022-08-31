@@ -10,9 +10,9 @@ pwd
 
 if [ $db = 'S' ]; then
     mv tables tables.mongo
-    mv conf conf.mongo
     mv tables.sql tables
-    mv conf.sql conf
+    mv config config.mongo
+    mv config.sql config
     echo "Usimng SQLite3 Database"
 else
     mongorestore --drop
