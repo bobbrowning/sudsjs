@@ -10,11 +10,11 @@ module.exports = {
 
   permission: { view: ['admin', 'demo'] },
   list: {
-    columns: ['id', 'createdAt', 'tableName', 'mode', 'row'],
-  }, 
+    columns: ['_id', 'createdAt', 'tableName', 'mode', 'row'],
+  },
   standardHeader: true,
   attributes: {
-     tableName: {
+    tableName: {
       type: 'string',
       database: { type: 'varchar', length: 50, },
     },
@@ -23,7 +23,7 @@ module.exports = {
       database: { type: 'varchar', length: 10, },
     },
     row: {
-      type: 'number',
+      type: 'string',
     },
     notes: {
       friendlyName: 'notes',

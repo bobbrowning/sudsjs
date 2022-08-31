@@ -26,7 +26,6 @@ let Generic_Database__Driver='generic';    // To make documentation.js work...
 
 exports.connect=connect;
 exports.createTable = createTable;
-
 exports.getRow = getRow;
 exports.getRows = getRows;
 exports.countRows = countRows;
@@ -54,7 +53,14 @@ let lang = require('../../config/language')['EN'];
  * ********************************************* */
 
 function connect() {
-  globalThis.knex = require('knex')(suds.database);
+  trace.log({connect:suds.database.client,event: 'verbose'})
+  let knex=require('knex');
+  globalThis.knex = knex
+  
+  
+  (suds.database);
+  console.log('connected to database');
+
 }
 
 /** *********************************************
@@ -492,7 +498,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   trace.log(table, tableData);
   if (!sortKey && spec.sort) { sortKey = spec.sort[0]; }
   if (!sortKey) { sortKey = tableData.primaryKey; }
-  trace.log(sortKey);
+  trace.log(sortKey, tableData.primaryKey);
   if (!direction && spec.sort) { direction = spec.sort[1]; }
   if (!direction) { direction = 'DESC'; }
   if (spec && spec.searches && spec.searches.length) {

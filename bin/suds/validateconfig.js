@@ -80,6 +80,7 @@ module.exports = async function (req, res) {
         'validatePage',
         'forgottenPasswordOptions',
         'session',
+        'morgan',
         'authorisation',
         'login',
         'logout',

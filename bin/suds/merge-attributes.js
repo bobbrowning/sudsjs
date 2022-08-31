@@ -8,16 +8,16 @@
  * same structure. 
  * 
  */
-
+console.log('loading db 1')
 let trace = require('track-n-trace');
 let invertGroups = require('./invert-groups')
 let suds = require('../../config/suds');
 //const tableData = require('./table-data');
 humaniseFieldname = require('./humanise-fieldname');
-let addSubschemas=require ('./subschemas');
-const { attributes } = require('../../tables/studentsubschema');
+
 let cache = {};
-let tableData;
+let tableData; 
+
 
 
 module.exports = function (table, permission, subschemas, additionalAttributes) {

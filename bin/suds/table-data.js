@@ -34,6 +34,9 @@ module.exports = function (table, permission) {
     standardHeader = require('../../config/standard-header');
   }
   let combined= { ...standardHeader, ...tableData.attributes }
+   /** default priomary key t the first field */
+   if (!merged.primaryKey) {merged.primaryKey=combined[Object.keys(combined)[0]]}
+
 
   /* add primary key as a top level value in the tableData object. */
   for (let key of Object.keys(combined)) {

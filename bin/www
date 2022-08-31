@@ -19,7 +19,7 @@ let trace = require('track-n-trace');
  * Get port from environment and store in Express.
  */
 
-trace.log(process.argv, { level: 'verbose' });
+trace.log(process.argv, { level: 'verbose' }); 
 for (let arg of process.argv.slice(2)) {
   let arg2 = arg.split('=');
   process.env[arg2[0]] = arg2[1];
@@ -29,14 +29,18 @@ var port = normalizePort(process.env.PORT || suds.port);
 app.set('port', port);
 
 require('dotenv').config();
-
 /** Establish database connection */
-require('./suds/' + suds.dbDriver).connect();
 
+trace.log({driver: './suds/' + suds.dbDriver, level: 'verbose'})
+let db=require('./suds/' + suds.dbDriver);
+trace.log({required: db, level: 'verbose'})
+
+db.connect();
+trace.log({connected: suds.dbDriver, level: 'verbose'})
 
 process.on('uncaughtException', err => {
   console.error('There was an uncaught error', err)
-  process.exit(1) //mandatory (as per the Node.js docs)
+  process.exit(1) //mandatory (as per the Node.js docs)  
 });
 /**
  * Create HTTP server.

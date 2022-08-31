@@ -11,7 +11,7 @@ module.exports = {
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
   standardHeader: true,
   attributes: {
-
+ 
     mainproduct: {
       model: 'products',
       input: {

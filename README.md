@@ -34,6 +34,8 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 
 Install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.
 
+Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
 Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
 ```
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip

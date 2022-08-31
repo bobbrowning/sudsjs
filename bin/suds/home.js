@@ -128,7 +128,7 @@ module.exports = async function (req, permission) {
         let attributes = mergeAttributes(table, permission);
         trace.log({ table: table, tables: suds.tables });
         if (!suds.tables.includes(table)) {    // Check that table exists in model.
-          console.log(`${table} is referenced but does not exist in suds.js` );
+          trace.error(`${table} is referenced but does not exist in suds.js` );
           res.send(`<h1>Unexpected error </h1><p>Table: ${table} does not exist.</p>`);
           return;
         }

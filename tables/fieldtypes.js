@@ -11,11 +11,11 @@ module.exports = {
      field type for testing.`,
     permission: { all: ['admin', 'demo'] },
     list: {
-        columns: ['id', 'text']
+        columns: ['_id', 'text']
     },
     standardHeader: true,
     attributes: {
- 
+
         /* Application columns */
         text: {
             friendlyName: 'Regular input field (hover here for tooltip).',
