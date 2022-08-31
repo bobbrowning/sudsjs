@@ -3,12 +3,12 @@ echo "Please enter the app name"
 read appName
 echo "MongoDB test database(M) or SQLite(S) "
 read db
-echo db
+echo $db
 mv sudsjs-main $appName
 cd ./$appName
 pwd
 
-if [ db = 'S' ]; then
+if [ $db = 'S' ]; then
     mv tables tables.mongo
     mv cong conf.mongo
     mv tables.sql tables
