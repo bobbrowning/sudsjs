@@ -10,7 +10,7 @@ pwd
 
 if [ $db = 'S' ]; then
     mv tables tables.mongo
-    mv cong conf.mongo
+    mv conf conf.mongo
     mv tables.sql tables
     mv conf.sql conf
     echo "Usimng SQLite3 Database"
