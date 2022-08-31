@@ -3,8 +3,6 @@ echo "Please enter the app name"
 read appName
 echo "MongoDB test database(M) or SQLite(S) "
 read db
-curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
-unzip master.jip
 mv sudsjs-main $appName
 cd ./$appName
 pwd
