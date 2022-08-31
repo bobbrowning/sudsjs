@@ -7,17 +7,18 @@ mv sudsjs-main $appName
 cd ./$appName
 pwd
 
-if [db != 'S']
+if [ db != 'S' ]
 then
     mongorestore --drop
-    echo "database restored"
+    echo "MongoDB database restored"
 fi
-if [db = 'S']
+if [ db = 'S' ]
 then
     mv tables tables.mongo
     mv cong conf.mongo
     mv tables.sql tables
     mv conf.sql conf
+    echo "Usimng SQLite3 Database"
 fi
 npm install
 echo "SUDS Installed - starting up"
