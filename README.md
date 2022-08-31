@@ -30,27 +30,23 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 * Arbitrarily structured documents - Dictionary items and arrays.
 * variations in the fieldset within  collection. 
 
-# Setup of the SUDS system plus test data for MongoDB community edition.
+# Setup of the SUDS system plus test data.
 
-Install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.
+If you plan to test the MongoDB test data, install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.
+
+If you plan to use the SQLite test data no installation is needed.  
 
 Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
-Download the zip file from https://github.com/bobbrowning/sudsjs (the green button 'Code' - last option) and place it in the root directory for your  applications.  Alternatively use curl:
+Download the zip file from https://github.com/bobbrowning/sudsjs, unzip it and runn a little installation script I wrote. It works in a few seconds with Ubuntu but your mileage may obviously vary.
 ```
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
-```
-This downloads a file called master.zip.
-
-Unzip the file which creates a directory sudsjs-main.
-
-Run the bash installation script as follows.  When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.
-
-```
+unzip master.zip
 bash sudsjs-main/install.sh
 ```
 
-The install script runs the application as the final step and you should see 
+
+When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it askes, ehter 'S' for thr SQLite3 version oof the test data, anything else (including 'M' for the MySQL version.)  The install script runs the application as the final step and you should see 
 ```
 SUDS Installed - starting up
 SUDS-Express - starting app.js
