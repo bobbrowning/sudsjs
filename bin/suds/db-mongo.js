@@ -55,7 +55,6 @@ let ObjectId = require('mongodb').ObjectId;
  * 
  * ********************************************* */
 
-let knex = function () { };
 
 async function connect() {
 

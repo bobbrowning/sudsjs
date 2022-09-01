@@ -86,7 +86,7 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
         if (tableData.recordTypeFix) { cache[cachekey][tableData.recordTypeColumn].recordTypeFix = true; }
       }
     }
-    trace.log({ permission: permission, key: cachekey, attributes: cache[cachekey], cached: Object.keys(cache), level: 'norm', maxdepth: 2 });
+    trace.log({ permission: permission, key: cachekey, attributes: cache[cachekey], cached: Object.keys(cache), level: 'norm', maxdepth: 3 });
     return (cache[cachekey]);
   }
 
@@ -194,22 +194,8 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
   */
 
 
-
-
-
-
-
-
-
-
-
       trace.log({ key: key, type: merged[key], level: 'norm' })
       trace.log({ key: key, type: merged[key].input.type, level: 'norm' })
-
-
-
-
-
 
       /* ************************************************
       *

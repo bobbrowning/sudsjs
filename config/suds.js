@@ -10,25 +10,20 @@ module.exports = {
    *
    ***************************************************** */
 
-  title: 'SUDS test database',
+  title: 'SUDS test database - MongoDB version',
 
   description: `This is a sample test database to illustrate the main features of SUDS.
   It is not meant to be realistic, as a real system you have more complex data than we 
   have here. It is designed to illustrate the main features of the SUDS system.
-  
-  To change this file to use SQLite
-  1. In the security section change _id to id.
-  2. Comment out the MOngoSQL database definition below and uncomment the SQLite section
-  3. You will also need to rename the tables directory and rename the tables-SQL directory to tables.
-  4. Change _id to id in standard-heading.js
-  5. Comment out mongo-specific tables (studentdenorm and subsechema.
-  6. Remove them from home.js as well... 
+
+  This is the version for MongoDB Community edition
   `,
 
 
   versionHistory: [
     { version: '1.0.0', date: '2021-08-20', author: 'Bob', description: 'Initial test database' },
     { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'MongoDB compatible version' },
+    { version: '2.1.1', date: '2022-09-01', author: 'Bob', description: 'Bugs fixed' },
   ],
 
   /** **********************************************

@@ -62,6 +62,7 @@ Alternative logins are
 * gladys@loman.demo password: demo, permission: Purchasing;
 * howard@wagner.demo password demo, permission: General manager
 * willy@loman.demo password demo, permission: Sales
+* trainer@demo.demo password demo, permission: Training (MongoDB test set only)
 
 To set up your own superuser, 
 1. Register a new user (click on Register in the Guest user page)

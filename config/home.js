@@ -152,7 +152,6 @@ variable: {
       { table: 'user', title: 'All users' },
       { table: 'subschema', title: 'Subschema' },   
      { report: 'auditTrail', title: 'Audit trail', },
-      { www: '/createtables', title: 'Create new database tables' },
       { www: '/configreport', title: 'Configuration report' },
       { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
 
