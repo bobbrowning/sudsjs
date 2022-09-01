@@ -32,9 +32,7 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 
 # Setup of the SUDS system plus test data.
 
-If you plan to test the MongoDB test data, install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.
-
-If you plan to use the SQLite test data no installation is needed.  
+If you plan to test the MongoDB test data, install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.  If you plan to use the SQLite test data no installation is needed.  
 
 Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
@@ -47,7 +45,7 @@ bash sudsjs-main/install.sh
 ```
 
 
-When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it askes, ehter 'S' for thr SQLite3 version oof the test data, anything else (including 'M' for the MySQL version.)  The install script runs the application as the final step and you should see 
+When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it asks, ehter 'S' for thr SQLite3 version oof the test data, anything else (including 'M' for the MongoDB version.)  The install script runs the application as the final step and you should see 
 ```
 SUDS Installed - starting up
 SUDS-Express - starting app.js
@@ -61,10 +59,16 @@ This will load a website that is managed by SUDSjs and runs on a test SQLite dat
 To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
 
 Alternative logins are 
-* gladys@demo.demo password: demo, permission: purchasing;
-* howard@demo.com password demo, permission: General manager
-* willy@demo.com password demo, permission: sales
+* gladys@loman.demo password: demo, permission: Purchasing;
+* howard@wagner.demo password demo, permission: General manager
+* willy@loman.demo password demo, permission: Sales
 
+To set up your own superuser, 
+1. Register a new user (click on Register in the Guest user page)
+1. Change the superuser email  address in the suds.js config file (see below) to the email address of the new user
+1. Now you can create other users.
+
+To set up back office users click on Register. Then edit the user to set the permission in the security section. Note that you only have access to the security section if you are superuser or have admin permission.
 
 # Stop and start the application: 
 
@@ -110,14 +114,11 @@ If you have an audit file it has to have the same name and table definition as t
 1. For relational detabases, add the tables to the database with http://localhost:3000/createtables. You don't need this for MongoDB.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
 
 
-I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this may cause problems.
+I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this will be unreliable.
 
 
 ## Final steps 
-1. Run the admin page. 
-1. Register with the same email address you set up as superuser in the config file.  Log in and you should see all of the home page sections. 
-1. Click on 'All users' and edit the user you have just set up. You will need to set the User Type (presumably in-house) and Person or business. 
-1. Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
+Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
 
 
 

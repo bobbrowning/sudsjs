@@ -26,6 +26,9 @@ module.exports = async function (req, res) {
     userRec.password = crypto.pbkdf2Sync(allParms.password, userRec.salt, 10000, 64, 'sha512').toString('hex');
     userRec.emailAddress = allParms.emailAddress;
     userRec.fullName = allParms.fullName;
+    userRec.userType = 'I';
+    userRec.isOrg = 'P';
+
     trace.log(userRec);
 
     let oldRec = await db.getRow('user', allParms.emailAddress, 'emailAddress');
@@ -37,7 +40,13 @@ module.exports = async function (req, res) {
                 !suds.audit.operations
                 || suds.audit.operations.includes('new')
             )) {
-            await db.createRow('audit', {row: rec.id, mode: 'new', tableName: 'user', updatedBy: rec.id, notes: 'User Registration'});
+            await db.createRow('audit', {
+                row: rec.id, 
+                mode: 'new', 
+                tableName: 'user',
+                updatedBy: rec.id, 
+                notes: 'User Registration'
+            });
         }
 
     }

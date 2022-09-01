@@ -112,7 +112,7 @@ module.exports = async function (req, res) {
         'dbType',
         'dbDriverKey',
         'caseInsensitive',
-    ];
+     ];
     console.log('Checking suds.js: '); 
     for (let key of Object.keys(suds)) {
         console.log('- checking : ', key);
@@ -213,6 +213,10 @@ module.exports = async function (req, res) {
         'array',
         'object',
         'stringify',
+        'key',
+        'qualifiedName',
+        'qualifiedFriendlyName',
+
     ];
     let validTableData = [
         'rowTitle',

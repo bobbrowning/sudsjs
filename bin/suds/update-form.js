@@ -793,7 +793,7 @@ module.exports = async function (
       ****************************************************** */
   function createFormGroups() {
     trace.log({ formgroups: tableData.groups, formlist: formList });
-
+    hideGroup={};
     /** Cycle through groups  
      * - creating a list creating a list of all the columns covered
      * - if a group applies to certain record types and the list for that group
@@ -817,7 +817,7 @@ module.exports = async function (
       }
       incl = incl.concat(tableData.groups[group].columns)
     }
-
+    trace.log({incl:incl,hideGroup:hideGroup});
 
     /** 
      * Clone the list of all columns = note these will be top level items only
@@ -846,7 +846,7 @@ module.exports = async function (
         openTab = group
         first = false;
       };
-      for (let col of tableData.groups[group].columns) {
+      for (let col of tableData.groups[group].columns) { 
         if (!tableData.groups[group].static) {
           columnGroup[col] = group;
         }
@@ -858,8 +858,9 @@ module.exports = async function (
      *  visibkeGroup just means that there is at least one field in the group that it not hidden 
          * hiddenGroup means that we are just bot showing that group so has priority. 
      */
+     visibleGroup={};
     for (let key of formList) {
-      trace.log(key, attributes[key].input.hidden, columnGroup[key]);
+      trace.log({key:key, hidden:attributes[key].input.hidden, columngroup:columnGroup[key]});
       if (!attributes[key].input.hidden) {
         visibleGroup[columnGroup[key]] = true;
       }
@@ -875,7 +876,7 @@ module.exports = async function (
       function tabclick (tab) { 
         console.log('tabclick:',tab); `;
       for (let tab of tabs) {
-        trace.log(tab, hideGroup[tab]);
+        trace.log(tab, hideGroup[tab],visibleGroup[tab]); 
         if (hideGroup[tab]) { continue; }
         if (!visibleGroup[tab]) { continue; }
         form += `
