@@ -36,7 +36,7 @@ async function displayField(attributes, value, children, permission, parent) {
       for (let i = 0; i < value.length; i++) {
         display += '<li>';
         let disp = 'inline';
-        let unique=new Date().getTime();
+        let unique=Math.random();
         if (attributes.stringify) {
           disp = 'none';
           display += `

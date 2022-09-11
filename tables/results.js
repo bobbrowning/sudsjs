@@ -1,6 +1,6 @@
 /**
  * 
- * Student table - normalised moned
+ * Results table - normalised moned
  * 
  */
 let db = require('../bin/suds/db-mongo');

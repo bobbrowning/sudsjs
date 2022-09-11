@@ -1,5 +1,5 @@
 /**
- * Subjects collection
+ * Papers collection
   */
 
 let db = require('../bin/suds/db-mongo');

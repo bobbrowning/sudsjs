@@ -573,7 +573,7 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
       for (const key of tableData.groups[group].columns) {
         trace.log(key);
         if (!attributes[key]) {
-          trace.error(`
+          trace.warning(`
           column ${key} in group ${group} does not exist.`);
           continue
         };

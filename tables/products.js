@@ -9,6 +9,14 @@ module.exports = {
 
   description: `One record for each product that the organisation deals in.`,
 
+  /**
+   * The stringify function creates a human-friendly descriotion of the record
+   * It returns the name of the product blus a list of prices from the variants array
+   * Example: "E-Bike Battery (Guide retail price(s): £85.00 / £180.00)"
+   * 
+   * @param {object} record 
+   * @returns {string} Description of record
+   */
   stringify: function (record) {
     let suds = require('../config/suds')
     let formatter = new Intl.NumberFormat(
@@ -26,18 +34,31 @@ module.exports = {
       }
     }
     else {
-      price = 'TBD';
+      price = 'Price TBD';
     }
     return `${record.name} (Guide retail price(s): ${price})`
   },
 
+  /** 
+   * 
+   * This feature allows for different data fields for different types of product.  The subschema
+   * field has a subschema type field so that youcan have different subschemas for different applications
+   * There is one for exam results as well.
+   */
   subschema: {
     key: 'productGroup',
   },
+
   list: {
     columns: ['name', 'supplier', 'productGroup'],
   },
+
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
+
+  /**
+   * The input and display screens are divided into groups. Any field not included in any group
+   * are put in the 'other' group.
+   */
   groups: {
     basic: {
       static: true,
@@ -47,12 +68,12 @@ module.exports = {
       friendlyName: 'Activity Log',
       activityLog: true,                                                       // This is the activity log
       limit: 10,                                                               // Maximum entries shown (defaults to 10)
-      activities: ['salesorderlines', 'purchaseorderlines'],              // These shild records are included
+      activities: ['salesorders', 'purchaseorderlines'],              // These shild records are included
       permission: { view: ['sales', 'purchasing', 'admin', 'demo'] },
     },
     details: {
       friendlyName: 'Details',
-      columns: ['overview', 'image','vatable'],
+      columns: ['overview', 'image', 'vatable'],
     },
     variants: {
       friendlyName: 'Variants',
@@ -76,10 +97,12 @@ module.exports = {
       columns: ['productGroup'],
     },
   },
+
+  /** Every record has a standard header */
   standardHeader: true,
+
+
   attributes: {
-
-
     name: {
       type: 'string',
       description: 'Product name',
@@ -141,7 +164,13 @@ module.exports = {
       display: { truncateForTableList: 50 },
     },
 
-
+/**
+ * The associated products list is structured as follows:
+ *    associatedProducts 
+ *           -product key
+ *           -relationship to product
+ *                        
+ */
     associatedProducts: {
       type: 'object',
       array: { type: 'multiple', bite: 2 },
@@ -169,6 +198,18 @@ module.exports = {
 
     },
 
+    /** The variants list is structured as follows:
+     * 
+     * variants list
+     *    - friendly name
+     *    - Stock Keeping Unit (product code)
+     *    - Sales price
+     *    - cost price
+     *    - Subvariants list for that variant (Colours) 
+     *         - friendly Name
+     *    -    - SKU
+    */
+
     variants: {
       type: 'object',
       friendlyName: 'Variant',
@@ -183,7 +224,7 @@ module.exports = {
           type: 'string',
           input: { type: 'textarea' },
         },
-         salesPrice: {
+        salesPrice: {
           type: 'number',
           friendlyName: 'Guide retail unit price',
           input: {
@@ -218,6 +259,13 @@ module.exports = {
 
     },
 
+    /**
+     * 
+     * These are not real fields in the database, but reflect the child records we list.
+     * Purchase orders are normalised and sales orders are denormalised but this has very
+     * little effect on these entries.# 
+     * 
+     */
     purchases: {
       collection: 'purchaseorderlines',
       via: 'product',
