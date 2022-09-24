@@ -181,7 +181,7 @@ function getInstruction(table, spec) {
 
 
   let b = 0;
-  for (i = 0; i < searches.length; i++) {
+  for (let i = 0; i < searches.length; i++) {
     let item = {};
     let searchField = searches[i][0];
     let compare = searches[i][1];
@@ -193,8 +193,8 @@ function getInstruction(table, spec) {
       trace.log(`*********************** ${searchField} *****************`);
       path = searchField.split('.');
       let step = attributes[path[0]];
-      for (let i = 1; i < path.length; i++) {
-        step = step.object[path[i]];
+      for (let j = 1; j < path.length; j++) {
+        step = step.object[path[j]];
         trace.log({ step: step });
       }
       ta = step;
@@ -230,8 +230,8 @@ function getInstruction(table, spec) {
     }
     if (compare == 'less' || compare == 'lt') { item = { $lt: value } }
     if (compare == 'more' || compare == 'gt') { item = { $gt: value } }
-    if (compare == 'le') { item = { $le: value } }
-    if (compare == 'ge') { item = { $ge: value } }
+    if (compare == 'le') { item = { $lte: value } }
+    if (compare == 'ge') { item = { $gte: value } }
     if (compare == 'ne') { item = { $ne: value } }
 
 

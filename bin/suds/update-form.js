@@ -326,19 +326,20 @@ module.exports = async function (
     let next = 0;
     for (let i = 0; i < length; i++) {
       let subFieldName = `${fieldName}.${i + 1}`
-      trace.log({ 
-        fieldName: fieldName, 
-        i: i, next: next, 
-        type: attributes.type, 
-        fieldname: subFieldName, 
-        value: entered[subFieldName], 
-        delete: entered[subFieldName + '.delete'] })
+      trace.log({
+        fieldName: fieldName,
+        i: i, next: next,
+        type: attributes.type,
+        fieldname: subFieldName,
+        value: entered[subFieldName],
+        delete: entered[subFieldName + '.delete']
+      })
       if (attributes.type != 'object') {
         /** Skip blank entries. */
         if (!entered[subFieldName]) { continue }
         /** Skip deleted entries */
         if (entered[subFieldName + '.delete']) { continue }
-        trace.log(next,entered[subFieldName]);
+        trace.log(next, entered[subFieldName]);
         arry[next++] = entered[subFieldName];
       }
       else {
@@ -427,8 +428,13 @@ module.exports = async function (
     for (let key of Object.keys(attributes)) {
       if (attributes[key].collection) { continue; }  // not interested in collections
       let value;
-      if (!record[key]) {                           // might be pre-set
-        value = attributes[key].input.default;
+      if (!record[key]) {  // might be pre-set
+        if (typeof attributes[key].input.default == 'function') {
+          value = attributes[key].input.default(record);
+        } 
+        else {
+          value = attributes[key].input.default;
+        }
       }
       trace.log({ key: key, value: value, level: 'verbose' });
       if (value && typeof value == 'string') { trace.log(value.substring(6, 7)); }
@@ -483,10 +489,10 @@ module.exports = async function (
     ) {
       subschemas = record[tableData.subschema.key];
       trace.log(subschemas)
-      if (attributes[tableData.subschema.key].array 
+      if (attributes[tableData.subschema.key].array
         && attributes[tableData.subschema.key].array.type == 'single'
         && attributes[tableData.subschema.key].process == 'JSON'
-        ) {
+      ) {
         subschemas = JSON.parse(subschemas)
       }
       additionalAttributes = await addSubschemas(subschemas);
@@ -793,7 +799,7 @@ module.exports = async function (
       ****************************************************** */
   function createFormGroups() {
     trace.log({ formgroups: tableData.groups, formlist: formList });
-    hideGroup={};
+    hideGroup = {};
     /** Cycle through groups  
      * - creating a list creating a list of all the columns covered
      * - if a group applies to certain record types and the list for that group
@@ -817,7 +823,7 @@ module.exports = async function (
       }
       incl = incl.concat(tableData.groups[group].columns)
     }
-    trace.log({incl:incl,hideGroup:hideGroup});
+    trace.log({ incl: incl, hideGroup: hideGroup });
 
     /** 
      * Clone the list of all columns = note these will be top level items only
@@ -846,7 +852,7 @@ module.exports = async function (
         openTab = group
         first = false;
       };
-      for (let col of tableData.groups[group].columns) { 
+      for (let col of tableData.groups[group].columns) {
         if (!tableData.groups[group].static) {
           columnGroup[col] = group;
         }
@@ -858,9 +864,9 @@ module.exports = async function (
      *  visibkeGroup just means that there is at least one field in the group that it not hidden 
          * hiddenGroup means that we are just bot showing that group so has priority. 
      */
-     visibleGroup={};
+    visibleGroup = {};
     for (let key of formList) {
-      trace.log({key:key, hidden:attributes[key].input.hidden, columngroup:columnGroup[key]});
+      trace.log({ key: key, hidden: attributes[key].input.hidden, columngroup: columnGroup[key] });
       if (!attributes[key].input.hidden) {
         visibleGroup[columnGroup[key]] = true;
       }
@@ -876,7 +882,7 @@ module.exports = async function (
       function tabclick (tab) { 
         console.log('tabclick:',tab); `;
       for (let tab of tabs) {
-        trace.log(tab, hideGroup[tab],visibleGroup[tab]); 
+        trace.log(tab, hideGroup[tab], visibleGroup[tab]);
         if (hideGroup[tab]) { continue; }
         if (!visibleGroup[tab]) { continue; }
         form += `
@@ -981,7 +987,7 @@ module.exports = async function (
       formField += `
       
       <div style="display: ${display}" id="${subqualname}.fld" >   <!-- ----------- Array item  ${subqualname} start --------------- -->           
-        <b>${attributes.friendlyName} number ${i + 1}</b>
+        <b>${attributes.friendlyName} #${i + 1}</b>
         <span style="padding-left: 50px; font-weight: normal">${lang.delete}&nbsp;&nbsp;  
         <input type="checkbox" name="${subqualname}.delete"></span>
         <br>

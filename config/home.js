@@ -31,10 +31,12 @@ module.exports = {
       },
       { table: 'contacts', title: 'Log contact', mode: 'new' },
       { table: 'user', title: 'All users' },
-      { report: 'allFollowUps', title: 'All overdue Follow ups', },
-      { report: 'allUpcomingFollowUps', title: 'All upcoming Follow ups', },
+      { report: 'myOpenContacts', title: 'My open contacts', },
+      { report: 'allOpenContacts', title: 'All open contacts', },
+      { report: 'overdueFollowUps', title: 'All overdue follow ups', },
     ],
   },
+
 
 
   sales: {

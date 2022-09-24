@@ -29,13 +29,14 @@ module.exports = {
 
   /* The stringify  function returns the first 40 characters of notes  */
   /*   plus the contact date.                                            */
-  stringify: function (record) {
+  stringify: async function (record) {
     let date = new Date(record.date).toString().substring(0, 16);
-    console.log(record)
-     let text = record.note.substring(0, 40);
-     if (record.note.length > 40) { text += ' ...' }
-     return `${text} - ${date}`;
-    
+    let user=await db.getRow('user',record.user);
+    console.log(user.fullName) 
+     let text = record.note.substring(0, 30);
+     if (record.note.length > 30) { text += ' ...' }
+     return `${user.fullName}: ${text} - ${date}`; 
+
   },
 
 
@@ -51,25 +52,24 @@ module.exports = {
     },
 
 
-    preFormDescription: `This function is run immediately before updating/adding to  the     
-     a new contact.   The 'isFollowUp' value is pre-populated for new    
-     rows when called from a parent record. This is because it is the  
-     field that links the new record to the parent.                     
-     This routine looks for 'isFollowUp' populated and there is no       
-     user - i.e. a new row called from a parent.  The routine fills in   
-     the user from the parent record. It also closes the previous contact `,
+    /** 
+     * This function is run immediately before updating/adding to  the
+     * a new contact.   The 'isFollowUp' value is pre-populated for new    
+     * rows when called from a parent record. If it is a followup then the 
+     * previous contact in the chain is marked as closed.                     
+     */
     preForm: async function (record, mode) {
-      if (record.isFollowUp && !record.user) {
-        let following = await db.getRow('contacts', record.isFollowUp);
-        record.user = following.user;
-        await db.updateRow('contacts', { _id: record.isFollowUp, closed: true })
+      if (record.isFollowUp) {
+         await db.updateRow('contacts', { _id: record.isFollowUp, closed: true })
       }
       return;
     },
 
 
-    postProcessDescription: `This function is run immediately after the record is updated.   
-    It sets the last contact and next action in the user's record.`,
+    /** 
+     * This function is run immediately after the record is updated.   
+     * It sets the last contact and next action in the user's record.
+     * */
     postProcess: async function (record, operation) {
       console.log('postprocess - updating user', record.user, record.id, record.nextActionDate, record.nextAction,)
       await db.updateRow('user', {
@@ -157,8 +157,23 @@ module.exports = {
     isFollowUp: {
       model: 'contacts',
       description: 'If this is a follow-up to another contact. This refers.',
-      friendlyName: 'Contact number that this is a following up to',
-      input: { type: 'readonly' },
+      friendlyName: 'Contact that this is a following up to',
+      input: {
+        type: 'autocomplete',
+        search: {                  // This can simply be a field to search 
+          andor: 'and',             // Or can be a full search specification  
+          searches: [
+            ['note', 'contains', '#input'],
+            ['user', 'equals', '$user'],
+            ['_id', 'ne', '$_id']
+          ],
+          sort: ['date','DESC'], 
+        },
+        limit: 5,                   // number of options returned
+        placeholder: 'Type part of the note',
+        idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
+        default: '#loggedInUser',    // 
+      },
     },
     result: {
       array: { type: 'single' },

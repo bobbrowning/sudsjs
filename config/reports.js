@@ -55,11 +55,11 @@ module.exports = {
   *
   * **************************************************** */
 
-  followUps: {
+  myOpenContacts: {
     table: 'contacts',
-    friendlyName: 'My overdue follow-ups',
-    description: 'My overdue follow-ups',
-    title: 'Overdue follow-ups',                                   // Title
+    friendlyName: 'My open contacts',
+    description: 'My open contacts',
+    title: 'My open contacts',                                   // Title
     sort: ['nextActionDate', 'DESC'],
     open: 'contacts',
     openGroup: 'contacts',                                // Link to row detail page will open this child list
@@ -67,15 +67,32 @@ module.exports = {
       andor: 'and',
       searches:
         [
-          ['nextActionDate', 'lt', '#today'],            //  #today and #loggedInUser are special names 
           ['contactBy', 'eq', '#loggedInUser'],          //  #today+n and #today-n are also allowed where n is a number of days.
           ['closed', 'ne', true],
         ]
     },
     columns: ['user', 'date', 'nextActionDate', 'notes'],        // Columns on the table listing. All columns are in the detail page
   },
+ 
+  allOpenContacts: {
+    table: 'contacts',
+    friendlyName: 'All open contacts',
+    description: 'All open contacts',
+    title: 'All open contacts',                                   // Title
+    sort: ['nextActionDate', 'DESC'],
+    open: 'contacts',
+    openGroup: 'contacts',                                // Link to row detail page will open this child list
+    search: {
+      andor: 'and',
+      searches:
+        [
+          ['closed', 'ne', true],
+        ]
+    },
+    columns: ['user', 'date', 'nextActionDate', 'notes', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
+  },
 
-  allFollowUps: {
+  overdueFollowUps: {
     table: 'contacts',
     friendlyName: 'All overdue follow-ups',
     description: 'All overdue follow-ups',

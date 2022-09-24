@@ -32,7 +32,7 @@ async function createField (key, fieldValue, attributes, errorMsg, mode, record,
      *  The helpers are all input-fieldtype.js e.g field-radio.js
      *  new helpers can be added without changing this program.
      * 
-     * If there is no helper put out a ,essage to the consoe and 
+     * If there is no helper put out a message to the console and 
      * treat as 'text'
      * 
      ******************************************************  */

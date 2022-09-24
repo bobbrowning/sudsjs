@@ -77,7 +77,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
               title = record[tableData.stringify];
             }
             else {
-              title = tableData.stringify(record);
+              title = await tableData.stringify(record);
             }
         }
       }
@@ -100,7 +100,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
     width = attributes.input.width;
   }
 
-  let searchparm = '';
+  let searchparm = ''; 
 
   if (attributes.model) {
     idPrefix = 'ID: ';
@@ -131,15 +131,19 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
       }
     }
   }
+  let sortparm='';
+  if (attributes.input.search && attributes.input.search.sort) {
+      sortparm=`&sortfield=${attributes.input.search.sort[0]}&sortdirection=${attributes.input.search.sort[1]}`
+   }
 
-  let onblur = '';
+    let onblur = '';
   if (attributes.input.onblur) {
     onblur = attributes.input.onblur;
   }
   let onchange='';
   if (attributes.input.onchange) {
     onchange = attributes.input.onchange;
-    onchange=onchange.replace('{{fieldValue}}',fieldValue)
+    onchange=onchange.replace('{{fieldValue}}',fieldValue) 
   }
 
   results = `
@@ -157,7 +161,7 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
           value="${title}"
           placeholder="${placeholder}" 
           aria-describedby="${attributes.description}"
-          oninput="auto('${route}','${fieldName}','${source}','${display}','${limit}','${searchparm}','${onchange}')"
+          oninput="auto('${route}','${fieldName}','${source}','${display}','${limit}','${searchparm}','${sortparm}','${onchange}')"
           onblur="${onblur}"
           >
           <span id="msg_${fieldName}"></span>

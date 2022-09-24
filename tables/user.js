@@ -81,7 +81,7 @@ module.exports = {
       friendlyName: 'Website',
       open: 'website',                                                       // List web pages authored by this user
       columns: ['webpages'],
-      permission: { all: ['admin', 'web', 'demo'] },
+      permission: { all: ['admin', 'web'] },
     },
     security: {
       friendlyName: 'Security',
@@ -337,7 +337,7 @@ module.exports = {
         order: 'date',                                 // The order in which the are listed (default updatedAt)
         direction: 'DESC',                                  // ASC or DESC  default DESC
         heading: 'Recent contacts',                         // Heading to the listing Default to table name
-        columns: ['_id', 'date', 'notes', 'nextActionDate', 'nextAction', 'closed'],
+        columns: ['date', 'note', 'nextActionDate', 'closed'],
         addChildTip: 'Add a new contact for this user.',
         derive: {
           lines: { type: 'count', friendlyName: 'Number of contacts' },

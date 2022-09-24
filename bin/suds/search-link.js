@@ -63,7 +63,7 @@ function searchLink(attributes, searchSpec) {
     }
   }
 
-
+  trace.log(searches); 
   return (searches);
 }
 

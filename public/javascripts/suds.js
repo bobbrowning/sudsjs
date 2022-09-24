@@ -20,7 +20,7 @@ let starting = {};
  */
 async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
     let debug = 1;
-     if (debug) console.log(`******************* start  ${fieldName} ************************`);
+    if (debug) console.log(`******************* start  ${fieldName} ************************`);
     if (debug) console.log(fieldName, apiName, parentName, fieldValue, starting);
 
     /** Make sure only ne of these is running at a time for each field */
@@ -265,7 +265,7 @@ function nextArrayItem(nextItem, counter, button) {
  */
 function nextArrayItem(item) {
     let debug = true;
-    if (debug) console.log(arguments);
+    if (debug) console.log(item);
     if (debug) console.log(item + '.length');                                     // Field containing number of items in the array currently
     let last = document.getElementById(item + '.length').value;                   // Number of items currently
     last = parseInt(last) + 1;                                                    // Add one - and make it an integer rather than string
@@ -273,18 +273,18 @@ function nextArrayItem(item) {
     let nexthtml = document.getElementById(`${item}.${last}.fld`).innerHTML;      // The HTML in the last+1 (blank) item
     let next = last + 1;                                                          // this will be the new blank item
     nexthtml = `
-            < div style = "display: none" id = "${item}.${next}.fld" >
+            <div style = "display: none" id = "${item}.${next}.fld">
                 ${nexthtml}
-    </div >
+    </div>
             `;
-    let re = new RegExp(`${item}.${last} `.replace(/\./g, '\\.'), 'g')             // regular expression /xxxx\.3/
+    let re = new RegExp(`${item}.${last}`.replace(/\./g, '\\.'), 'g')             // regular expression /xxxx\.3/
     if (debug) console.log(re)
-    nexthtml = nexthtml.replace(re, `${item}.${next} `);                           // replace xxxx.3 by xxxx.4
-    let re2 = new RegExp(`#${last} `)                                              // replace #3 by #4 ???? why?
-    nexthtml = nexthtml.replace(re2, `#${next} `);
+    nexthtml = nexthtml.replace(re, `${item}.${next}`);                           // replace xxxx.3 by xxxx.4
+    let re2 = new RegExp(`#${last}`)                                              // replace #3 by #4 ???? why?
+    nexthtml = nexthtml.replace(re2, `#${next}`);
     if (debug) console.log(item + '.more');
     document.getElementById(item + '.more').innerHTML += nexthtml;                // add the new html we have created to the .more div
-
+    if (debug) console.log(document.getElementById(item + '.more'))
     document.getElementById(`${item}.${last}.fld`).style.display = 'inline';      // expose the old blank html section
     document.getElementById(item + '.length').value = last.toString();            // update the last counter
     if (debug) console.log(document.getElementById(item + '.length').value)
@@ -293,7 +293,7 @@ function nextArrayItem(item) {
 
 }
 
-function auto(route, fieldName, linkedTable, display, limit, searchparm, onchange) {
+function auto(route, fieldName, linkedTable, display, limit, searchparm,sortparm, onchange) {
     /*the autocomplete function takes two arguments,
     the text field element and an array of possible autocompleted values:*/
     let debug = false;
@@ -316,9 +316,9 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm, onchang
     }
     if (!val) { return false; }
 
-    let url = `${route}?linkedtable=${linkedTable}&display=${display}&limit=${limit}${searchparm}&term=${val} `;
-    if (debug) {console.log(url)}
-    fetch(url).then(function (response) { 
+    let url = `${route}?linkedtable=${linkedTable}&display=${display}&limit=${limit}${searchparm}${sortparm}&term=${val} `;
+    if (debug) { console.log(url) }
+    fetch(url).then(function (response) {
         // The API call was successful!
         return response.json();
     }).then(function (data) {

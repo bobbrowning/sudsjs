@@ -75,6 +75,9 @@ module.exports = async function (req, res) {
     limit: limit,
     searches: []
   };
+  if (req.query.sortfield) {
+    search['sort']=[req.query.sortfield,req.query.sortdirection]
+  }
   if (allParms.andor) { search.andor = allParms.andor; }
   for (let i = 0; i < suds.search.maxConditions; i++) {
     j = i + 1;
@@ -98,7 +101,8 @@ module.exports = async function (req, res) {
   let records = await db.getRows(linkedTable, search);
   trace.log({ records: records, display: display });
 
-  for (i = 0; i < records.length; i++) {
+  for (let i = 0; i < records.length; i++) {
+    trace.log(i,labels.length);
     let show;
     if (display) {
       show = records[i][display];
@@ -108,7 +112,7 @@ module.exports = async function (req, res) {
         show = records[i][tableData.stringify];
       }
       else {
-        show = tableData.stringify(records[i]);
+        show = await tableData.stringify(records[i]);
       }
       //     show = displayFunction(records[i]);
     }
@@ -134,7 +138,7 @@ module.exports = async function (req, res) {
           show = record[tableData.stringify];
         }
         else {
-          show = tableData.stringify(record);
+          show = await tableData.stringify(record);
         }
         //          show = await displayFunction(record);
       }
