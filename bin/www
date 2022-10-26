@@ -51,10 +51,12 @@ var server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-let nodeEnv = '';
 
-console.log(`Starting SUDSJS: ${new Date().toISOString()}`);
-console.log(`Listening on port ${port}${nodeEnv}`);
+console.log(`
+Starting SUDSJS: ${new Date().toISOString()}
+Listening on port ${port}
+Logging format: ${suds.morgan.format}
+`);
 if (process.env.NODE_ENV) {
   console.log(`${process.env.NODE_ENV} mode`);
 }

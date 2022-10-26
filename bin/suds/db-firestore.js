@@ -1,6 +1,7 @@
 
 /** *********************************************
- * Mongodb database driver.  
+ * 
+ * Firebase database driver.  
  * 
  * createTable(req, res)
  * 
@@ -21,29 +22,30 @@
  * @name generic_database__driver
  * 
  * ********************************************** */
-let Generic_Database__Driver = 'mongodb';    // To make documentation.js work...
+let Generic_Database__Driver = 'firebase';    // To make documentation.js work...
 
 exports.connect = connect;
 exports.createTable = createTable;
 
+exports.createRow = createRow;
 exports.getRow = getRow;
 exports.getRows = getRows;
 exports.countRows = countRows;
 exports.totalRows = totalRows;
-exports.createRow = createRow;
 exports.deleteRow = deleteRow;
 exports.deleteRows = deleteRows;
 exports.updateRow = updateRow;
 exports.standardiseId = standardiseId;
 
-
+const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
 let trace = require('../../node_modules/track-n-trace');
 let suds = require('../../config/suds');
 const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 let lang = require('../../config/language')['EN'];
-const MongoClient = require("mongodb").MongoClient;
-let ObjectId = require('mongodb').ObjectId;
+let db;
+
 
 /** *********************************************
  * 
@@ -58,18 +60,22 @@ let ObjectId = require('mongodb').ObjectId;
 
 async function connect() {
 
-  globalThis.client = new MongoClient(suds.database.uri);
-  globalThis.database = client.db(suds.database.name);
+
   suds.dbType = 'nosql';
+  let serviceAccountKey = suds.database.keyFile;
   try {
-    await client.connect();
-    // Establish and verify connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Connected successfully to MongoDB database server");
+    const serviceAccount = require('../../config/' + serviceAccountKey);
+
+    initializeApp({
+      credential: cert(serviceAccount)
+    });
+
+    globalThis.database = getFirestore();
+    console.log("Connected successfully to Firestore database server");
 
   }
   catch (err) {
-    console.log("Database connected failed", err);
+    console.log("Firestore database connected failed", err);
   }
 }
 
@@ -138,8 +144,7 @@ function objectifyId(id) {
  * 
  *        GET INSTRUCTION
  * 
- * Turns a search specification into an sql search and bindings 
- * Won't work with MONGO 
+ * Turns a search specification into a firsestore query object.
  *
  * @example
  * Typical  filter specification
@@ -157,7 +162,7 @@ function objectifyId(id) {
  * 
  * @param {string} table - Table name
  * @param {Object} spec - Filter specification - see above
- * @returns {array}  instruction + bindings
+ * @returns {ref}  query reference
  *  
  */
 
@@ -169,88 +174,52 @@ function getInstruction(table, spec) {
   let attributes = rawAttributes(table);
   /* Rationalise the searchspec object */
   if (!spec.andor) { spec.andor = 'and'; }
+  if (spec.andor == 'or') {
+    throw 'Firestore does not support "OR" queries';
+  }
   // if (!spec.sort) {
   //   spec.sort = [Object.keys(tableData.attributes)[0], 'DESC'];  // sort defaults to first field (normally ID) 
   // }
   let searches = [];
   if (spec.searches) { searches = spec.searches; }
-  trace.log({ searches: spec.searches });
+  trace.log({ searches: searches });
 
-  let query = {};
-  if (spec.andor == 'or') { query = { $or: [] } }
-
-
+  let query = database.collection(table);
   let b = 0;
   for (let i = 0; i < searches.length; i++) {
     let item = {};
     let searchField = searches[i][0];
     let compare = searches[i][1];
     let value = searches[i][2];
-    let ta;
-    let qfield = searchField;
-    let path = [searchField];
-    if (searchField.includes('.')) {
-      trace.log(`*********************** ${searchField} *****************`);
-      path = searchField.split('.');
-      let step = attributes[path[0]];
-      for (let j = 1; j < path.length; j++) {
-        step = step.object[path[j]];
-        trace.log({ step: step });
-      }
-      ta = step;
-      trace.log(ta);
-    }
-    else {
-      ta = attributes[searchField];
-    }
-    if (ta.model || searchField == '_id') {
-      value = objectifyId(value)
-    }
-    trace.log({ searchField: searchField, path: path, qfield: qfield, compare: compare, value: value })
+    let ta = attributes[searchField];
+    //   if (ta.model || searchField == 'id') {
+    //     value = objectifyId(value)
+    //   }
+    trace.log({ searchField: searchField, compare: compare, value: value })
 
     insensitive = '';
     if (suds.caseInsensitive) { insensitive = 'i'; }
-    if (compare == 'startsWith' || compare == 'startswith') {
-      let re = new RegExp(`${value}.*`, insensitive);
-      item = { $regex: re }
-      //      continue; 
+    if (compare == 'startsWith'
+      || compare == 'startswith'
+      || compare == 'contains'
+      || compare == 'like') {
+      throw 'Firestore does not support partial text queries';
     }
-    if (compare == 'contains' || compare == 'like') {
-      let re = new RegExp(`.*${value}.*`, insensitive);
-      item = { $regex: re }
-      //     continue;
-    }
-    if (compare == 'equals' || compare == 'eq') {
-      if (typeof value == 'string' && suds.caseInsensitive) {
-        /* Make it case insensitive */
-        let re = new RegExp(`^${value}$`, 'i')
-        item = { '$regex': re }
-      }
-      else { item = value }
-    }
-    if (compare == 'less' || compare == 'lt') { item = { $lt: value } }
-    if (compare == 'more' || compare == 'gt') { item = { $gt: value } }
-    if (compare == 'le') { item = { $lte: value } }
-    if (compare == 'ge') { item = { $gte: value } }
-    if (compare == 'ne') { item = { $ne: value } }
+    let comp = '==';
 
-
-
-
-    if (spec.andor == 'and') {
-      query[qfield] = item;
-    }
-    else {
-      let cond = {};
-      cond[qfield] = item;
-      query.$or.push(cond);
-    }
-
+    if (compare == 'less' || compare == 'lt') { comp = '<' }
+    if (compare == 'more' || compare == 'gt') { comp = '>' }
+    if (compare == 'le') { comp = '<=' }
+    if (compare == 'ge') { comp = '>=' }
+    if (compare == 'ne') { comp = '!=' }
+    trace.log(searchField, comp, value);
+    query = query.where(searchField, comp, value);
+ //   console.log(query._queryOptions.fieldFilters);
   }
-
-  trace.log({ table: table, instruction: query });
   return (query);
 }
+
+
 
 /** 
  * 
@@ -273,17 +242,17 @@ function getInstruction(table, spec) {
  */
 function fixWrite(table, record, attributes, mode) {
   trace.log({ table: table, record: record, mode: mode, break: '+', })
-  trace.log({attributes: attributes, level: 'verbose'});
+  trace.log({ attributes: attributes, level: 'verbose' });
   let rec = {};
-  if (record._id && typeof (record._id) == 'string' && mode != 'new') {
-    rec['_id'] = objectifyId(record._id);
-    trace.log({ id: rec._id });
+  if (record.id && typeof (record.id) == 'string' && mode != 'new') {
+    rec['id'] = objectifyId(record.id);
+    trace.log({ id: rec.id });
   }
   for (let key of Object.keys(attributes)) {
     trace.log(key);
     if (attributes[key].collection) { continue }  // Not a real field
-    if (key == '_id') { continue; }       // Done already
-    trace.log(key,Array.isArray(record[key]),record[key]);
+    if (key == 'id') { continue; }       // Done already
+    trace.log(key, Array.isArray(record[key]), record[key]);
     if (attributes[key].array
       && attributes[key].array.type != 'single'
       && !Array.isArray(record[key])) {
@@ -302,7 +271,7 @@ function fixWrite(table, record, attributes, mode) {
 
     if (attributes[key].array) {
       if (attributes[key].array.type != 'single') {
-        trace.log(record[key],Array.isArray(record[key]));
+        trace.log(record[key], Array.isArray(record[key]));
         if (!Array.isArray(record[key])) {
           if (record[key]) {
             record[key] = [record[key]];
@@ -319,10 +288,10 @@ function fixWrite(table, record, attributes, mode) {
             rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
           }
           else {
-            rec[key][i]=record[key][i]
+            rec[key][i] = record[key][i]
           }
         }
-        trace.log(record[key],rec[key]);
+        trace.log(record[key], rec[key]);
       }
       else {
         /** single means the record value will be a JSON string.  So don't go any deeper.. */
@@ -332,7 +301,7 @@ function fixWrite(table, record, attributes, mode) {
     else {
       trace.log(attributes[key].type)
       if (attributes[key].type == 'object' && record[key]) {
-        trace.log('down a level',key,record[key]);
+        trace.log('down a level', key, record[key]);
         rec[key] = fixWrite(table, record[key], attributes[key].object, mode);
         trace.log(rec[key]);
       }
@@ -375,7 +344,7 @@ function fixWrite(table, record, attributes, mode) {
  * *********************************************** */
 function fixRead(record, attributes) {
   trace.log(record);
-  if (record._id) { record._id = record._id.toString(); }
+  if (record.id) { record.id = record.id.toString(); }
   for (let key of Object.keys(record)) {
     trace.log({ key: key, data: record[key], level: 'verbose' })
     if (!attributes[key]) { continue };                          // do nothing if item not in schema
@@ -418,11 +387,48 @@ function fixRead(record, attributes) {
   trace.log(record);
 
 }
+
+
+
+/**
+ * Create a row in the table
+ * 
+ * The method of obtaining the primary key is database dependent.
+ * This has been tested withMySQL. Postgesql and SqLite3
+ * The fallack is to read the most recently added record. However
+ * this may not be reliable in a multi-user situation.
+ * 
+ * @param {string} table 
+ * @param {object} record 
+ * @returns {object} record with primary key added
+ */
+
+async function createRow(table, record) {
+  trace.log({ inputs: arguments })
+  let tableData = tableDataFunction(table);
+  let attributes = mergeAttributes(table);
+  let rec = fixWrite(table, record, attributes, 'new');
+  for (let key of Object.keys(attributes)) {
+    if (attributes[key].process.createdAt) { rec[key] = Date.now() }
+    if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
+  }
+  trace.log('inserting:', table, rec);
+  const result = await database.collection(table).add(rec);
+  trace.log(result, result);
+  trace.log(typeof (result.id));
+  return (rec);
+}
+
+
+
+
 /** 
  * 
  * Count Rows
  * 
- * Counts the number of rows given a filter specification (see above)
+ * Counts the number of rows given a filter specification 
+ * 
+ * Development - returns fixed value. Would need changing for production
  * 
  * @param {string} table - Table name
  * @param {Object} spec - Filter specification - see get instruction above. 
@@ -431,21 +437,7 @@ function fixRead(record, attributes) {
 async function countRows(table, spec) {
 
   trace.log({ input: arguments });
-  const collection = database.collection(table);
-  let count = 0;
-  let query = {};
-  if (spec) {
-    query = getInstruction(table, spec);
-  }
-  trace.log({ table: table, instruction: query, });
-  try {
-    count = await collection.countDocuments(query);
-  }
-  catch (err) {
-    console.log(err);
-  }
-  trace.log({ count: count });
-  return (count);
+  return (100);
 }
 
 /** 
@@ -476,7 +468,7 @@ async function totalRows(table, spec, col) {
       },
       {
         $group: {
-          _id: null,
+          id: null,
           result: { $sum: '$' + col }
         }
       }
@@ -490,36 +482,6 @@ async function totalRows(table, spec, col) {
   return (total[0].result);
 }
 
-
-/**
- * Create a row in the table
- * 
- * The method of obtaining the primary key is database dependent.
- * This has been tested withMySQL. Postgesql and SqLite3
- * The fallack is to read the most recently added record. However
- * this may not be reliable in a multi-user situation.
- * 
- * @param {string} table 
- * @param {object} record 
- * @returns {object} record with primary key added
- */
-
-async function createRow(table, record) {
-  trace.log({ inputs: arguments })
-  let tableData = tableDataFunction(table);
-  let attributes = mergeAttributes(table);
-  let rec = fixWrite(table, record, attributes, 'new');
-  for (let key of Object.keys(attributes)) {
-    if (attributes[key].process.createdAt) { rec[key] = Date.now() }
-    if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
-  }
-  trace.log('inserting:', table, rec);
-  const collection = database.collection(table);
-  let result = await collection.insertOne(rec);
-  trace.log(result, rec);
-  trace.log(typeof (rec._id));
-  return (rec);
-}
 
 /**
  * Delete Rows
@@ -591,7 +553,7 @@ async function deleteRow(permission, table, id) {
   let message = 'Deleting record';
 
   try {
-    await collection.deleteOne({ _id: id });
+    await collection.deleteOne({ id: id });
 
   } catch (err) {
     console.log(`Database error deleting Row ${id} in table ${table} `, err);
@@ -617,17 +579,18 @@ async function deleteRow(permission, table, id) {
  * @param {string} table 
  * @param {object} record 
  */
-async function updateRow(table, record, subschemas,additionalAttributes) {
+async function updateRow(table, record, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments })
-  const collection = database.collection(table);
-  let attributes = mergeAttributes(table, '', subschemas,additionalAttributes);
+   let attributes = mergeAttributes(table, '', subschemas, additionalAttributes);
   let rec = fixWrite(table, record, attributes, 'update');
-  let filter = { _id: rec._id };
+  let filter = { id: rec.id };
   try {
-    await collection.updateOne(filter, { $set: rec })
+    const ref = database.collection(table).doc(rec.id);
+    const res = await ref.update(rec);
+    trace.log(res);
   }
   catch (err) {
-    console.log(`Problem updating ${rec._id}`, err);
+    console.log(`Problem updating ${rec.id} in ${table}`, err);
   }
   trace.log({ op: 'update ', table: table, filter: filter, record: rec });
 
@@ -649,7 +612,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   const collection = database.collection(table);
 
   if (!limit && spec.limit) { limit = spec.limit }
-  let rows = {};
+  let rows = [];
   let options = {};
   let instruction = {};
   let tableData = tableDataFunction(table);
@@ -657,13 +620,11 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   if (!sortKey) { sortKey = tableData.primaryKey; }
   if (!direction && spec.sort) { direction = spec.sort[1]; }
   if (!direction) { direction = 'DESC'; }
-  if (spec && spec.searches && spec.searches.length) {
-    if (!spec.instruction) {
-      spec.instruction = getInstruction(table, spec);
-    }
-    instruction = spec.instruction;
-  }
-  trace.log({ instruction: instruction, limit: limit, offset: offset });
+
+    queryRef = spec.ref = getInstruction(table, spec);
+
+  trace.log({ instruction: queryRef, limit: limit, offset: offset });
+  /*
   if (sortKey) {
     let sortObj = {};
     trace.log({ direction: direction });
@@ -676,24 +637,35 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   if (offset) {
     options['skip'] = offset;
   }
+*/
+   try {
+    trace.log('getting');
+    snapshot = await queryRef.get();
+    trace.log(snapshot);
+   // console.log(snapshot.docs)
 
-  trace.log(instruction, options);
-  try {
-    rows = await collection.find(instruction, options).toArray();
   }
   catch (err) {
-    console.err(`Error reading ${table} returning empty set.  
+    console.log (`Error reading ${table}
+
     ${err}`);
-    rows = [];
-  }
-  //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
-  trace.log(rows);
+
+  } 
+  let i=0;
+  rows=[];
+  snapshot.forEach(doc => {
+    console.log(doc.id, '=>', doc.data());
+    rows[i]=doc.data();
+    rows[i++].id=doc.id;
+  });
   let attributes = rawAttributes(table);
   trace.log(attributes, { level: 'silly' });
   for (let i = 0; i < rows.length; i++) {
     fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed
     trace.log('fixed read', rows[i], { level: 'verbose' });
   }
+
+  trace.log(rows);
   return (rows);
 }
 
@@ -714,7 +686,6 @@ async function getRow(table, val, col) {
   }
   else {
     if (!col) { col = tableData.primaryKey };
-    if (col == '_id' && typeof val == 'string' && val.length == 12) { val = objectifyId(val) }
     trace.log(col, val);
     spec = { searches: [[col, 'eq', val]] };
   }

@@ -45,7 +45,7 @@ bash sudsjs-main/install.sh
 ```
 
 
-When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it asks, ehter 'S' for thr SQLite3 version oof the test data, anything else (including 'M' for the MongoDB version.)  The install script runs the application as the final step and you should see 
+When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it asks, enter 'S' for thre SQLite3 version of the test data, anything else (including 'M' for the MongoDB version.)  The install script runs the application as the final step and you should see 
 ```
 SUDS Installed - starting up
 SUDS-Express - starting app.js

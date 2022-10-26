@@ -123,8 +123,9 @@ module.exports = {
 
   /** **************** MongoDB configuration ***************
    * 
-   *  don't forget the primary key in the security -> autorisation object needs changing
-   *  also the tables directory needs to be swapped for the mongodb set...
+   * 
+   * 
+
 */
   dbDriver: 'db-mongo.js',
   dbDriverKey: 'objectId',
@@ -134,9 +135,6 @@ module.exports = {
     uri: `mongodb://localhost:27017`,
     name: 'suds',
   },
-
-
-
 
 
   /** *********   Postgresql config ***************************
@@ -173,6 +171,21 @@ module.exports = {
   */
 
 
+/** ******************* Firestore configuration *********
+ * 
+ * This database works after a fashion but the driver 
+ * is incomplete.  Firestore lacks the database functions
+ * that SUDSJS needs. There are workarounds, but they tend to 
+ * involve downloading s bunch of data and processing it ourselves.
+ * 
+ * 
+ 
+ dbDriver: 'db-firestore.js',
+ dbkey: 'string',
+ database: {
+     keyFile: 'sudsjs-1cd54-xxxxxxxxxxx.json',
+ },
+*/
 
 
   /** List of tables in the database.. */
@@ -193,7 +206,7 @@ module.exports = {
     'subjects',
     'subjectsdenorm',
     'papers',
-    'papersdenorm',
+ //   'papersdenorm',
     'studentdenorm',
     'studentsubschema',
     'subschema',
@@ -262,7 +275,7 @@ module.exports = {
   ***************************************************** */
   superuser: 'admin@admin.demo',                //  This person is always superuser.
 
-  csrf: true,
+  csrf: false,
 
   authorisation: {
     table: 'user',

@@ -18,7 +18,7 @@ module.exports = displayField;
 
 async function displayField(attributes, value, children, permission, parent) {
   if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-  trace.log(arguments);
+  trace.log({arguments: arguments, break: '*',});
   let display = '';
 
   /** If the item is an object we navigate through the structure  by
@@ -156,11 +156,14 @@ async function displayField(attributes, value, children, permission, parent) {
     }
 
     if (attributes.display.type) {
+      trace.log('./display/' + attributes.display.type)
       try {
-        helper = require('./display/' + attributes.display.type);
+        helper = require('./display/' + attributes.display.type); 
       }
       catch (err) {
-        trace.log(err)
+        trace.error(`
+        ${attributes.display.type}
+        ${err}`)
       }
       if (helper) {
         trace.log('using helper', attributes.display.type, value);

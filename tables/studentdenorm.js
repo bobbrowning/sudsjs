@@ -1,6 +1,32 @@
 /**
  * 
- * Student table - denormalized moned
+ * Student table - denormalized model
+ * 
+ * This version of the student table contains all of the exam results as an array of objects. 
+ * Like this
+ * result 1 - subject 1
+ *            -  paper 1
+ *            -  paper 2
+ *          - subject 2
+ *              etc
+ * result 2 - subject 1
+ *            - paper 1
+ *            - paper 2
+ * etc
+ * 
+ * So the user on entry or update has to select the subject before being presented 
+ * with the papers. This is done by an API called by fillChildSelect which sites in 
+ * public -> javascript -> suds.js. 
+ * 
+ * The paramerters are field name, API name, parent name, value
+ * 
+ * The API code is found in 
+ * bin -> custom -> APIname.js the parentName can be an array and sungkle values 
+ * care standardised to an array (in this case). These are passed to the API code as 
+ * parentValue0, 1,2, etc.
+ * 
+ * The API does not need a routing entry because there is a routing function 
+ * that forwards the data to the requested custom routine (apicustomrouter). 
  * 
  */
 
@@ -57,8 +83,7 @@ module.exports = {
                     object: {
                         paper: {
                             type: 'string',
-                            model: 'papersdenorm',
-                            input: {
+                             input: {
                                 type: 'select',
                                 onevents: {
                                     onload: `fillChildSelect('{{fieldName}}','exampaper','subject','{{fieldValue}}')`,

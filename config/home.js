@@ -129,8 +129,7 @@ denorm: {
   img: '/images/suds/www.jpg',
   permission: ['admin', 'demo','trainer','demod'],
   links: [
-    { table: 'subjectsdenorm', title: 'Subjects' },
-    { table: 'papersdenorm', title: 'Papers' },
+    { table: 'subjectsdenorm', title: 'Subjects and papers' },
     { table: 'studentdenorm', title: 'Students' },
   ],
 },

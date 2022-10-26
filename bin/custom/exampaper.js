@@ -13,12 +13,12 @@ module.exports=  async function (query) {
     if (examDoc.err) {
         return(['error'],['examDoc.msg'])
     }
-    trace.log(examDoc);
-    let values=examDoc.papers;
     let labels=[];
-    for (let i=0;i<values.length; i++) {
-        let paperDoc=await db.getRow('papersdenorm',values[i])
-        labels[i]=paperDoc.name;
+    let values=[];
+    trace.log(examDoc);
+    for (let i=0; i<examDoc.papers.length; i++){ 
+       labels[i]=values[i]=examDoc.papers[i].name; 
     }
-    return ([labels,values]);
+    trace.log(labels,values)
+    return ([labels,values]); 
 }

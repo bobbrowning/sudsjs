@@ -68,8 +68,7 @@ async function admin(req, res) {
         files: req.files,
         break: '#',
         level: 'min',
-        csrf: req.csrfToken(),
-
+ 
     });
     let csrfToken;
     if (suds.csrf) {
