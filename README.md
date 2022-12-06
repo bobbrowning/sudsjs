@@ -18,6 +18,7 @@ You can see it in action at [sudsjs.com](http://sudsjs.com).
 * Some starter applications. The test data includes a useable contact management system and website content management system. 
 * This is all controlled by configuration files.
 * Works with Mysql, PostgreSQL, SQLite 3, MongoDB, CouchDB
+
 The NOSQL database support adds
 * Denormalized data.
 * Arbitrarily structured documents - Dictionary items and arrays.
@@ -25,7 +26,7 @@ The NOSQL database support adds
 
 The CouchBD system does not support collections, so the system adds an extra field to each document to simulate this function.
 
-SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. 
  
 
 # Setup 
