@@ -40,23 +40,13 @@ cd ./appName
 npm install
 
 ```
-The config and tables directories are set up for CouchDB.  
-
-Edit config/suds.js to set up the database type and authorisation data. 
-
-You may need to modify config/standard-header.js.  
-* For SQL databases the normal key field is 'id'.  For NOSQL it is '_id'.  
-* The _rev and xcollection fields are for CouchDB only. These should be removed for other systems.
-
-To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.
-
-The tables directory contains the test data schema which are relevant for MongoDB or CouchDB.  Schema for a SQL database are in tables.sql. You will need to retain the user schema and audit schema for the system to work. 
+ 
 
 # Test data
 
-The SQLite database is included in the download. The dump directtory contains the MongoDB data. Use Mongorestore to restore it.
-
-The CouchDB test database is in dumpedDB.JSON. Use couchdb-dump (https://github.com/danielebailo/couchdb-dump) to restore it.
+* The SQLite database is included in the download. 
+* The dump directory contains the MongoDB data. Use Mongorestore to restore it.
+* The CouchDB test database is in dumpedDB.JSON. Use couchdb-dump (https://github.com/danielebailo/couchdb-dump) to restore it.
 
  To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
 
@@ -90,10 +80,11 @@ nodemon -e js,css, ejs
 Nodemon needs installing (https://www.npmjs.com/package/nodemon) but will restart the app every time you change a config file, whuch is a big time-saver during development. 
 
 
+# Set up the configuration files
 
-# Set up your database 
+The config and tables directories in the download are set up for CouchDB. There are sql versions as well. 
 
-## Modify the configuration files 
+## Main configuration file 
 
 The configuration files are in the config directory. The main file to change is suds.js.  This covers:
 * Routes
@@ -107,20 +98,36 @@ The configuration files are in the config directory. The main file to change is 
 1. Set up the superuser email address in the security section. It also lists the permission sets you require.
 1. The input section includes a list of input field types. You can create your own handlers for special input types (/bin/suds/input for examples), in which case you add them here.
 1. The view configuration lists the view engine and views. The view engine is set to ejs (https://ejs.co/). Other view engines have not been tested.
+1. Edit database type and authorisation data. There are commented-out sections for other databases.
 
+## Standard document header
 
-## Set up the database. 
+You may need to modify config/standard-header.js.  
+* For SQL databases the normal key field is 'id'.  For NOSQL it is '_id'.  
+* The _rev and xcollection fields are for CouchDB only. These should be removed for other systems.
+
+## Database schema
+
+The tables directory contains the test data schema for MongoDB or CouchDB.  Schema for a SQL database are in tables.sql. You will need to retain the user schema and audit schema for the system to work.  You define the necessary fields in the user table in config/suds.js
+
 1. Update/create the table definitions
 There must be a user table defined and it must have certain fields in it. You will find these in the security section of suds.js. (If you change this you will be in uncharted territory but you can add/remove other fields in this table.) 
 If you have an audit file it has to have the same name and table definition as the one in the test database. 
-1. Set up the database name and password in the suds.js config file along with the database type.  The test data config file has a mysql/postgesql setups (without the password) commented out as an example.  
-1. For relational detabases, add the tables to the database with http://localhost:3000/createtables. You don't need this for MongoDB.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
+
+1. For relational databases, add the tables to the database with http://localhost:3000/createtables. You don't need this for MongoDB or CouchDB.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
 
 
-I have tested the software with sqlite3, mysql and postgresql. It's probably all right with other database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this will be unreliable.
+I have tested the software with sqlite3, mysql and postgresql relational systems. It's probably all right with other SQL database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this will be unreliable.
+
+I started a Firestore database driver but it didn't go well (https://bob742.blogspot.com/2022/10/firestore-didnt-go-well-for-me.html) but the driver is there if you want to give it a shot. I never got round to working on the delete function.
+
+I started on Cassandra but the documentation defeated me.  I may pick that up in the future.
 
 
-## Final steps 
+# Final steps 
+
+To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.
+
 Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
 
 

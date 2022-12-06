@@ -370,7 +370,7 @@ module.exports = {
       collection: 'products',
       via: 'supplier',
       collectionList: {
-        columns: ['name', 'price', 'class', 'description', 'stockLevel'],
+        columns: ['name','description'],
       }
     },
 
@@ -378,7 +378,7 @@ module.exports = {
       collection: 'purchaseorders',
       via: 'supplier',
       collectionList: {
-        columns: ['name', 'date', 'status', 'notes'],
+        columns: [ 'date', 'status', 'notes'],
       }
 
     },

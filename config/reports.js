@@ -20,14 +20,14 @@ module.exports = {
       ]
     },
     /* Columns on the table listing. All columns are in the detail page */
-    columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
+    columns: ['fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
   },
 
   productSales: {
     table: 'salesorders',
     friendlyName: 'Products sales',
     searchFields: ['product'],
-    sort: ['product'],
+    sort: ['product','ASC'],
     view: {
       design: 'reports',
       view: 'productSales',
@@ -72,7 +72,7 @@ module.exports = {
   resultsnorm: {
     table: 'results',
     friendlyName: 'Results by subject (Normalized data)',
-    sort: ['subject'],
+    sort: ['subject','ASC'],
     columns: ['subject', 'studentId', 'paper', 'score'],
   },
 
@@ -141,7 +141,7 @@ module.exports = {
       ]
     },
     /* Columns on the table listing. All columns are in the detail page */
-    columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
+    columns: ['fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
   },
 
   /* *****************************************************
@@ -258,7 +258,7 @@ module.exports = {
         ['userType', 'eq', 'C'],
       ]                                           // Filter field and value
     },
-    columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'organisation',],        // Columns on the table listing. All columns are in the detail page
+    columns: ['fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'organisation',],        // Columns on the table listing. All columns are in the detail page
   },
 
 
@@ -303,7 +303,7 @@ module.exports = {
         ['userType', 'eq', 'P'],
       ]                                           // Filter field and value
     },
-    columns: ['id', 'fullName', 'organisation', 'lastContact', 'nextActionDate', 'userType'],        // Columns on the table listing. All columns are in the detail page
+    columns: [ 'fullName', 'organisation', 'lastContact', 'nextActionDate', 'userType'],        // Columns on the table listing. All columns are in the detail page
   },
 
   suppliers: {
@@ -319,7 +319,7 @@ module.exports = {
         ['userType', 'eq', 'S'],
       ]                                           // Filter field and value
     },
-    columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone',],        // Columns on the table listing. All columns are in the detail page
+    columns: [ 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone',],        // Columns on the table listing. All columns are in the detail page
   },
 
 
@@ -336,7 +336,7 @@ module.exports = {
         ['userType', 'eq', 'I'],
       ]                                           // Filter field and value
     },
-    columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'permission', 'isSuperAdmin'],        // Columns on the table listing. All columns are in the detail page
+    columns: [ 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'permission', 'isSuperAdmin'],        // Columns on the table listing. All columns are in the detail page
   },
 
   auditTrail: {

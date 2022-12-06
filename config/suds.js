@@ -21,9 +21,9 @@ module.exports = {
 
   versionHistory: [
     { version: '1.0.0', date: '2021-08-20', author: 'Bob', description: 'Initial test database' },
-    { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'cassandra compatible version' },
+    { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'MongoDB compatible version' },
     { version: '2.1.1', date: '2022-09-01', author: 'Bob', description: 'Bugs fixed' },
-    { version: '2.2.0', date: '2022-10-13', author: 'Bob', description: 'Bugs fixed' },
+    { version: '2.2.0', date: '2022-12-04', author: 'Bob', description: 'CouchDB compatible version' },
   ],
 
   /** **********************************************
