@@ -178,10 +178,9 @@ module.exports = {
 
 
 
-  /** **************** cassandra configuration ***************
+  /** **************** MongoDB configuration ***************
     * 
-    *  don't forget the primary key in the security -> autorisation object needs changing
-    *  also the tables directory needs to be swapped for the cassandra set...
+    *  
  
    dbDriver: 'db-mongo.js',
    dbDriverKey: 'objectId',

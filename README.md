@@ -40,7 +40,13 @@ cd ./appName
 npm install
 
 ```
-The config and tables directories are set up for CouchDB.  Edit config/suds.js to set up the database type and authorisation data. 
+The config and tables directories are set up for CouchDB.  
+
+Edit config/suds.js to set up the database type and authorisation data. 
+
+You may need to modify config/standard-header.js.  
+* For SQL databases the normal key field is 'id'.  For NOSQL it is '_id'.  
+* The _rev and xcollection fields are for CouchDB only. These should be removed for other systems.
 
 To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.
 
