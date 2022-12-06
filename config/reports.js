@@ -23,6 +23,101 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
   },
 
+  productSales: {
+    table: 'salesorders',
+    friendlyName: 'Products sales',
+    searchFields: ['product'],
+    sort: ['product'],
+    view: {
+      design: 'reports',
+      view: 'productSales',
+    },
+    columns: ['product', 'order', 'units', 'price', 'total'],
+    view: {
+      design: 'reports',
+      view: 'productSales',
+      params: {
+      },
+      fields: {
+        product: {
+          type: 'string',
+          friendlyName: 'Product',
+          model: 'products',
+          input: { type: 'select' }
+        },
+        order: {
+          friendlyName: 'Sales order',
+          type: 'string',
+          model: 'salesorders',
+        },
+        units: { type: 'string' ,           friendlyName: 'Units' },
+        price: { type: 'number' ,         friendlyName: 'Price'  },
+        total: { type: 'number' ,        friendlyName: 'Total'  },
+      }
+    }
+  },
+
+
+
+  allSubjects: {
+    table: 'subjects',
+    friendlyName: 'Subjects list',
+    view: {
+      design: 'reports',
+      view: 'allSubjects',
+    },
+    columns: ['name', 'notes'],
+  },
+
+  resultsnorm: {
+    table: 'results',
+    friendlyName: 'Results by subject (Normalized data)',
+    sort: ['subject'],
+    columns: ['subject', 'studentId', 'paper', 'score'],
+  },
+
+  resultsdenorm: {
+    table: 'subjectsdenorm',
+    friendlyName: 'Results by subject (Denormalized data)',
+    searchFields: ['subject'],
+    view: {
+      design: 'reports',
+      view: 'results',
+      params: {
+      },
+      fields: {
+        subject: {
+          friendlyName: 'Subject',
+          model: 'subjectsdenorm',
+          input: { type: 'select' },
+        },
+        student: {
+          friendlyName: 'Student',
+          model: 'studentdenorm',
+        },
+        paper: {
+          friendlyName: 'Paper',
+        },
+        score: {
+          friendlyName: 'Score',
+        },
+      },
+    },
+    columns: ['subject', 'student', 'paper', 'score'],
+  },
+
+
+  allUsers: {
+    table: 'user',
+    friendlyName: 'User list',
+    view: {
+      design: 'reports',
+      view: 'allUsers',
+    },
+    sort: ['emailAddress', 'ASC'],                            // sort field
+    columns: ['fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
+  },
+
 
   /* *****************************************************
   *
@@ -71,9 +166,9 @@ module.exports = {
           ['closed', 'ne', true],
         ]
     },
-    columns: ['user', 'date', 'nextActionDate', 'notes'],        // Columns on the table listing. All columns are in the detail page
+    columns: ['user', 'date', 'nextActionDate', 'note'],        // Columns on the table listing. All columns are in the detail page
   },
- 
+
   allOpenContacts: {
     table: 'contacts',
     friendlyName: 'All open contacts',
@@ -89,7 +184,7 @@ module.exports = {
           ['closed', 'ne', true],
         ]
     },
-    columns: ['user', 'date', 'nextActionDate', 'notes', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
+    columns: ['user', 'date', 'nextActionDate', 'note', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
   },
 
   overdueFollowUps: {
@@ -108,7 +203,7 @@ module.exports = {
           ['closed', 'ne', true],
         ]
     },
-    columns: ['user', 'date', 'nextActionDate', 'notes', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
+    columns: ['user', 'date', 'nextActionDate', 'note', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
   },
 
   upcomingFollowUps: {
@@ -128,7 +223,7 @@ module.exports = {
           ['closed', 'ne', true],
         ]
     },
-    columns: ['user', 'date', 'nextActionDate', 'notes'],        // Columns on the table listing. All columns are in the detail page
+    columns: ['user', 'date', 'nextActionDate', 'note'],        // Columns on the table listing. All columns are in the detail page
   },
 
   allUpcomingFollowUps: {
@@ -147,7 +242,7 @@ module.exports = {
           ['closed', 'ne', true],
         ]
     },
-    columns: ['user', 'date', 'nextActionDate', 'notes', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
+    columns: ['user', 'date', 'nextActionDate', 'note', 'contactBy'],        // Columns on the table listing. All columns are in the detail page
   },
 
 
@@ -166,12 +261,12 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'organisation',],        // Columns on the table listing. All columns are in the detail page
   },
 
-   
+
   studentSubschema: {
     table: 'subschema',
     title: 'Subschemas for student demo',
     sort: ['updatedAt', 'DESC'],                          // Option sort field and direction. 
-     search: {
+    search: {
       andor: 'and',
       searches: [
         ['group', 'eq', 'exams'],
@@ -180,13 +275,13 @@ module.exports = {
   },
 
 
-  
+
   outstandingOrders: {
     table: 'salesorders',
     title: 'Outstanding orders',
     sort: ['updatedAt', 'DESC'],                          // Option sort field and direction. 
     openGroup: 'salesorderlines',
-     search: {
+    search: {
       andor: 'and',
       searches: [
         ['status', 'ne', 'D'],
@@ -244,19 +339,19 @@ module.exports = {
     columns: ['id', 'fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'permission', 'isSuperAdmin'],        // Columns on the table listing. All columns are in the detail page
   },
 
-   auditTrail: {
-     table: 'audit',
-     title: 'List audit trail',
-     sort: ['createdAt','DESC'],
-     search: {
+  auditTrail: {
+    table: 'audit',
+    title: 'List audit trail',
+    sort: ['createdAt', 'DESC'],
+    search: {
       andor: 'and',
       searches: [
         ['tableName', 'eq', '#table'],
         ['udatedBy', 'eq', '#users'],
-      ]                                           
+      ]
     },
 
-   }
+  }
 
 }
 

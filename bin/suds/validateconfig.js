@@ -111,6 +111,7 @@ module.exports = async function (req, res) {
         'dbkey',
         'dbType',
         'dbDriverKey',
+        'dbDriverName',
         'caseInsensitive',
      ];
     console.log('Checking suds.js: '); 

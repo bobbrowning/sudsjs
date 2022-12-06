@@ -95,7 +95,8 @@ module.exports = {
     maxLength: 'Error: The maximum number of characters allowed is ',   //     "    "  
     min: 'Error: This must be greater that ',                           //     "    "
     minLength: 'Error: The minimum number of characters allowed is ',   //     "    "
-    more: 'more ...',                                                   // link to row detail page on table listing
+    more: 'more ...', 
+    moreThan: 'moreThan',                                                  // link to row detail page on table listing
     nan: 'Error: this field must be a number',
     ne: 'not equal to',                       // Error message                                               
     next: 'Next page >',                                                // Table list pagination

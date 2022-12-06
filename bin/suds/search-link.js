@@ -33,12 +33,15 @@ function getAttribute(field, attr) {
 function searchLink(attributes, searchSpec) {
   trace.log(arguments);
 
-
-  let searches = searchSpec.searches;
+   let searches = searchSpec.searches;
   for (i = 0; i < searches.length; i++) {
     trace.log(i, searches[i]);
     let searchField = searches[i][0];
     let attribute=getAttribute(searchField,attributes);
+ if (!attribute) {
+    trace.warning('Unknown search field');
+    return [];
+  }
     let value = searches[i][2];
     trace.log(searchField);
     if (searchField) {

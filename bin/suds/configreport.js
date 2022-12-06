@@ -384,6 +384,9 @@ module.exports = async function (req, res) {
 
 
   output += `<a name="ds"></a><h1>Database</h1>`;
+  if (suds.dbDriverName) {
+    output+=`This database is runnung under <b>${suds.dbDriverName}</b>`;
+  }
   output += `<table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
     <thead>
     <tr>
@@ -550,14 +553,14 @@ module.exports = async function (req, res) {
       output += `
            This table has record types identified by field  <i>${tabledata.recordTypeColumn}</i>.  See below. <br /> `;
     }
-    trace.log(tabledata, { level: table });
+    trace.log(table );
     output += `</p>`;
 
     if (tabledata.list && tabledata.list.columns) {
       output += `<p>A standard listing in tabular form has the following columns listed<br />`;
       for (let i = 0; i < tabledata.list.columns.length; i++) {
         if (i > 0) { output += ', ' }
-
+        trace.log(i,tabledata.list.columns[i])
         output += properties[tabledata.list.columns[i]].friendlyName;
       }
       output += `</p>`;

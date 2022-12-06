@@ -147,6 +147,7 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
         totalChild += childCount;
         hasRows += child + ', ';
       }
+
     }
   }
   trace.log({ children: children, total: totalChild });

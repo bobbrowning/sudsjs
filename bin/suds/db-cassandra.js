@@ -21,7 +21,7 @@
  * @name generic_database__driver
  * 
  * ********************************************** */
-let Generic_Database__Driver = 'mongodb';    // To make documentation.js work...
+let Generic_Database__Driver = 'cassandra';    // To make documentation.js work...
 
 exports.connect = connect;
 exports.createTable = createTable;
@@ -42,7 +42,7 @@ let suds = require('../../config/suds');
 const tableDataFunction = require('./table-data');
 let mergeAttributes = require('./merge-attributes');
 let lang = require('../../config/language')['EN'];
-const MongoClient = require("mongodb").MongoClient;
+const cassandra = require("cassandra-driver");
 let ObjectId = require('mongodb').ObjectId;
 
 /** *********************************************
@@ -58,15 +58,16 @@ let ObjectId = require('mongodb').ObjectId;
 
 async function connect() {
 
-  globalThis.client = new MongoClient(suds.database.uri);
-  globalThis.database = client.db(suds.database.name);
-  suds.dbType = 'nosql';
+  let conf=suds.database.clientData;
+  conf.authProvider = new cassandra.auth.PlainTextAuthProvider(suds.database.auth.user,suds.database.auth.password);
+
+  globalThis.client =  new cassandra.Client(conf); 
+
+ suds.dbType = 'nosql';
   try {
     await client.connect();
     // Establish and verify connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Connected successfully to MongoDB database server");
-
+    console.log("Connected successfully to Cassandra database server");
   }
   catch (err) {
     console.log("Database connected failed", err);
@@ -647,6 +648,7 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
 
   trace.log({ input: arguments });
   const collection = database.collection(table);
+
   if (!limit && spec.limit) { limit = spec.limit }
   let rows = {};
   let options = {};
@@ -686,13 +688,13 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     rows = [];
   }
   //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
+  trace.log(rows);
   let attributes = rawAttributes(table);
   trace.log(attributes, { level: 'silly' });
   for (let i = 0; i < rows.length; i++) {
     fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed
     trace.log('fixed read', rows[i], { level: 'verbose' });
   }
-  trace.log(rows);
   return (rows);
 }
 

@@ -1,5 +1,6 @@
 let trace = require('track-n-trace');
 let sendView = require('./send-view');
+let suds = require('../../config/suds');
 
 
 module.exports = async function (req, res) {

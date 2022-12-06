@@ -3,7 +3,8 @@
  *
   */
 
-let db = require('../bin/suds/db-mongo');
+ let suds = require('../config/suds');
+ let db = require('../bin/suds/'+suds.dbDriver);
 let stock = require('../bin/custom/stock');
 const { appendFile } = require('fs');
 module.exports = {
@@ -38,7 +39,7 @@ module.exports = {
 
   },
 
-  list: { columns: ['_id', 'product', 'product', 'units'], },
+  list: { columns: ['_id', 'product', 'product', 'units','total'], },
   standardHeader: true,
   attributes: {
 
@@ -130,7 +131,13 @@ module.exports = {
       type: 'number',
       model: 'user',
       input: { type: 'hidden' },
+    },
+    total: {
+      type: 'number',
+      input: { type: 'hidden' },
+      display: { currency: true },
     }
+
 
   },
 

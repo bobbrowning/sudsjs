@@ -340,7 +340,6 @@ module.exports = {
         columns: ['date', 'note', 'nextActionDate', 'closed'],
         addChildTip: 'Add a new contact for this user.',
         derive: {
-          lines: { type: 'count', friendlyName: 'Number of contacts' },
           last: {
             type: 'function',
             friendlyName: 'Last contact',
@@ -352,13 +351,12 @@ module.exports = {
     },
 
 
-
     salesorders: {
       collection: 'salesorders',
       friendlyName: 'Sales orders',
       via: 'customer',
       collectionList: {
-        columns: ['date', 'id', 'status', 'totalValue'],
+        columns: ['date', '_id', 'status', 'totalValue'],
         derive: {
           nosales: { type: 'count', friendlyName: 'Number of sales ' },
           totsales: { type: 'total', column: 'totalValue', friendlyName: 'Total sales', display: { currency: true } },

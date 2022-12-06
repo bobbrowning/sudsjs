@@ -7,8 +7,8 @@
  */
 
 const { stringify } = require('querystring');
-let db = require('../bin/suds/db-mongo');
-
+let suds = require('../config/suds');
+let db = require('../bin/suds/'+suds.dbDriver);
 
 
 module.exports = {
@@ -235,7 +235,7 @@ module.exports = {
       via: 'isFollowUp',
       collectionList: {
         addChildTip: 'Record the follow-up to this contact',
-        columns: ['date', 'notes', 'closed'],
+        columns: ['date', 'note', 'closed'],
       }
 
     },

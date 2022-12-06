@@ -55,10 +55,7 @@ let lang = require('../../config/language')['EN'];
 function connect() {
   trace.log({connect:suds.database.client,event: 'verbose'})
   let knex=require('knex');
-  globalThis.knex = knex
-  
-  
-  (suds.database);
+  globalThis.knex = knex (suds.database);
   console.log('connected to database');
 
 }
@@ -111,7 +108,6 @@ function stringifyId (id) {
  *        GET INSTRUCTION
  * 
  * Turns a search specification into an sql search and bindings 
- * Won't work with MONGO 
  *
  * @example
  * Typical  filter specification

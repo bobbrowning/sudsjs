@@ -8,6 +8,7 @@ let home = require('./home');
 let suds = require('../../config/suds');
 let reports = require('../../config/reports');
 let trace = require('track-n-trace');
+const { authorisation } = require('../../config/suds');
 const db = require('./' + suds.dbDriver);
 const lang = require('../../config/language')['EN'];
 
@@ -68,7 +69,7 @@ async function admin(req, res) {
         files: req.files,
         break: '#',
         level: 'min',
- 
+
     });
     let csrfToken;
     if (suds.csrf) {
@@ -95,7 +96,7 @@ async function admin(req, res) {
     let user = {};
     let logNotes = '';
     permission = '#guest#';
-   
+
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
     }
@@ -106,12 +107,15 @@ async function admin(req, res) {
         if (suds.superuser == user[aut.emailAddress]) { permission = '#superuser#' }
         /*** Last seen at */
         let now = Date.now();
-        await db.updateRow(aut.table, { id: req.session.userId, lastSeenAt: now });
+        let rec = {};
+        rec[aut.primaryKey] = req.session.userId;
+        rec.lastSeenAt = now;
+        await db.updateRow(aut.table, rec);
 
         trace.log({ 'User record': user, level: 'verbose' });
     }
 
-     /* validate permission set   */
+    /* validate permission set   */
     if (
         !(permission == '#superuser#'
             || permission == '#guest#'
@@ -128,8 +132,8 @@ The user is being treated as a guest.
     }
     // store the permision in session data.
     req.session.permission = permission;
-  trace.log({user: req.session.userId, permission: permission,level: 'user'})
-     trace.log(permission);
+    trace.log({ user: req.session.userId, permission: permission, level: 'user' })
+    trace.log(permission);
     //   global.suds = { user: req.session.userId, permission: permission };
 
 
@@ -172,13 +176,13 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
       * ******************************************** */
     let main_menu;
 
-    trace.log({table: req.query.table});
- 
+    trace.log({ table: req.query.table });
+
     if (!req.query.table && !req.query.report) {
         trace.log('home page');
-        req.session.reportData = {}; 
-      // trace.stop();   
-         let output = await home(req, permission);
+        req.session.reportData = {};
+        // trace.stop();   
+        let output = await home(req, permission);
         let result = await sendView(res, 'admin', output);
         trace.log(result);
         return;
@@ -446,10 +450,16 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
             trace.log(table, reportObject);
 
             reportData.table = table;
-            let copyfields = ['friendlyName', 'title', 'open', 'openGroup'];
+            let copyfields = ['friendlyName', 'title', 'open', 'openGroup', 'searchFields','view'];
             for (let i = 0; i < copyfields.length; i++) {
                 fieldName = copyfields[i];
                 if (reportObject[fieldName]) { reportData[fieldName] = reportObject[fieldName]; }
+            }
+            /***
+             * Only applies to CouchDB
+             */
+            if (reportObject.view) {
+                reportData.view = reportObject.view;
             }
             /***
              * 
@@ -459,42 +469,44 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
              */
             if (reportObject.search) {
                 reportData.search = {};
-                reportData.search.andor = reportObject.search.andor;
+                reportObject.search.andor='and';
+                if (reportData.search.andor) {reportData.search.andor = reportObject.search.andor};
                 if (req.query.andor) { reportData.search.andor = req.query.andor }
                 reportData.search.searches = [];
-                for (let i = 0; i < reportObject.search.searches.length; i++) {
-                    /* search is an array contains search criteria  number i*/
-                    /* will move it into the reportData object later */
-                    let search = [reportObject.search.searches[i][0], reportObject.search.searches[i][1], reportObject.search.searches[i][2]];
-                    let value = search[2];
-                    if (value && typeof value == 'string' && value.substring(0, 1) == '#') {
-                        /* #today or #today+5 or #today-3  No spaces allowed */
-                        if (value.substring(0, 6) == '#today') {
-                            let today = Date.now();
-                            let diff = 0;
-                            if (value.substring(6, 7) == '+') { diff = Number(value.substring(7)) }
-                            if (value.substring(6, 7) == '-') { diff = -1 * Number(value.substring(7)) }
-                            today += diff * 86400000;
-                            search[2] = new Date(today).toISOString().split("T")[0];
-                        }
-                        else {
-                            if (value == '#loggedInUser') {
-                                search[2] = req.session.userId;
+                if (reportObject.search.searches) {
+                    for (let i = 0; i < reportObject.search.searches.length; i++) {
+                        /* search is an array contains search criteria  number i*/
+                        /* will move it into the reportData object later */
+                        let search = [reportObject.search.searches[i][0], reportObject.search.searches[i][1], reportObject.search.searches[i][2]];
+                        let value = search[2];
+                        if (value && typeof value == 'string' && value.substring(0, 1) == '#') {
+                            /* #today or #today+5 or #today-3  No spaces allowed */
+                            if (value.substring(0, 6) == '#today') {
+                                let today = Date.now();
+                                let diff = 0;
+                                if (value.substring(6, 7) == '+') { diff = Number(value.substring(7)) }
+                                if (value.substring(6, 7) == '-') { diff = -1 * Number(value.substring(7)) }
+                                today += diff * 86400000;
+                                search[2] = new Date(today).toISOString().split("T")[0];
                             }
                             else {
-                                /*  Should be an input field with this name */
-                                term = value.substring(1);
-                                if (req.query[term]) {
-                                    search[2] = req.query[term];
+                                if (value == '#loggedInUser') {
+                                    search[2] = req.session.userId;
                                 }
                                 else {
-                                    continue;
+                                    /*  Should be an input field with this name */
+                                    term = value.substring(1);
+                                    if (req.query[term]) {
+                                        search[2] = req.query[term];
+                                    }
+                                    else {
+                                        continue;
+                                    }
                                 }
-
                             }
                         }
+                        reportData.search.searches[i] = [search[0], search[1], search[2]]
                     }
-                    reportData.search.searches[i] = [search[0], search[1], search[2]]
                 }
             }
             trace.log(reportObject.search);
@@ -570,7 +582,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                     let searchField = req.query['searchfield_' + j];
                     let compare = req.query['compare_' + j];
                     let value = req.query['value_' + j];
-                    if (attributes[searchField].process && attributes[searchField].process.JSON) {
+                    if (attributes[searchField] && attributes[searchField].process && attributes[searchField].process.JSON) {
                         compare = 'contains';
                         value = `"${value}"`;
                     }
@@ -702,7 +714,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
                 }
             }
             trace.log({ mode: mode, id: id, record: record, subschemas: subschemas });
-            trace.log({user: req.session.userId,level: 'user'})
+            trace.log({ user: req.session.userId, level: 'user' })
             output = await updateForm(
                 permission,
                 table,

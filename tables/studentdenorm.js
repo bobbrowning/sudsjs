@@ -28,9 +28,43 @@
  * The API does not need a routing entry because there is a routing function 
  * that forwards the data to the requested custom routine (apicustomrouter). 
  * 
+ * 
+ * Example document  (couchdb)
+ * 
+ * {
+_id: 'dbb87f2f748e4ac19f13ad887806ac62',
+_rev: '4-fffaff6f4c74d19c3d0653d856b9dd92',
+xcollection: 'studentdenorm',
+createdAt: 1659523428186,
+updatedAt: 1667904766660,
+updatedBy: 'dbb87f2f748e4ac19f13ad8878005588',
+name: 'Foghorn Leghorn',
+address: {
+  address1: 'Warner Farm',
+  address2: '',
+  city: 'Burbank',
+  zip: '47894',
+  },
+results: [
+  {
+    subject: 'dbb87f2f748e4ac19f13ad8878066813',
+    paper: [
+      { paper: 'Geometry',  score: 55,  },
+      { paper: 'Numerical analysis',  score: 88,  },
+      ],
+    },
+  {
+    subject: 'dbb87f2f748e4ac19f13ad8878065418',
+    paper: [ { paper: 'TV Advertising',  score: 77,  },  ],
+    },
+  ],
+}
+
+ * 
  */
 
-let db = require('../bin/suds/db-mongo');
+ let suds = require('../config/suds');
+ let db = require('../bin/suds/'+suds.dbDriver);
 let lookup = require('../bin/suds/lookup-value');
 
 

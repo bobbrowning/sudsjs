@@ -4,7 +4,8 @@
  * 
  */
 
- let db = require('../bin/suds/db-mongo');
+ let suds = require('../config/suds');
+ let db = require('../bin/suds/'+suds.dbDriver);
  let lookup = require('../bin/suds/lookup-value');
 
 

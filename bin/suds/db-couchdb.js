@@ -28,6 +28,7 @@ exports.createTable = createTable;
 
 exports.getRow = getRow;
 exports.getRows = getRows;
+exports.getView = getView;
 exports.countRows = countRows;
 exports.totalRows = totalRows;
 exports.createRow = createRow;
@@ -44,6 +45,8 @@ let mergeAttributes = require('./merge-attributes');
 let lang = require('../../config/language')['EN'];
 const MongoClient = require("mongodb").MongoClient;
 let ObjectId = require('mongodb').ObjectId;
+const Nano = require('nano');
+let nano;
 
 /** *********************************************
  * 
@@ -58,14 +61,17 @@ let ObjectId = require('mongodb').ObjectId;
 
 async function connect() {
 
-  globalThis.client = new MongoClient(suds.database.uri);
-  globalThis.database = client.db(suds.database.name);
+  let auth = suds.database.auth;
   suds.dbType = 'nosql';
   try {
-    await client.connect();
-    // Establish and verify connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Connected successfully to MongoDB database server");
+    const opts = {
+      url: `http://${auth.user}:${auth.password}@localhost:5984`,
+      requestDefaults: suds.database.requestDefaults,
+    }
+    nano = Nano(opts);
+
+    globalThis.db = nano.db.use(suds.database.database);
+    console.log(`Connected successfully to ${suds.database.database} on Couchdb database server`);
 
   }
   catch (err) {
@@ -176,7 +182,7 @@ function getInstruction(table, spec) {
   if (spec.searches) { searches = spec.searches; }
   trace.log({ searches: spec.searches });
 
-  let query = {};
+  let query = { xcollection: table };
   if (spec.andor == 'or') { query = { $or: [] } }
 
 
@@ -211,32 +217,24 @@ function getInstruction(table, spec) {
     insensitive = '';
     if (suds.caseInsensitive) { insensitive = 'i'; }
     if (compare == 'startsWith' || compare == 'startswith') {
-      let re = new RegExp(`${value}.*`, insensitive);
+      let re = `${value}.*`;
       item = { $regex: re }
       //      continue; 
     }
     if (compare == 'contains' || compare == 'like') {
-      let re = new RegExp(`.*${value}.*`, insensitive);
+      let re = `.*${value}.*`;
       item = { $regex: re }
       //     continue;
     }
     if (compare == 'equals' || compare == 'eq') {
-      if (typeof value == 'string' && suds.caseInsensitive) {
-        /* Make it case insensitive */
-        let re = new RegExp(`^${value}$`, 'i')
-        item = { '$regex': re }
-      }
-      else { item = value }
+      item = value
     }
     if (compare == 'less' || compare == 'lt') { item = { $lt: value } }
     if (compare == 'more' || compare == 'gt') { item = { $gt: value } }
     if (compare == 'le') { item = { $lte: value } }
     if (compare == 'ge') { item = { $gte: value } }
     if (compare == 'ne') { item = { $ne: value } }
-
-
-
-
+    trace.log(spec);
     if (spec.andor == 'and') {
       query[qfield] = item;
     }
@@ -271,38 +269,38 @@ function getInstruction(table, spec) {
  * @returns {object} record - cloned 
  * 
  */
-function fixWrite(table, record, attributes, mode) {
+async function fixWrite(table, record, attributes, mode) {
   trace.log({ table: table, record: record, mode: mode, break: '+', })
-  trace.log({attributes: attributes, level: 'verbose'});
+  trace.log({ attributes: attributes, level: 'verbose' });
   let rec = {};
-  if (record._id && typeof (record._id) == 'string' && mode != 'new') {
-    rec['_id'] = objectifyId(record._id);
-    trace.log({ id: rec._id });
-  }
+
   for (let key of Object.keys(attributes)) {
-    trace.log(key);
-    if (attributes[key].collection) { continue }  // Not a real field
-    if (key == '_id') { continue; }       // Done already
-    trace.log(key,Array.isArray(record[key]),record[key]);
-    if (attributes[key].array
-      && attributes[key].array.type != 'single'
-      && !Array.isArray(record[key])) {
-      record[key] = [record[key]];
-    }
+    trace.log({ key: key, level: 'verbose' });
+    trace.log(key, Array.isArray(record[key]), record[key], { level: 'verbose' });
     trace.log({
       key: key,
       type: attributes[key].type,
       array: attributes[key].array,
-      collection: attributes[key].collection,
+      collection: attributes[key].xcollection,
       val: record[key],
       num: Number(record[key]),
       isNan: isNaN(rec[key]),
       level: 'verbose'
-    })
+    });
+
+    /*** 
+     * 
+     *      Fix array - doesn't do much!
+     * If this field is an array and the data is not - them ruen it into an aray 
+     * The 'single' array type is where we store an array as a Javascript object 
+     * rather than a real array. Hangover from SQL databases and unlileky yo be used
+     * for Couch.
+    */
+
 
     if (attributes[key].array) {
       if (attributes[key].array.type != 'single') {
-        trace.log(record[key],Array.isArray(record[key]));
+        trace.log(record[key], Array.isArray(record[key]), { level: 'verbose' });
         if (!Array.isArray(record[key])) {
           if (record[key]) {
             record[key] = [record[key]];
@@ -311,39 +309,64 @@ function fixWrite(table, record, attributes, mode) {
             record[key] = [];
           }
         }
+
+        /** start with an empty array
+         * If the elements of the array are objectes
+         * call itself recursively ti process the objects.
+         * otherwise just copy it.
+         * 
+        */
         rec[key] = [];
         trace.log(record[key]);
         for (let i = 0; i < record[key].length; i++) {
           if (attributes[key].type == 'object' && record[key][i]) {
-            trace.log({ key: key, i: i, subrecord: record[key][i] })
-            rec[key][i] = fixWrite(table, record[key][i], attributes[key].object, mode)
+            trace.log({ key: key, i: i, subrecord: record[key][i], level: 'verbose' })
+            rec[key][i] = await fixWrite(table, record[key][i], attributes[key].object, mode)
           }
           else {
-            rec[key][i]=record[key][i]
+            rec[key][i] = record[key][i]
           }
         }
-        trace.log(record[key],rec[key]);
+        trace.log(record[key], rec[key]);
       }
       else {
         /** single means the record value will be a JSON string.  So don't go any deeper.. */
         rec[key] = record[key];
       }
     }
+    /*** Not an array */
     else {
-      trace.log(attributes[key].type)
+      trace.log(key, attributes[key].type, { level: 'verbose' })
+      /** If this is an object call itself recursively until we get to a non-object  field */
       if (attributes[key].type == 'object' && record[key]) {
-        trace.log('down a level',key,record[key]);
-        rec[key] = fixWrite(table, record[key], attributes[key].object, mode);
+        trace.log('down a level', key, record[key]);
+        rec[key] = await fixWrite(table, record[key], attributes[key].object, mode);
         trace.log(rec[key]);
       }
       //   if (!attributes[key]) { continue }   // skip field if not in database
+      /*** Not an object or array */
+
       /** For new records, guarantee that they have every field */
       else {
-        trace.log(typeof record[key]);
+        trace.log({ key: key, type: typeof record[key], level: 'verbose' });
+        /** Make sure every field is there for new records */
         if (typeof record[key] === 'undefined' && mode == 'new') {
-          record[key] = null;
+          if (key == '_id') {
+            let uuids = await nano.uuids();
+            trace.log({ uuids: uuids });
+            record[key] = uuids.uuids[0];
+            trace.log({ id: record[key] });
+          }
+          else {
+            record[key] = null;
+          }
         }
-        trace.log('final processing');
+
+
+        trace.log('final processing', {
+          level: 'verbose'
+
+        });
         if (typeof record[key] !== 'undefined') {
           rec[key] = record[key];
           if (attributes[key].type == 'number') {
@@ -359,7 +382,7 @@ function fixWrite(table, record, attributes, mode) {
         }
       }
     }
-    trace.log({ key: key, old: record[key], new: rec[key] })
+    trace.log({ key: key, old: record[key], new: rec[key] }, { level: 'verbose' })
   }
   trace.log({ fixed: rec });
   return (rec);
@@ -369,8 +392,7 @@ function fixWrite(table, record, attributes, mode) {
 
 /** ************************************************
  * 
- * Fix any iassues with the record read.
- * Change ObjectId to string
+ * Fix any issues with the record read.
  * 
  * *********************************************** */
 function fixRead(record, attributes) {
@@ -379,7 +401,6 @@ function fixRead(record, attributes) {
   for (let key of Object.keys(record)) {
     trace.log({ key: key, data: record[key], level: 'verbose' })
     if (!attributes[key]) { continue };                          // do nothing if item not in schema
-    trace.log({ array: attributes[key].array, data: record[key] });
     if (attributes[key].array) {
       trace.log(record[key]);
       if (!Array.isArray(record[key])) {
@@ -401,12 +422,12 @@ function fixRead(record, attributes) {
       }
     }
     else {
-      trace.log(attributes[key].type, record[key]);
+      trace.log({ type: attributes[key].type, key: record[key], level: 'verbose' });
       if (attributes[key].type == 'object' && record[key]) {
         fixRead(record[key], attributes[key].object)
       }
       else {
-        trace.log({ model: attributes[key].model, data: record[key] });
+        trace.log({ model: attributes[key].model, data: record[key], level: 'verbose' });
         if (attributes[key].model && record[key]) {
           record[key] = record[key].toString();
           trace.log({ key: key, data: record[key], level: 'verbose' })
@@ -423,28 +444,17 @@ function fixRead(record, attributes) {
  * Count Rows
  * 
  * Counts the number of rows given a filter specification (see above)
+ * As many SQL databases don't have a count function this simply 
+ * reads pagelength +1 records and returns the number read.
  * 
  * @param {string} table - Table name
  * @param {Object} spec - Filter specification - see get instruction above. 
  * @returns {number} Record count
  */
-async function countRows(table, spec) {
-
+async function countRows(table, spec, offset) {
   trace.log({ input: arguments });
-  const collection = database.collection(table);
-  let count = 0;
-  let query = {};
-  if (spec) {
-    query = getInstruction(table, spec);
-  }
-  trace.log({ table: table, instruction: query, });
-  try {
-    count = await collection.countDocuments(query);
-  }
-  catch (err) {
-    console.log(err);
-  }
-  trace.log({ count: count });
+  let first = await getRows(table, spec, offset, suds.pageLength + 1);
+  count = first.length;
   return (count);
 }
 
@@ -460,34 +470,10 @@ async function countRows(table, spec) {
  * @returns {number} Record count
  */
 async function totalRows(table, spec, col) {
-
-  trace.log({ input: arguments });
-  const collection = database.collection(table);
-  let total = 0;
-  let query = {};
-  if (spec) {
-    query = getInstruction(table, spec);
-    trace.log(query);
-  }
-  try {
-    total = await collection.aggregate([
-      {
-        $match: query,
-      },
-      {
-        $group: {
-          _id: null,
-          result: { $sum: '$' + col }
-        }
-      }
-    ]).toArray();
-  }
-  catch (err) {
-    console.log(err);
-  }
-  trace.log({ total: total });
-  if (!total.length) return (0);
-  return (total[0].result);
+ let result=0;
+  let records=getRows(table,spec);
+  for (const i=0; i<records.length;i++) {result+=records[i][col]}
+  return result;
 }
 
 
@@ -508,17 +494,27 @@ async function createRow(table, record) {
   trace.log({ inputs: arguments })
   let tableData = tableDataFunction(table);
   let attributes = mergeAttributes(table);
-  let rec = fixWrite(table, record, attributes, 'new');
+  let rec = await fixWrite(table, record, attributes, 'new');
   for (let key of Object.keys(attributes)) {
     if (attributes[key].process.createdAt) { rec[key] = Date.now() }
     if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
   }
-  trace.log('inserting:', table, rec);
-  const collection = database.collection(table);
-  let result = await collection.insertOne(rec);
-  trace.log(result, rec);
-  trace.log(typeof (rec._id));
-  return (rec);
+  rec['xcollection'] = table;
+  delete rec._rev;   // not valid for insert
+  trace.log('inserting:', rec);
+  try {
+    const result = await db.insert(rec);
+    rec['_id'] = result.id;
+    rec['_rev'] = result.rev;
+    trace.log(result, rec);
+    trace.log(typeof (rec._id));
+    return (rec);
+  }
+  catch (err) {
+    trace.error(`attempt to insert record in ${table} failed
+    ${err} `);
+    return (rec);
+  }
 }
 
 /**
@@ -546,24 +542,24 @@ async function deleteRows(table, spec) {
       message = 'Unexpected error 51';
     }
     output = `
-      <h2>Deleting records</h2>
-      <DIV CLASS="footerlinks">
-     
-       <button class="btn btn-primary" onclick="window.location='${suds.mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
-           <button class="btn btn-primary" onclick="window.location='${suds.mainPage}'">${lang.backToTables}</button>
-    </DIV>
-  `;
+      < h2 > Deleting records</h2 >
+        <DIV CLASS="footerlinks">
+
+          <button class="btn btn-primary" onclick="window.location='${suds.mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
+          <button class="btn btn-primary" onclick="window.location='${suds.mainPage}'">${lang.backToTables}</button>
+        </DIV>
+    `;
   }
   else {
     output = `
-      <h2>Deleting records failed - no search specification</h2>
-       
-      <DIV CLASS="footerlinks">
-     
-       <button class="btn btn-primary" onclick="window.location='${suds.mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
-           <button class="btn btn-primary" onclick="window.location='${suds.mainPage}'">${lang.backToTables}</button>
-    </DIV>
-  `;
+      < h2 > Deleting records failed - no search specification</h2 >
+
+        <DIV CLASS="footerlinks">
+
+          <button class="btn btn-primary" onclick="window.location='${suds.mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
+          <button class="btn btn-primary" onclick="window.location='${suds.mainPage}'">${lang.backToTables}</button>
+        </DIV>
+    `;
   }
   return (output);
 
@@ -580,7 +576,6 @@ async function deleteRows(table, spec) {
 async function deleteRow(permission, table, id) {
   trace = require('track-n-trace');
   trace.log({ start: 'Delete table row', inputs: arguments, break: '#', level: 'min' });
-  const collection = database.collection(table);
   let mainPage = suds.mainPage;
   let tableData = tableDataFunction(table);
   if (typeof (id) == 'string') {
@@ -589,22 +584,34 @@ async function deleteRow(permission, table, id) {
   }
   if (!mainPage) { mainPage = '/'; }
   let message = 'Deleting record';
-
+  let rec;
+  let rev;
   try {
-    await collection.deleteOne({ _id: id });
-
+    rec = await db.get(id)
+    rev = rec._rev;
+    console.log('destroying', id, rev)
+    await db.destroy(id, rev);
   } catch (err) {
-    console.log(`Database error deleting Row ${id} in table ${table} `, err);
-    message = 'Unexpected error 51';
+    console.log(`Database error deleting Row ${id} in table ${table} - retrying `);
+    try {
+      rec = await db.get(id)
+      rev = rec._rev;
+      console.log('destroying (2)', id, rev)
+      await db.destroy(id, rev);
+    }
+    catch {
+      console.log(err);
+      throw new Error('second try failed')
+    }
   }
   output = `
-      <h2>${message}</h2>
-      <DIV CLASS="footerlinks">
-     
-       <button class="btn btn-primary" onclick="window.location='${mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
-           <button class="btn btn-primary" onclick="window.location='${mainPage}'">${lang.backToTables}</button>
-    </DIV>
-  `;
+      <h2> ${message}</h2>
+        <DIV CLASS="footerlinks">
+
+          <button class="btn btn-primary" onclick="window.location='${mainPage}?table=${table}&mode=list'">${lang.tableList}</button>
+          <button class="btn btn-primary" onclick="window.location='${mainPage}'">${lang.backToTables}</button>
+        </DIV>
+    `;
   return (output);
 
 
@@ -617,21 +624,91 @@ async function deleteRow(permission, table, id) {
  * @param {string} table 
  * @param {object} record 
  */
-async function updateRow(table, record, subschemas,additionalAttributes) {
+async function updateRow(table, record, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments })
-  const collection = database.collection(table);
-  let attributes = mergeAttributes(table, '', subschemas,additionalAttributes);
-  let rec = fixWrite(table, record, attributes, 'update');
+  let attributes = mergeAttributes(table, '', subschemas, additionalAttributes);
+  let rec = await fixWrite(table, record, attributes, 'update');
   let filter = { _id: rec._id };
+  if (!rec._id) {
+    trace.log(rec);
+    throw `Attempt to update record - missing id`
+  }
   try {
-    await collection.updateOne(filter, { $set: rec })
+    /**
+     * Read the existing record wu=itg that key
+     * Replace items in the update
+     * This becomes the new record.
+     */
+    let oldrec = await getRow(table, rec._id);
+    for (let key of Object.keys(rec)) {
+      if (key == '_rev') continue;
+      oldrec[key] = rec[key]
+    }
+    rec = oldrec;
+    trace.log(rec);
+    let result = await db.insert(rec);
+    trace.log(result);
   }
   catch (err) {
-    console.log(`Problem updating ${rec._id}`, err);
+    trace.warning(`Problem updating
+    id: ${rec._id}
+    rev: $rec._rev
+  }
+    retrying
+    ${err} `);
+    try {
+      let oldrec = await getRow(table, rec._id);
+      for (let key of Object.keys(rec)) {
+        if (key == '_rev') continue;
+        oldrec[key] = rec[key]
+      }
+      rec = oldrec;
+      let result = await db.insert(rec);
+      trace.log(result);
+    }
+    catch (err) {
+      trace.error(`Problem updating ${rec._id} no update`, err);
+    }
   }
   trace.log({ op: 'update ', table: table, filter: filter, record: rec });
 
 }
+
+
+/**
+ * Get a single row from the database
+ * @param {string} table 
+ * @param {number} row to be selected - normally the primary key 
+ * @param {number} Optional - field to be searched if not the primary key 
+ * @returns {object} The row 
+ */
+async function getRow(table, val, col) {
+  trace.log({ inputs: arguments })
+  if (!val) {
+    throw new Error(`Attempt to read undefined record on ${table}`);
+  }
+
+  let tableData = tableDataFunction(table);
+  let spec;
+  if (typeof val == 'object') {
+    spec = val;
+  }
+  else {
+    if (!col) { col = tableData.primaryKey };
+    trace.log(col, val);
+    spec = { searches: [[col, 'eq', val]] };
+  }
+  trace.log(spec);
+  let records = await getRows(table, spec);
+  trace.log({ table: table, value: val, records: records });
+  if (!records.length) { record = { err: 1, msg: 'Record not found' } }
+  else { record = records[0] }
+  trace.log('fixed read', record);
+  return (record);
+
+}
+
+
 
 /**
  * Get a set of rows from a table
@@ -646,14 +723,14 @@ async function updateRow(table, record, subschemas,additionalAttributes) {
 async function getRows(table, spec, offset, limit, sortKey, direction,) {
 
   trace.log({ input: arguments });
-  const collection = database.collection(table);
+  if (spec && spec.view) return (await getView(table, spec, offset, limit, sortKey, direction,))
+  if (!spec) { spec = {} }
   if (!limit && spec.limit) { limit = spec.limit }
   let rows = {};
-  let options = {};
-  let instruction = {};
+  let instruction = { xcollection: table };
   let tableData = tableDataFunction(table);
   if (!sortKey && spec.sort) { sortKey = spec.sort[0]; }
-  if (!sortKey) { sortKey = tableData.primaryKey; }
+  //  if (!sortKey) { sortKey = tableData.primaryKey; }
   if (!direction && spec.sort) { direction = spec.sort[1]; }
   if (!direction) { direction = 'DESC'; }
   if (spec && spec.searches && spec.searches.length) {
@@ -662,12 +739,19 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
     }
     instruction = spec.instruction;
   }
-  trace.log({ instruction: instruction, limit: limit, offset: offset });
+  trace.log({
+    instruction: instruction,
+    limit: limit,
+    offset: offset,
+    direction: direction,
+    sortkey: sortKey
+  });
+  let options = { selector: instruction };
   if (sortKey) {
     let sortObj = {};
     trace.log({ direction: direction });
-    if (direction == 'DESC') { sortObj[sortKey] = -1 } else { sortObj[sortKey] = 1 }
-    options['sort'] = sortObj;
+    if (direction == 'DESC') { sortObj[sortKey] = 'desc' } else { sortObj[sortKey] = 'asc' }
+    options['sort'] = [sortObj];
   }
   if (limit && limit != -1) {
     options['limit'] = limit;
@@ -675,58 +759,106 @@ async function getRows(table, spec, offset, limit, sortKey, direction,) {
   if (offset) {
     options['skip'] = offset;
   }
-
-  trace.log(instruction, options);
+  trace.log(options);
   try {
-    rows = await collection.find(instruction, options).toArray();
+    let result = await db.find(options);
+    rows = result.docs;
   }
   catch (err) {
-    console.err(`Error reading ${table} returning empty set.  
-    ${err}`);
-    rows = [];
+    trace.log(err);
+    if (err.description.includes('No index exists for this sort,')) {
+      let indexDef = { index: { fields: [sortKey] } }
+      trace.error(`Creating index for ${sortKey}`);
+      await db.createIndex(indexDef)
+      try {
+        let result = await db.find(options);
+        rows = result.docs;
+      }
+      catch (err) {
+        trace.error(`Error reading ${table} returning empty set.
+        ${err} `);
+        rows = [];
+      }
+    }
+    else {
+      trace.error(`Error reading ${table} returning empty set.
+    ${err} `);
+      rows = [];
+    }
   }
   //    rows = await knex(table).whereRaw(instruction, bindings).orderBy(sortKey, direction).offset(offset).limit(limit);
+
+  trace.log(rows);
   let attributes = rawAttributes(table);
   trace.log(attributes, { level: 'silly' });
   for (let i = 0; i < rows.length; i++) {
     fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed
     trace.log('fixed read', rows[i], { level: 'verbose' });
   }
-  trace.log(rows);
   return (rows);
 }
 
+
 /**
- * Get a single row from the database
+ * Get a set of rows from a table
  * @param {string} table 
- * @param {number} row to be selected - normally the primary key 
- * @param {number} Optional - field to be searched if not the primary key 
- * @returns {object} The row 
+ * @param {object} spec - flter specification - see above
+ * @param {number} offset 
+ * @param {} limit 
+ * @param {*} sortKey 
+ * @param {*} direction 
+ * @returns {array} Array of table row objects.
  */
-async function getRow(table, val, col) {
-  trace.log({ inputs: arguments })
+async function getView(table, spec, offset, limit, sortKey, direction,) {
 
-  let tableData = tableDataFunction(table);
-  let spec;
-  if (typeof val == 'object') {
-    spec = val;
+  trace.log({ input: arguments });
+  if (!limit && spec.limit) { limit = spec.limit }
+  let rows = {};
+  let options={};
+  if (spec.view.params) {options=spec.view.params}
+ 
+  if (spec && spec.searches && spec.searches.length) {
+    if (spec.searches.length != 1) {
+      trace.warning('Searches on a view can only have one item');
+    }
+    else {
+      options['key']=spec.searches[0][2];
+    }
   }
-  else {
-    if (!col) { col = tableData.primaryKey };
-    if (col == '_id' && typeof val == 'string' && val.length == 12) { val = objectifyId(val) }
-    trace.log(col, val);
-    spec = { searches: [[col, 'eq', val]] };
-  }
-  trace.log(spec);
-  let records = await getRows(table, spec);
-  trace.log({ table: table, value: val, records: records });
-  if (!records.length) { record = { err: 1, msg: 'Record not found' } }
-  else { record = records[0] }
-  trace.log('fixed read', record);
-  return (record);
 
+  /** sortkey doesn't apply and should not be used.  Use params instead... */
+  if (!sortKey && spec.sort) { sortKey = spec.sort[0]; }
+  if (!direction && spec.sort) { direction = spec.sort[1]; }
+  if (direction && direction == 'DESC') { options['descending'] = true; }
+
+  if (limit && limit != -1) {
+    options['limit'] = limit;
+  }
+  if (offset) {
+    options['skip'] = offset;
+  }
+  trace.log(options);
+  rows = []
+  let result = await db.view(spec.view.design, spec.view.view, options);
+  trace.log({ result: result });
+  for (let i = 0; i < result.rows.length; i++) {
+    rows[i] = result.rows[i].value;
+    rows[i]._id = result.rows[i].id;
+    if (sortKey) {
+      rows[i][sortKey] = result.rows[i].key;
+    }
+  }
+  trace.log(rows);
+
+  trace.log(rows);
+  let attributes = rawAttributes(table);
+  trace.log(attributes, { level: 'silly' });
+  for (let i = 0; i < rows.length; i++) {
+    fixRead(rows[i], attributes);  //rows[i] is an object so only address is passed
+    trace.log('fixed read', rows[i], { level: 'verbose' });
+  }
+  return (rows);
 }
-
 
 
 /**

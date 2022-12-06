@@ -120,7 +120,7 @@ relate: {
     { table: 'subjects', title: 'Subjects' },
     { table: 'papers', title: 'Papers' },
     { table: 'studentnorm', title: 'Students' },
-    { table: 'results', title: 'Results' },
+    { report: 'resultsnorm', title: 'Results' },
   ],
 },
 denorm: {
@@ -141,6 +141,18 @@ variable: {
   links: [
     { table: 'studentsubschema', title: 'Students' },   
     { report: 'studentSubschema',title: 'Subschemas' },
+  ],
+},
+views: {
+  title: 'Couch DB views',
+  description: 'Couch DB only',
+  img: '/images/suds/www.jpg',
+  permission: ['admin', 'demo'],
+  links: [
+    { report: 'allSubjects',title: 'Subjects list' },
+    { report: 'allUsers',title: 'User list' },
+    { report: 'resultsdenorm',title: 'Results' },
+    { report: 'productSales',title: 'Product sales' },
   ],
 },
   //  Setup / admin section

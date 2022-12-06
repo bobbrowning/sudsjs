@@ -3,7 +3,8 @@
  * Results table - normalised moned
  * 
  */
-let db = require('../bin/suds/db-mongo');
+ let suds = require('../config/suds');
+ let db = require('../bin/suds/'+suds.dbDriver);
 module.exports = {
     description: 'Exam results',
 
@@ -11,7 +12,7 @@ module.exports = {
     permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
     standardHeader: true,
     list: {
-        columns: ['studentId', 'subject', 'paper', 'score'],
+        columns: ['subject','studentId', 'paper', 'score'],
     },
     recordTypeColumn: 'subject',
     recordTypeInput: 'select',
@@ -24,7 +25,6 @@ module.exports = {
         subject: {
             type: 'string',
             model: 'subjects',
-
             input: {
                 type: 'readonly',
             },

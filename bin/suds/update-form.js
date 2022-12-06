@@ -30,7 +30,7 @@ let createField = require('./create-field');             // Creates an input fie
 let displayField = require('./display-field');           // displays a column value
 let addSubschemas = require('./subschemas');
 let fs = require('fs');
-const { takeCoverage } = require('v8');
+
 
 /** Data Division */
 module.exports = async function (
@@ -431,9 +431,14 @@ module.exports = async function (
       if (!record[key]) {  // might be pre-set
         if (typeof attributes[key].input.default == 'function') {
           value = attributes[key].input.default(record);
-        } 
+        }
         else {
-          value = attributes[key].input.default;
+          if (attributes[key].input.default == '!table') {
+            value = table;
+          }
+          else {
+            value = attributes[key].input.default;
+          }
         }
       }
       trace.log({ key: key, value: value, level: 'verbose' });
@@ -583,7 +588,9 @@ module.exports = async function (
           }
         }
         let uploadname = Date.now().toString() + '-' + files[key].name;
+        uploadname=uploadname.replace(/ /g,'_');
         if (attributes[key].input.keepFileName) { uploadname = files[key].name }
+
         files[key].mv(`${rootdir}/public/uploads/${uploadname}`);
         record[key] = uploadname;
         //   let result = await upload(inputs.req, inputs.res, key);

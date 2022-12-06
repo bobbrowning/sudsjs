@@ -108,12 +108,13 @@ async function displayField(attributes, value, children, permission, parent) {
     if (!value && !attributes.collection) return ('');
 
 
-    /** This is not a real field on the database, but itendifies a child column */
+    /** This is not a real field on the database, but identifies a child column */
     trace.log(attributes.collection, children, value)
     if (attributes.collection) {
       let num = children;
 
       if (num == 0) { num = lang.no; }
+      if (num >suds.pageLength) {num=`${lang.moreThan} ${suds.pageLength}`;}
       if (children == 1) {
         display = `${lang.thereIs} ${num} ${attributes.friendlyName} ${lang.row}`;
       }
@@ -122,6 +123,7 @@ async function displayField(attributes, value, children, permission, parent) {
       }
       return (display);
     }
+
 
     /** Some display types have a special routine to display it.  
      * The helper routine is stores in bin/suds/display   */
@@ -162,7 +164,7 @@ async function displayField(attributes, value, children, permission, parent) {
       }
       catch (err) {
         trace.error(`
-        ${attributes.display.type}
+        Loading helper for type: ${attributes.display.type}
         ${err}`)
       }
       if (helper) {

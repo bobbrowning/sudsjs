@@ -7,9 +7,9 @@ This is a database support system I have developed. No coding is required to all
 
 I am a retired software engineer, and this was my project in COVID lockdown to keep my brain active and keep me up to date with modern developments.  I just turned 80 so don't bank on me for long-term support, but I have no plans to check out any time soon. I hope this is useful to maybe give you ideas, or to use in NOSQL familiarisation or just steal the code. If anyone wants to work on this with a view to taking it on and getting it in production and long-term support, please contact me - bob@sudsjs.com.
 
-You can see it in action at [sudsjs.com](http://sudsjs.com).
+You can see it in action at [sudsjs.com](http://sudsjs.com).  
 
-Functions:
+# Functions:
 
 * List / filter / sort tables, 
 * List / Edit / Delete rows. 
@@ -17,46 +17,41 @@ Functions:
 * An administration page,
 * Some starter applications. The test data includes a useable contact management system and website content management system. 
 * This is all controlled by configuration files.
-
-This will:
-* give you a significant head-start for your project;
-* reduce overall development time;
-* provide a test-bed for your planned data structure before you commit resources;
-* provide a system for users to enter data while you are developing the application.
-
-
-SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested with SQLite3, MySQL,  Postgesql and MongoDB (Community edition).  The MongoDB functions support:
+* Works with Mysql, PostgreSQL, SQLite 3, MongoDB, CouchDB
+The NOSQL database support adds
 * Denormalized data.
 * Arbitrarily structured documents - Dictionary items and arrays.
-* variations in the fieldset within  collection. 
+* Variations in the fieldset within collections.
 
-# Setup of the SUDS system plus test data.
+The CouchBD system does not support collections, so the system adds an extra field to each document to simulate this function.
 
-If you plan to test the MongoDB test data, install [MongoDB Community edition](https://www.mongodb.com/docs/manual/administration/install-on-linux/).  Make sure the MongoDB system is running.  If you plan to use the SQLite test data no installation is needed.  
+SUDSjs is new and is in beta testing.  The software plus test data only takes a few minutes to set up on your Linux system. It has been tested
+ 
 
-Install [Node.js](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+# Setup 
 
-Download the zip file from https://github.com/bobbrowning/sudsjs, unzip it and runn a little installation script I wrote. It works in a few seconds with Ubuntu but your mileage may obviously vary.
+Download the zip file from https://github.com/bobbrowning/sudsjs, unzip it...
 ```
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
 unzip master.zip
-bash sudsjs-main/install.sh
+mv sudsjs-main appName
+cd ./appName
+npm install
 
 ```
+The config and tables directories are set up for CouchDB.  Edit config/suds.js to set up the database type and authorisation data. 
 
+To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.
 
-When it asks for an app name provide a suitable name (say myapp).  This will be the directory name in which the app resides.  When it asks, enter 'S' for thre SQLite3 version of the test data, anything else (including 'M' for the MongoDB version.)  The install script runs the application as the final step and you should see 
-```
-SUDS Installed - starting up
-SUDS-Express - starting app.js
-Listening on port 3000: undefined mode
-```
+The tables directory contains the test data schema which are relevant for MongoDB or CouchDB.  Schema for a SQL database are in tables.sql. You will need to retain the user schema and audit schema for the system to work. 
 
-In a browser:  http://localhost:3000  
+# Test data
 
-This will load a website that is managed by SUDSjs and runs on a test SQLite database. It has links to various functions. 
+The SQLite database is included in the download. The dump directtory contains the MongoDB data. Use Mongorestore to restore it.
 
-To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
+The CouchDB test database is in dumpedDB.JSON. Use couchdb-dump (https://github.com/danielebailo/couchdb-dump) to restore it.
+
+ To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
 
 Alternative logins are 
 * gladys@loman.demo password: demo, permission: Purchasing;
@@ -64,7 +59,7 @@ Alternative logins are
 * willy@loman.demo password demo, permission: Sales
 * trainer@demo.demo password demo, permission: Training (MongoDB test set only)
 
-To set up your own superuser, 
+The superuser password is my secret as this is the same database as on the demo site. To set up your own superuser, 
 1. Register a new user (click on Register in the Guest user page)
 1. Change the superuser email  address in the suds.js config file (see below) to the email address of the new user
 1. Now you can create other users.

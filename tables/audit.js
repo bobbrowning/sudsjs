@@ -10,7 +10,7 @@ module.exports = {
 
   permission: { view: ['admin', 'demo'] },
   list: {
-    columns: ['_id', 'createdAt', 'tableName', 'mode', 'row'],
+    columns: [ 'createdAt', 'tableName', 'mode', 'row'],
   },
   standardHeader: true,
   attributes: {

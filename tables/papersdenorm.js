@@ -2,8 +2,9 @@
  * Subjects collection
   */
 
-let db = require('../bin/suds/db-mongo');
-let lookup = require('../bin/suds/lookup-value');
+ let suds = require('../config/suds');
+ let db = require('../bin/suds/'+suds.dbDriver);
+ let lookup = require('../bin/suds/lookup-value');
 
 module.exports = {
    permission: { all: ['admin', 'demo', 'trainer', 'demor', 'demod'] },

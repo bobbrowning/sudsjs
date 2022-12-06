@@ -29,11 +29,11 @@ var port = normalizePort(process.env.PORT || suds.port);
 app.set('port', port);
 
 require('dotenv').config();
+// console.log(process.env);
 /** Establish database connection */
-
 trace.log({driver: './suds/' + suds.dbDriver, level: 'verbose'})
 let db=require('./suds/' + suds.dbDriver);
-trace.log({required: db, level: 'verbose'})
+trace.log({required: db, level: 'verbose'});
 
 db.connect();
 trace.log({connected: suds.dbDriver, level: 'verbose'})

@@ -3,8 +3,8 @@
  * Student table - normalised moned
  * 
  */
- let db = require('../bin/suds/db-mongo');
-
+ let suds = require('../config/suds');
+let db = require('../bin/suds/'+suds.dbDriver);
 module.exports = {
     description: 'Exam results',
 

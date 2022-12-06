@@ -4,7 +4,8 @@
  * @description :: A model definition represents a database table/collection.
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
  */
-let db = require('../bin/suds/db-mongo');
+let suds = require('../config/suds');
+let db = require('../bin/suds/'+suds.dbDriver);
 
 module.exports = {
   friendlyName: 'Sales orders',
@@ -15,7 +16,7 @@ module.exports = {
 
 
   stringify: function (record) {
-    return `Order no:${record._id} - Value: £${record.totalValue}`;
+    return `Total value: £${record.totalValue}`;
   },
 
 
@@ -92,7 +93,8 @@ module.exports = {
       type: 'object',
       stringify: async function (data) {
         let record = await db.getRow('products', data.product);
-        shortname = record.name.substr(0, 40)
+        shortname="Record not found"
+        if (record.name) {shortname = record.name.substr(0, 40)}
         return `${data.units} X ${shortname}`
       },
       object: {

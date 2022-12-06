@@ -20,7 +20,7 @@ module.exports = createField;
 async function createField (key, fieldValue, attributes, errorMsg, mode, record, tableData, tabs) {
 
   trace = require('track-n-trace');
-  trace.log({ inputs: arguments, maxdepth: 2 });
+  trace.log({ inputs: arguments, maxdepth: 4 });
   trace.log({ attributes: attributes })
   const inputFieldTypes = suds.inputFieldTypes;
   trace.log({key: key,types: inputFieldTypes, level: 'iftbug'});

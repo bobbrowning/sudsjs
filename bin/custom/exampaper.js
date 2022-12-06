@@ -9,6 +9,9 @@
 module.exports=  async function (query) {
      trace.log(query);
     let exam=query.parentValue0;
+    if (!exam) {
+        return ([],[])
+    }
     let examDoc = await db.getRow('subjectsdenorm',exam)
     if (examDoc.err) {
         return(['error'],['examDoc.msg'])

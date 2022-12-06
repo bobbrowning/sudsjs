@@ -9,9 +9,25 @@
  */
 
 module.exports = {
+    xcollection: {
+        friendlyName: 'Collection',
+        type: 'string',
+        input: {
+            default: '!table',
+            type: 'hidden',
+        },
+        permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+    },
     _id: {
         friendlyName: 'Document ID',
         primaryKey: true,
+        type: 'string',
+        permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+    },
+    _rev: {
+        friendlyName: 'Document revision',
+        type: 'string',
+        input: {type: 'hidden'}, 
         permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
     },
     createdAt: {

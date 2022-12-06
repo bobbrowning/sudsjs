@@ -12,7 +12,7 @@ let humaniseFieldname = require('./humanise-fieldname');
 let suds = require('../../config/suds');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db = require('./'+suds.dbDriver);
+let db = require('./' + suds.dbDriver);
 
 module.exports = listTable;
 
@@ -70,6 +70,20 @@ async function listTable(
   trace.log({ break: '#', inputs: arguments, level: 'min' });
   trace.log(reportData);
   let attributes = mergeAttributes(table, permission);
+  if (reportData.view && reportData.view.fields) {
+    for (let key of Object.keys(reportData.view.fields)) {
+      reportData.view.fields[key].canView = true;
+      if (!reportData.view.fields[key].input) {reportData.view.fields[key].input = {};}
+      reportData.view.fields[key].process = {};
+      reportData.view.fields[key].display = {};
+      reportData.view.fields[key].type = 'string';
+    }
+    extendedAttributes = { ...attributes, ...reportData.view.fields };
+  }
+  else {
+
+    extendedAttributes = attributes;
+  }
   let tableData = tableDataFunction(table, permission);
   trace.log({ tabledata: tableData, permission: permission, maxdepth: 3 });
   let id = tableData.primaryKey;
@@ -84,20 +98,20 @@ async function listTable(
   let openGroup;
   let searchSpec = {};
   let heading;
-  let headingTip='';
+  let headingTip = '';
 
   let hideEdit = reportData.hideEdit;
   let hideDetails = reportData.hideDetails;
 
   if (reportData.open) { open = reportData.open }
   if (reportData.openGroup) { openGroup = reportData.openGroup }
-  if (reportData.title) {
-    heading = reportData.title;
-    if (reportData.description) {headingTip=reportData.description}
+  if (reportData.friendlyName) {
+    heading = reportData.friendlyName;
+    if (reportData.description) { headingTip = reportData.description }
   }
   else {
     heading = `${lang.listTable} ${tableData.friendlyName}`;
-    headingTip=tableData.description; 
+    headingTip = tableData.description;
   }
   let headingText = '';
   if (reportData.headingText) {
@@ -108,7 +122,10 @@ async function listTable(
 
 
 
-  /* clone search spec */
+  /***
+   *  clone search spec
+   *  embed the view data if their is any...
+   *  */
   if (reportData.search) {
     trace.log(reportData.search)
     searchSpec.andor = reportData.search.andor;
@@ -126,14 +143,15 @@ async function listTable(
             }
       */
     }
-    trace.log(searchSpec) 
+    trace.log(searchSpec)
   }
+  if (reportData.view) { searchSpec.view = reportData.view }
 
   trace.log(searchSpec);
 
   //    if (reportData.open) { open = reportData.open }
   //    if (reportData.openGroup) { openGroup = reportData.openGroup }
-  let columns = Object.keys(attributes);
+  let columns = Object.keys(extendedAttributes);
   if (tableData.list.columns) { columns = tableData.list.columns }
   if (reportData.columns) { columns = reportData.columns }
   if (reportData.sort) {
@@ -146,7 +164,7 @@ async function listTable(
     table: table,
     heading: heading,
     tableData: tableData,
-    attributes: attributes,
+    extendedAttributes: extendedAttributes,
     columns: columns,
     level: 'verbose', maxdepth: 3
   });
@@ -165,7 +183,7 @@ async function listTable(
   if (searchSpec.searches && searchSpec.searches.length) {
     if (!searchSpec.andor) { searchSpec.andor = 'and'; }
     andor = searchSpec.andor;
-    searches = getSearchLink(attributes, searchSpec);
+    searches = getSearchLink(extendedAttributes, searchSpec);
   }
   trace.log(searchSpec);
 
@@ -228,15 +246,19 @@ async function listTable(
   }
   trace.log({ table: table, page: page, limit: limit, offset: offset })
 
-  //  Get field names and attributes
+  //  Get field names and extendedAttributes
   let fieldList = [];
   let i = 0;
   for (let key of columns) {
-    if (!attributes[key]) {
-      console.error(`list-table.js: Listing table ${table} - Unrecognised field ${key} in column list`);
-      continue;
+    if (!extendedAttributes[key]) {
+      trace.error(`
+      list-table.js: Unrecognised field ${key} in column list
+      Listing table: ${table}
+      Parent: ${parent}
+      Report: ${reportData.friendlyName}`);
+      fieldList[i++] = key;
     }
-    if (attributes[key].canView && !attributes[key].collection) {
+    if (extendedAttributes[key].canView && !extendedAttributes[key].collection) {
       fieldList[i++] = key;
     }
   }
@@ -262,7 +284,7 @@ async function listTable(
   let andtest = [];
   for (i = 0; i < searches.length; i++) {
     let searchField = searches[i][0];
-    let attribute=getAttribute(searchField,attributes);
+    let attribute = getAttribute(searchField, extendedAttributes);
     let compare = searches[i][1];
     let value = searches[i][2];
     let displayValue = value;
@@ -317,22 +339,25 @@ async function listTable(
   if (searchText) { searchText += '.<br />' };
 
   // number of rows in the table
-  let count = await db.countRows(table, searchSpec);
+  let count = await db.countRows(table, searchSpec, offset);
   trace.log({ count: count, heading: heading });
 
   if (!defaultSort) {
     let dir = lang.asc;
     if (direction == 'DESC') { dir = lang.desc }
-    trace.log(sortKey, attributes[sortKey]);
+    trace.log(sortKey, extendedAttributes[sortKey]);
     searchText += `
-          ${lang.sortedBy} ${attributes[sortKey].friendlyName} - ${dir}.`;
+          ${lang.sortedBy} ${extendedAttributes[sortKey].friendlyName} - ${dir}.`;
   }
-  if (parent && limit && limit != -1) {
+if (parent && limit && limit != -1) {
     searchText += ` ${lang.limit} ${limit} ${lang.rows}`;
   }
   if (parent && limit != -1 && count > limit) {
-    searchText += ` <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.fullList}</a>`;
+    searchText += ` <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}">${lang.fullList}</a>`;
   }
+  if (extendedAttributes[sortKey].model) {
+    searchText+=`<br /><span style="color:red">(Note: Order is by ${extendedAttributes[sortKey].friendlyName} code not name)</span>`;
+}
 
 
   if (headingText) {
@@ -367,24 +392,35 @@ async function listTable(
   *
   * *********************************************** */
 
-
-
+  let needSearch = true;
+  if (parent) { needSearch = false; }
+  if (reportData.view && !reportData.searchFields) { needSearch = false; }
+  trace.log({ needSearch: needSearch, sf: reportData.searchFields })
   // ------------------------
-  if (!parent) {                                // never provide search for child listing 
+  if (needSearch) {                                // never provide search for child listing 
     /**
      * 
      *  Create a list of fields and then remove those that this user
      *  doesn't have permission to see
      * 
+     * The report may specify which fields to allow searching.
+     * If the report is a CouchDB type view, the list must be one item long with the key field.
+     * 
      */
-    let keys = Object.keys(attributes);
-    for (let k = 0; k < keys.length; k++) {
-      if (attributes[keys[k]].collection) { delete keys[k] ; continue;}
-     if (!attributes[keys[k]].canView) { delete keys[k] ; continue;}
-      if (attributes[keys[k]].type == 'object') { delete keys[k]; continue }
-      if (attributes[keys[k]].array) { delete keys[k] }
+    let keys;
+    if (reportData.searchFields) {
+      keys = reportData.searchFields;
     }
-    keys = keys.filter(Boolean);   // compress array after removing elements...
+    else {
+      keys = Object.keys(extendedAttributes);
+      for (let k = 0; k < keys.length; k++) {
+        if (extendedAttributes[keys[k]].collection) { delete keys[k]; continue; }
+        if (!extendedAttributes[keys[k]].canView) { delete keys[k]; continue; }
+        if (extendedAttributes[keys[k]].type == 'object') { delete keys[k]; continue }
+        if (extendedAttributes[keys[k]].array) { delete keys[k] }
+      }
+      keys = keys.filter(Boolean);   // compress array after removing elements...
+    }
     trace.log(keys);
     /**
      * 
@@ -428,29 +464,31 @@ async function listTable(
     output += `
     var filter= {
 `;
+
     for (let k = 0; k < keys.length; k++) {
       let key = keys[k];
-      let saved_placeholder = attributes[key].input.placeholder;
-      let saved_type = attributes[key].input.type;
-      let saved_width = attributes[key].input.width;
-      let saved_class = attributes[key].input.class;
-      let saved_hidden = attributes[key].input.hidden;
+      trace.log(key,extendedAttributes[key]);
+      let saved_placeholder = extendedAttributes[key].input.placeholder;
+      let saved_type = extendedAttributes[key].input.type;
+      let saved_width = extendedAttributes[key].input.width;
+      let saved_class = extendedAttributes[key].input.class;
+      let saved_hidden = extendedAttributes[key].input.hidden;
 
-      delete attributes[key].input.hidden;
-      attributes[key].input.class = classes.output.search.condition.valueClass;
+      delete extendedAttributes[key].input.hidden;
+      extendedAttributes[key].input.class = classes.output.search.condition.valueClass;
 
       // remove placeholder. The one for the input form may not be appropriate
-      if (suds.search.allwaysText.includes(attributes[key].input.type)) {
-        attributes[key].input.type = 'text';
-        attributes[key].input.width = suds.search.fieldWidth;
-        if (attributes[key].type == 'number') {
-          attributes[key].input.placeholder = lang.enterNumber;
+      if (suds.search.allwaysText.includes(extendedAttributes[key].input.type)) {
+        extendedAttributes[key].input.type = 'text';
+        extendedAttributes[key].input.width = suds.search.fieldWidth;
+        if (extendedAttributes[key].type == 'number') {
+          extendedAttributes[key].input.placeholder = lang.enterNumber;
         }
         else {
-          delete attributes[key].input.placeholder;
+          delete extendedAttributes[key].input.placeholder;
         }
       }
-      trace.log(key, attributes[key].type, attributes[key].input.type);
+      trace.log(key, extendedAttributes[key].type, extendedAttributes[key].input.type);
 
       // compare select depends on field type. defaults to text
       let comp = `
@@ -461,7 +499,7 @@ async function listTable(
          <option value="gt">Higher</option>
         </select>`;
 
-      if (attributes[key].type == 'number' || attributes[key].input.type == 'number') {
+      if (extendedAttributes[key].type == 'number' || extendedAttributes[key].input.type == 'number') {
         comp = `
           <select name="{{compare}}" class="${classes.output.search.select}" >
             <option value="lt">Less than</option>
@@ -472,7 +510,7 @@ async function listTable(
           </select>`;
       }
 
-      if (attributes[key].process && attributes[key].process.JSON) {
+      if (extendedAttributes[key].process && extendedAttributes[key].process.JSON) {
         comp = `
           <select name="{{compare}}" class="${classes.output.search.select}" >
             <option value="includes">Includes</option>
@@ -480,7 +518,7 @@ async function listTable(
       }
 
 
-      if (attributes[key].input.type == 'date') {
+      if (extendedAttributes[key].input.type == 'date') {
         comp = `
           <select name="{{compare}}" class="${classes.output.search.select}" >
           <option value="lt">Before</option>
@@ -491,11 +529,11 @@ async function listTable(
           </select>`;
       }
       // can't have equals because this is to the millisecond...
-      if (attributes[key].type == 'number'
+      if (extendedAttributes[key].type == 'number'
         && (
-          attributes[key].input.type == 'date'
-          || attributes[key].process.createdAt
-          || attributes[key].process.updatedAt
+          extendedAttributes[key].input.type == 'date'
+          || extendedAttributes[key].process.createdAt
+          || extendedAttributes[key].process.updatedAt
         )
       ) {
         comp = `
@@ -503,57 +541,58 @@ async function listTable(
             <option value="lt">Before</option>
             <option value="gt">After</option>
           </select>`;
-        attributes[key].input.type = 'date';
+        extendedAttributes[key].input.type = 'date';
       }
       if (saved_type == 'uploadFile') {
-        attributes[key].input.placeholder = 'Please enter a file name ';
+        extendedAttributes[key].input.placeholder = 'Please enter a file name ';
       }
 
       // Better than a checkbox...
-      if (attributes[key].type == 'boolean') {
-        attributes[key].input.type = 'yesnoRadio';
+      if (extendedAttributes[key].type == 'boolean') {
+        extendedAttributes[key].input.type = 'yesnoRadio';
       }
-      if (attributes[key].type == 'number' && !attributes[key].type == 'date') {
-        attributes[key].input.type = 'number';
-        attributes[key].input.width = suds.search.fieldWidth;
+      if (extendedAttributes[key].type == 'number' && !extendedAttributes[key].type == 'date') {
+        extendedAttributes[key].input.type = 'number';
+        extendedAttributes[key].input.width = suds.search.fieldWidth;
       }
-      if (attributes[key].process.updatedBy) {
-        attributes[key].input.type = 'autocomplete';
-        attributes[key].input.width = '80%';
-        attributes[key].input.search = 'fullName';
-        attributes[key].input.placeholder = 'Number or type name';
+      if (extendedAttributes[key].process.updatedBy) {
+        extendedAttributes[key].input.type = 'autocomplete';
+        extendedAttributes[key].input.width = '80%';
+        extendedAttributes[key].input.search = 'fullName';
+        extendedAttributes[key].input.placeholder = 'Number or type name';
       }
       // some types do not require a compare option 
-      if (suds.search.allwaysEquals.includes(attributes[key].input.type)) {
+      if (suds.search.allwaysEquals.includes(extendedAttributes[key].input.type)) {
         comp = `<input type="hidden" name="{{compare}}" value="eq">is`;
       }
 
-      if (attributes[key].process && attributes[key].process.JSON) {
+      if (extendedAttributes[key].process && extendedAttributes[key].process.JSON) {
         comp = `<input type="hidden" name="{{compare}}" value="includes">includes`;
-        attributes[key].input.type = 'select';
+        extendedAttributes[key].input.type = 'select';
 
       }
-      let [field, headerTags] = await createField(key, '', attributes[key], '', 'search', {}, tableData);
-      trace.log({ key: key, changed: attributes[key].input, level: 'verbose' });
+      trace.log(extendedAttributes[key]);
+      let [field, headerTags] = await createField(key, '', extendedAttributes[key], '', 'search', {}, tableData);
+      trace.log({ key: key, changed: extendedAttributes[key].input, level: 'verbose' });
 
-      /* restore the attributes we have changed */
+      /* restore the extendedAttributes we have changed */
 
-      attributes[key].input.class = saved_class;
+      extendedAttributes[key].input.class = saved_class;
       if (saved_placeholder) {
-        attributes[key].input.placeholder = saved_placeholder;
+        extendedAttributes[key].input.placeholder = saved_placeholder;
       }
-      delete attributes[key].input.width;
+      delete extendedAttributes[key].input.width;
       if (saved_width) {
-        attributes[key].input.width = saved_width;
+        extendedAttributes[key].input.width = saved_width;
       }
       if (saved_hidden) {
-        attributes[key].input.hidden = saved_hidden;
+        extendedAttributes[key].input.hidden = saved_hidden;
       }
-      attributes[key].input.type = saved_type;
+      extendedAttributes[key].input.type = saved_type;
 
-      trace.log({ restored: attributes[key].input, level: 'verbose' });
+      trace.log({ restored: extendedAttributes[key].input, level: 'verbose' });
       trace.log({ key: key, field: field, level: 'norm' });
-      if (field.includes('</script>') ) {continue}    
+      if (field.includes('</script>')) { continue }
       output += `
         // ------------------- ${key} function---------------------     
         ${key}: function () {  
@@ -561,7 +600,7 @@ async function listTable(
                let comp=\`${comp}\`;  
                return [comp,field];
              },`;
-      trace.log(key, attributes[key].type, attributes[key].input.type);
+      trace.log(key, extendedAttributes[key].type, extendedAttributes[key].input.type);
     }
 
     output += `
@@ -704,7 +743,7 @@ async function listTable(
     for (let key of keys) {
       output += `
           <option value="${key}">
-            ${attributes[key].friendlyName}
+            ${extendedAttributes[key].friendlyName}
           </option>`
     }
     output += `
@@ -813,26 +852,28 @@ async function listTable(
   }   // end of search box 
 
 
-      /* ************************************************
-    *
-    *  Sort direction
-    *
-    ************************************************ */
+  /* ************************************************
+*
+*  Sort direction
+*
+************************************************ */
+  let sortable = true;
+  if (parent) { sortable = false; }
+  if (reportData.view) { sortable = false }
+  let sortdirection;
+  if (sortKey == tableData.primaryKey) {
+    sortdirection = `${sortKey} ${direction}`;
+  }
+  else {
+    sortdirection = [];
+    sortdirection[0] = {};
+    sortdirection[0][sortKey] = direction;
+    sortdirection[1] = {};
+    sortdirection[1][tableData.primaryKey] = 'ASC';            //    tie-breaker in case multiple values of sort
+  }
+  trace.log({ sortdirection: sortdirection });
 
-      let sortdirection;
-      if (sortKey == tableData.primaryKey) {
-        sortdirection = `${sortKey} ${direction}`;
-      }
-      else {
-        sortdirection = [];
-        sortdirection[0] = {};
-        sortdirection[0][sortKey] = direction;
-        sortdirection[1] = {};
-        sortdirection[1][tableData.primaryKey] = 'ASC';            //    tie-breaker in case multiple values of sort
-      }
-      trace.log({ sortdirection: sortdirection });
-  
-  
+
   /* ************************************************
    *
    *  Create output
@@ -874,32 +915,32 @@ async function listTable(
 
       //   database field
       else {
-        if (attributes[key].description) description = attributes[key].description;
+        if (extendedAttributes[key].description) description = extendedAttributes[key].description;
         let thisdirection = 'ASC';
         if (key == sortKey && direction == 'ASC') { thisdirection = 'DESC' }
         output += `
             <span title="${description}">`;
-        if (!parent) {
+        if (sortable) {
           output += `        
                 <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${key}&direction=${thisdirection}">`;
         }
-        let tableHeading = attributes[key].friendlyName;
-        if (key == sortKey && !defaultSort ) {
-          if (direction== 'ASC') {
-             tableHeading+='&nbsp;'+lang.arrowUp;         }
-          else
-          {
-           tableHeading+='&nbsp;'+lang.arrowDown;
+        let tableHeading = extendedAttributes[key].friendlyName;
+        if (key == sortKey && !defaultSort) {
+          if (direction == 'ASC') {
+            tableHeading += '&nbsp;' + lang.arrowUp;
+          }
+          else {
+            tableHeading += '&nbsp;' + lang.arrowDown;
 
           }
         }
 
 
-        if (attributes[key].display.tableHeading) { tableHeading = attributes[key].display.tableHeading }
+        if (extendedAttributes[key].display.tableHeading) { tableHeading = extendedAttributes[key].display.tableHeading }
         output += `
                  ${tableHeading}`;
 
-        if (!parent) {
+        if (sortable) {
           output += `
                </a>`;
         }
@@ -928,7 +969,7 @@ async function listTable(
     ************************************************ */
 
     let records = await db.getRows(table, searchSpec, offset, limit, sortKey, direction);
-    trace.log({ offset: offset, page: page, records: records , length: records.length});
+    trace.log({ offset: offset, page: page, records: records, length: records.length });
     /*
     if (page == 1 && records.length==1) {
       let output=`<script>window.location="${suds.mainPage}?table=${table}&id=${records[0][tableData.primaryKey]}&mode=listrow"</script>`;
@@ -946,8 +987,8 @@ async function listTable(
       for (let j = 0; j < fieldList.length; j++) {
         let key = fieldList[j];
         let maxWidth = '';
-        if (attributes[key].display.maxWidth) {
-          maxWidth = attributes[key].display.maxWidth;
+        if (extendedAttributes[key].display.maxWidth) {
+          maxWidth = extendedAttributes[key].display.maxWidth;
         }
         let display;
         // virtual field
@@ -959,27 +1000,27 @@ async function listTable(
         else {
 
 
-          trace.log({ key: key, attributes: attributes[key], level: 'verbose' });
-          let attr = attributes[key];
+          trace.log({ key: key, extendedAttributes: extendedAttributes[key], level: 'verbose' });
+          let attr = extendedAttributes[key];
           let val = record[key]
-         display = await displayField(attr, val);
-          trace.log({ key: key, attributes: attributes[key], level: 'silly' });
+          display = await displayField(attr, val);
+          trace.log({ key: key, extendedAttributes: extendedAttributes[key], level: 'silly' });
 
           if (display == null) { display = ''; }
-          if (attributes[key].display && attributes[key].display.width) {
-            width = attributes[key].display.width;
+          if (extendedAttributes[key].display && extendedAttributes[key].display.width) {
+            width = extendedAttributes[key].display.width;
           }
           else {
             width = '';
           }
-          trace.log(key, attributes[key].display.type, attributes[key].display.truncateForTableList);
-          if (attributes[key].display.truncateForTableList
-            && display.length > attributes[key].display.truncateForTableList) {
+          trace.log(key, extendedAttributes[key].display.type, extendedAttributes[key].display.truncateForTableList);
+          if (extendedAttributes[key].display.truncateForTableList
+            && display.length > extendedAttributes[key].display.truncateForTableList) {
             // remove embedded images
             display = sanitizeHtml(display, {
-              allowedTags: [], allowedAttributes: {},
+              allowedTags: [], allowedextendedAttributes: {},
             });
-            display = display.substring(0, attributes[key].display.truncateForTableList) + ' ...';
+            display = display.substring(0, extendedAttributes[key].display.truncateForTableList) + ' ...';
           }
 
           trace.log('id:', record.id, ' field width: ', width, { level: 'verbose' });
@@ -988,7 +1029,7 @@ async function listTable(
           <TD style="max-width: ${maxWidth}">${display}</TD>`;
         }
       }
-      trace.log(i,tableData.canEdit);
+      trace.log(i, tableData.canEdit);
 
       //  link to detail line 
       if ((tableData.canEdit && !hideEdit) || !hideDetails) {
@@ -997,14 +1038,14 @@ async function listTable(
       }
       trace.log(tableData.primaryKey, record[tableData.primaryKey])
       let target;
-      if (suds.dbtype == 'nosql'){
-        target=db.stringifyId(record[tableData.primaryKey])
+      if (suds.dbtype == 'nosql') {
+        target = db.stringifyId(record[tableData.primaryKey])
       }
       else {
-        target=record[tableData.primaryKey];
+        target = record[tableData.primaryKey];
       }
 
-      trace.log(i,records.length);
+      trace.log(i, records.length);
 
       if (!hideDetails) {
         output += `
@@ -1021,7 +1062,7 @@ async function listTable(
       }
       output += `
       </tr>`;
-     }
+    }
 
     /* ************************************************
     *
@@ -1040,14 +1081,22 @@ async function listTable(
     /*** No pagination for child lists */
     if (parent) {
       if (limit != -1 && count > limit) {
-        next = `<a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}=">${lang.more}</a>`;
+        next = `<a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}">${lang.more}</a>`;
       }
     }
     else {
       if (page > 1) {   // Not the first page, can't be a child listing
         prev = `<a href="${suds.mainPage}?table=${table}&mode=list&page=${page - 1}&sortkey=${sortKey}&direction=${direction}">${lang.prev}</a>`;
       }
-      if (count > limit * page) {
+      let anotherPage = false;
+      if (suds.database.countable) {
+        if (limit * page <= count) { anotherPage = true; }
+      }
+      else {
+        if (limit <= count) { anotherPage = true; }
+      }
+      trace.log({ countable: suds.database.countable, limit: limit, page: page, count: count, another: anotherPage });
+      if (anotherPage) {
         next = `<a href="${suds.mainPage}?table=${table}&mode=list&page=${page + 1}&sortkey=${sortKey}&direction=${direction}">${lang.next}</a>`;
       }
     }

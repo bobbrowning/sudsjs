@@ -10,20 +10,20 @@ module.exports = {
    *
    ***************************************************** */
 
-  title: 'SUDS test database - MongoDB version',
+  title: 'SUDS test database',
 
   description: `This is a sample test database to illustrate the main features of SUDS.
   It is not meant to be realistic, as a real system you have more complex data than we 
   have here. It is designed to illustrate the main features of the SUDS system.
 
-  This is the version for MongoDB Community edition
   `,
 
 
   versionHistory: [
     { version: '1.0.0', date: '2021-08-20', author: 'Bob', description: 'Initial test database' },
-    { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'MongoDB compatible version' },
+    { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'cassandra compatible version' },
     { version: '2.1.1', date: '2022-09-01', author: 'Bob', description: 'Bugs fixed' },
+    { version: '2.2.0', date: '2022-10-13', author: 'Bob', description: 'Bugs fixed' },
   ],
 
   /** **********************************************
@@ -53,6 +53,7 @@ module.exports = {
     configreport: '../bin/suds/configreport',
     login: '../bin/suds/login',                      // e.g. http://localhost:3000/login results in bin/suds/login.js being run.
     changepw: '../bin/suds/change-password',
+    restore: '../bin/suds/restore',
     resetpw: '../bin/suds/reset-password',
     auto: '../bin/suds/api/autocomplete',
     lookup: '../bin/suds/api/lookup',
@@ -100,7 +101,7 @@ module.exports = {
    *  The generic database driver is db.js. The database object set below
    * is used to initialise the knex library when the software is loaded. 
    * See knex documentation for details https://knexjs.org/#Installation-client
-   * MongoDB uses a different driver db-mongo.js
+   * cassandra uses a different driver db-mongo.js
    * 
    *********************************************** */
 
@@ -118,23 +119,81 @@ module.exports = {
       filename: './suds.db',
     },
     useNullAsDefault: true,
+    countable: true,
   },
 */
 
-  /** **************** MongoDB configuration ***************
-   * 
-   * 
-   * 
 
-*/
-  dbDriver: 'db-mongo.js',
-  dbDriverKey: 'objectId',
-  caseInsensitive: true,
-  dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+  /** ******************* Firebase configuration *********
+   * 
+   *
+   dbDriver: 'db-firestore.js',
+   dbkey: 'string',
+   database: {
+       keyFile: 'sudsjs-1cd54-ca7b09319aac.json',
+       countable: false,
+   },
+  */
+
+
+  /** ******************* Cassandra configuration *********
+   * 
+   *      ** under development ******
+   * 
+   *
+  dbDriver: 'db-cassandra.js',
+  dbkey: 'string',
   database: {
-    uri: `mongodb://localhost:27017`,
-    name: 'suds',
+    clientData: {
+      contactPoints: ['127.0.0.1:9042'],
+      localDataCenter: 'datacenter1',
+      keyspace: 'sudsjs',
+    },
+    countable: false,
+    auth: {
+      user: 'suds',
+      password: 'suds',
+    }
   },
+*/
+
+  /** ******************* Couchdb configuration *********
+     * 
+     *      ** under development ******
+     * 
+     *
+  */
+  dbDriver: 'db-couchdb.js',
+  dbkey: 'string',
+  dbDriverName: 'CouchDB',
+  database: {
+    database: 'sudsjs',
+    auth: {
+      user: 'suds',
+      password: 'suds',
+    },
+    requestDefaults: {},
+    countable: false,
+  },
+
+
+
+  /** **************** cassandra configuration ***************
+    * 
+    *  don't forget the primary key in the security -> autorisation object needs changing
+    *  also the tables directory needs to be swapped for the cassandra set...
+ 
+   dbDriver: 'db-mongo.js',
+   dbDriverKey: 'objectId',
+   caseInsensitive: true,
+   dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+   database: {
+     uri: `cassandra://localhost:27017`,
+     name: 'suds',
+   },
+ */
+
+
 
 
   /** *********   Postgresql config ***************************
@@ -151,6 +210,7 @@ module.exports = {
        user: 'postgres',
        password: 'xxxxxxxxx',
        database: 'suds',
+       countable: true,
      },
    },
   
@@ -166,26 +226,12 @@ module.exports = {
           user: 'bob',
           password: 'xxxxxxxxxx',
           database: 'suds',
+          countable: true,
         },
       },
   */
 
 
-/** ******************* Firestore configuration *********
- * 
- * This database works after a fashion but the driver 
- * is incomplete.  Firestore lacks the database functions
- * that SUDSJS needs. There are workarounds, but they tend to 
- * involve downloading s bunch of data and processing it ourselves.
- * 
- * 
- 
- dbDriver: 'db-firestore.js',
- dbkey: 'string',
- database: {
-     keyFile: 'sudsjs-1cd54-xxxxxxxxxxx.json',
- },
-*/
 
 
   /** List of tables in the database.. */
@@ -206,7 +252,7 @@ module.exports = {
     'subjects',
     'subjectsdenorm',
     'papers',
- //   'papersdenorm',
+    //   'papersdenorm',
     'studentdenorm',
     'studentsubschema',
     'subschema',
@@ -280,7 +326,7 @@ module.exports = {
   authorisation: {
     table: 'user',
     /** Columns in authorisation table */
-    primaryKey: '_id',                            /* *********** change to _id for mongodb, id otherwise ******************* */
+    primaryKey: '_id',                            /* *********** change to _id for cassandra, id otherwise ******************* */
     passwordHash: 'password',
     salt: 'salt',
     permissionSet: 'permission',
@@ -297,7 +343,10 @@ module.exports = {
   forgottenPasswordOptions: {
     from: 'info@sudsjs.com',
     subject: 'Password Reset',
-    text: `A request was made for a new password for your account. 
+    text: `A request was made
+    
+    
+    for a new password for your account. 
     If this was not you please ignore this email. 
     To set up a new password, go to http://sudsjs.com/resetpw?user={{user}}.
     Enter this code {{token}} plus your new password.`,
@@ -328,21 +377,21 @@ module.exports = {
   },
 
 
-/** This creates a log using the morgan middleware.  https://www.npmjs.com/package/morgan for details.
- *  This example will create a combined apache log in the base directory of the app (for those of a nostalgic disposition).  
- *  There are a number of different predefined formats.  
- *  The system currently does not support tokens or custom format functions. 
- *  Commented out on the demo system
-   
+  /** This creates a log using the morgan middleware.  https://www.npmjs.com/package/morgan for details.
+   *  This example will create a combined apache log in the base directory of the app (for those of a nostalgic disposition).  
+   *  There are a number of different predefined formats.  
+   *  The system currently does not support tokens or custom format functions. 
+   *  Commented out on the demo system
+     
+    morgan: {
+       format: 'common',
+       file: 'apachelog.log',
+    },
+  
+  */
   morgan: {
-     format: 'common',
-     file: 'apachelog.log',
+    format: 'dev',
   },
-
-*/
-morgan: {
-  format: 'dev',
-},
 
 
   /** You can block specific IPs or emails from using the system... A bit basic at present... 
@@ -626,6 +675,7 @@ bottom bar.`,
   /** The system is not tested with other view engines. But changing this
    * would call a different engine to be called.  See the following for a comp,ete list
    *  https://expressjs.com/en/resources/template-engines.html
+   * 
    * 
    * List the views used below.
    * 
