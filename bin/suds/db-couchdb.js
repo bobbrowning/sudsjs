@@ -61,7 +61,7 @@ let nano;
 
 async function connect() {
 
-  let auth = suds.database.auth;
+  let auth = require('../../local/auth');
   suds.dbType = 'nosql';
   try {
     const opts = {

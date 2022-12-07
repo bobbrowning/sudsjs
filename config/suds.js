@@ -130,7 +130,7 @@ module.exports = {
    dbDriver: 'db-firestore.js',
    dbkey: 'string',
    database: {
-       keyFile: 'sudsjs-1cd54-ca7b09319aac.json',
+       keyFile: 'sudsjs-************.json',
        countable: false,
    },
   */
@@ -151,11 +151,10 @@ module.exports = {
     },
     countable: false,
     auth: {
-      user: 'suds',
-      password: 'suds',
+      user: '***',
+      password: '***',
     }
-  },
-*/
+  },*/
 
   /** ******************* Couchdb configuration *********
      * 
@@ -168,10 +167,6 @@ module.exports = {
   dbDriverName: 'CouchDB',
   database: {
     database: 'sudsjs',
-    auth: {
-      user: 'suds',
-      password: 'suds',
-    },
     requestDefaults: {},
     countable: false,
   },
