@@ -26,20 +26,52 @@ module.exports = {
   productSales: {
     table: 'salesorders',
     friendlyName: 'Products sales',
+  //  searchFields: ['product'],   // Not available for multiple keys
+    columns: ['product','date', 'id','customer', 'units', 'price', 'total'],
+     view: {
+      design: 'reports',
+      view: 'productSales',
+      key: ['product','date'],
+     params: {
+      },
+      /** Additional fields not in salesorder schema */
+      fields: {
+         product: {
+          type: 'string',
+          friendlyName: 'Product',
+          model: 'products',
+          input: { type: 'select' }
+        },
+        id: {
+          friendlyName: 'Sales order',
+          type: 'string',
+          model: 'salesorders',
+        },
+        units: { type: 'string' ,           friendlyName: 'Units' },
+        price: { type: 'number' ,         friendlyName: 'Price'  },
+        total: { type: 'number' ,        friendlyName: 'Total'  },
+      }
+    }
+  },
+
+  salesByProduct: {
+    table: 'products',
+    friendlyName: 'Products sales by month',
     searchFields: ['product'],
     sort: ['product','ASC'],
     view: {
       design: 'reports',
-      view: 'productSales',
+      view: 'salesbyproduct',
     },
-    columns: ['product', 'order', 'units', 'price', 'total'],
+    columns: ['product',  'total'],
     view: {
       design: 'reports',
-      view: 'productSales',
+      view: 'salesbyproduct',
+      reduced: true,
       params: {
       },
       fields: {
-        product: {
+         product: {
           type: 'string',
           friendlyName: 'Product',
           model: 'products',
@@ -56,7 +88,6 @@ module.exports = {
       }
     }
   },
-
 
 
   allSubjects: {
@@ -77,12 +108,13 @@ module.exports = {
   },
 
   resultsdenorm: {
-    table: 'subjectsdenorm',
+    table: 'studentdenorm',
     friendlyName: 'Results by subject (Denormalized data)',
     searchFields: ['subject'],
     view: {
       design: 'reports',
       view: 'results',
+      key: 'subject',
       params: {
       },
       fields: {

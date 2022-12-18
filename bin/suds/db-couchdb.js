@@ -470,9 +470,9 @@ async function countRows(table, spec, offset) {
  * @returns {number} Record count
  */
 async function totalRows(table, spec, col) {
- let result=0;
-  let records=getRows(table,spec);
-  for (const i=0; i<records.length;i++) {result+=records[i][col]}
+  let result = 0;
+  let records = getRows(table, spec);
+  for (const i = 0; i < records.length; i++) { result += records[i][col] }
   return result;
 }
 
@@ -685,7 +685,8 @@ async function updateRow(table, record, subschemas, additionalAttributes) {
 async function getRow(table, val, col) {
   trace.log({ inputs: arguments })
   if (!val) {
-    throw new Error(`Attempt to read undefined record on ${table}`);
+    trace.error(`Attempt to read undefined record on ${table}`);
+    return { err: 1, msg: 'Record not found' }
   }
 
   let tableData = tableDataFunction(table);
@@ -814,15 +815,21 @@ async function getView(table, spec, offset, limit, sortKey, direction,) {
   trace.log({ input: arguments });
   if (!limit && spec.limit) { limit = spec.limit }
   let rows = {};
-  let options={};
-  if (spec.view.params) {options=spec.view.params}
- 
+  let options = {};
+  if (spec.view.params) { options = spec.view.params }
+
   if (spec && spec.searches && spec.searches.length) {
     if (spec.searches.length != 1) {
       trace.warning('Searches on a view can only have one item');
     }
     else {
-      options['key']=spec.searches[0][2];
+      if (typeof spec.view.key == 'string') {
+      options['key'] = spec.searches[0][2];
+      }
+      else{
+         options['startkey']=[spec.searches[0][2],''];
+         options['endkey']=[spec.searches[0][2],'zzzzzzzzzzzzzz'];
+      }
     }
   }
 
@@ -837,16 +844,23 @@ async function getView(table, spec, offset, limit, sortKey, direction,) {
   if (offset) {
     options['skip'] = offset;
   }
-  trace.log(options);
-  rows = []
+  trace.log(options, spec.view.tableVia);
+  rows = [];
   let result = await db.view(spec.view.design, spec.view.view, options);
   trace.log({ result: result });
   for (let i = 0; i < result.rows.length; i++) {
     rows[i] = result.rows[i].value;
-    rows[i]._id = result.rows[i].id;
-    if (sortKey) {
-      rows[i][sortKey] = result.rows[i].key;
+    if (spec.view.key) {
+      if (typeof spec.view.key == 'string'){
+      rows[i][spec.view.key] = result.rows[i].key;
+      }
+      else{
+        for (let j=0;j<spec.view.key.length; j++){
+          rows[i][spec.view.key[j]] = result.rows[i].key[j];
+        }
+      }
     }
+    rows[i]._id = rows[i].id = result.rows[i].id;
   }
   trace.log(rows);
 

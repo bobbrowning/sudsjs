@@ -16,7 +16,7 @@ module.exports = {
 
 
   stringify: function (record) {
-    return `Total value: £${record.totalValue}`;
+    return `Date: ${record.date} Value: £${record.totalValue}`;
   },
 
 

@@ -158,7 +158,7 @@ module.exports = {
 
   /** ******************* Couchdb configuration *********
      * 
-     *      ** under development ******
+     *     The authorisation codes are stored in local/auth.js
      * 
      *
   */

@@ -79,6 +79,7 @@ module.exports = {
     links: [
       {report: 'outstandingOrders', title: 'Outstanding orders'},
       { table: 'salesorders', title: 'All sales orders', },
+      { report: 'productSales',title: 'Sales per product' },
       { table: 'products', },
       { report: 'customers', title: 'All customers' },
     ],
@@ -153,6 +154,7 @@ views: {
     { report: 'allUsers',title: 'User list' },
     { report: 'resultsdenorm',title: 'Results' },
     { report: 'productSales',title: 'Product sales' },
+    { report: 'salesByProduct',title: 'Monthly sales' },
   ],
 },
   //  Setup / admin section

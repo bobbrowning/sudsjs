@@ -50,7 +50,7 @@ module.exports = {
   },
 
   list: {
-    columns: ['name', 'supplier', 'productGroup'],
+    columns: ['_id','name', 'supplier', 'productGroup'],
   },
 
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },

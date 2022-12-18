@@ -69,14 +69,15 @@ async function listTable(
   const sanitizeHtml = require('sanitize-html');
   trace.log({ break: '#', inputs: arguments, level: 'min' });
   trace.log(reportData);
+  let extendedAttributes;
   let attributes = mergeAttributes(table, permission);
   if (reportData.view && reportData.view.fields) {
     for (let key of Object.keys(reportData.view.fields)) {
       reportData.view.fields[key].canView = true;
-      if (!reportData.view.fields[key].input) {reportData.view.fields[key].input = {};}
-      reportData.view.fields[key].process = {};
-      reportData.view.fields[key].display = {};
-      reportData.view.fields[key].type = 'string';
+      if (!reportData.view.fields[key].input)   {reportData.view.fields[key].input = {};}
+      if (!reportData.view.fields[key].process)  {reportData.view.fields[key].process = {};}
+      if (!reportData.view.fields[key].display) {reportData.view.fields[key].display = {};}
+      if (!reportData.view.fields[key].type)    {reportData.view.fields[key].type = 'string';}
     }
     extendedAttributes = { ...attributes, ...reportData.view.fields };
   }
@@ -750,6 +751,7 @@ if (parent && limit && limit != -1) {
         </select>
        \`;
         let selectdiv='select_'+num;
+        if (debug) console.log(select);
        document.getElementById(selectdiv).innerHTML=select;
        return ;
     }`;
