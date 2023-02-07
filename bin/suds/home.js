@@ -19,14 +19,19 @@ trace = require('track-n-trace');
 const suds = require('../../config/suds');
 var mergeAttributes = require('./merge-attributes');
 var hasPermission = require('./has-permission');
-let db = require('./'+suds.dbDriver);
+let db = require('./db');
 const fs = require('fs');
+const { databases } = require('../../config/suds');
 module.exports = async function (req, permission) {
   trace.log('SUDS Home page', { break: '#', level: 'min' });  // Distinctive break on trace
 
   //  Get data 
   const lang = req.app.locals.language.EN;  // Contains text used in headings etc.
-  const home = req.app.locals.home;
+ 
+  let home=require(`../../config/${suds[suds.dbDriver].homepage}`);
+  //const home = req.app.locals.home;
+ 
+ 
   let mainPage = req.app.locals.suds.mainPage;                // suds.js - home object
   let output = '';                                      // page content assembled here
 
@@ -248,6 +253,24 @@ module.exports = async function (req, permission) {
        */
       if (type == 'user') {
         trace.log({ user: req.session.userId, link: link });
+ 
+        if (link == 'switchdb') {
+          output += `
+          Current database is ${suds[suds.dbDriver].friendlyName}
+          <form action="/switchdb">
+          <select name="newdb">`
+          for (let db of suds.databases) {
+            if (db == suds.dbDriver) {continue}
+            output+=`<option value="${db}">${suds[db].friendlyName}</option>`
+          }
+          output+=`
+          </select>
+           <button type="submit" class="btn btn-secondary btn-sm">Switch</button>   
+          </form>`;
+
+
+        }
+ 
         if (link == 'lastValidate') {
           trace.log('lastValidation');
           try {

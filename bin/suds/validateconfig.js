@@ -9,9 +9,9 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 const fs = require('fs');
-const standardHeader = require('../../config/standard-header');
+const standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader];
 
 module.exports = async function (req, res) {
     console.log(__dirname);
@@ -113,12 +113,13 @@ module.exports = async function (req, res) {
         'dbDriverKey',
         'dbDriverName',
         'caseInsensitive',
+        'databases',
      ];
     console.log('Checking suds.js: '); 
     for (let key of Object.keys(suds)) {
         console.log('- checking : ', key);
         item = suds[key];
-        if (!validSections.includes(key)) {
+        if (!(validSections.includes(key) || suds.databases.includes(key))) {
             seterror(`In suds.js: 
         ${key} is not  valid item`);
         }

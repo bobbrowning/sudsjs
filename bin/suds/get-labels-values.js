@@ -6,7 +6,7 @@
 const { trace } = require('console');
 let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 
 module.exports = async function (attributes, record) {
   let trace = require('track-n-trace');

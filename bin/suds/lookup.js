@@ -3,7 +3,7 @@ let suds = require('../../config/suds');
 let tableDataFunction = require('./table-data');
 let lang = require('../../config/language')['EN'];
 let trace = require('track-n-trace');
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 
 const friendlyName = 'Look up text corresponding to field value';
 const description = `Looks up the value in a values object in the table 
@@ -34,7 +34,7 @@ module.exports =
       if (value && value != 'NaN' && value != '0') {
         let tableData = tableDataFunction(attributes.model);
         if (tableData.stringify) {
-          trace.log(attributes.model,tableData.stringify);
+          trace.log({table:attributes.model,value: value,stringify: tableData.stringify});
           let record = await db.getRow(attributes.model, value);     // linked parent record
           trace.log(record);
           if (record.err) {

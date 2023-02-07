@@ -12,7 +12,7 @@ let humaniseFieldname = require('./humanise-fieldname');
 let suds = require('../../config/suds');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 
 module.exports = listTable;
 
@@ -86,7 +86,7 @@ async function listTable(
     extendedAttributes = attributes;
   }
   let tableData = tableDataFunction(table, permission);
-  trace.log({ tabledata: tableData, permission: permission, maxdepth: 3 });
+  trace.log({ tabledata: tableData, permission: permission, maxdepth: 4 });
   let id = tableData.primaryKey;
   if (!id) { id = 'id'; }
   if (!tableData.canView) {
@@ -153,8 +153,11 @@ async function listTable(
   //    if (reportData.open) { open = reportData.open }
   //    if (reportData.openGroup) { openGroup = reportData.openGroup }
   let columns = Object.keys(extendedAttributes);
+  trace.log(columns)
   if (tableData.list.columns) { columns = tableData.list.columns }
+  trace.log(columns)
   if (reportData.columns) { columns = reportData.columns }
+  trace.log(columns)
   if (reportData.sort) {
     sortKey = reportData.sort[0];
     direction = reportData.sort[1];
@@ -245,19 +248,20 @@ async function listTable(
     limit = pageLength;                          // number of records to print
     offset = (page - 1) * limit;               // number of records to offset
   }
-  trace.log({ table: table, page: page, limit: limit, offset: offset })
+  trace.log({ table: table, page: page, limit: limit, offset: offset , columns:columns})
 
   //  Get field names and extendedAttributes
   let fieldList = [];
   let i = 0;
   for (let key of columns) {
     if (!extendedAttributes[key]) {
-      trace.error(`
-      list-table.js: Unrecognised field ${key} in column list
+      console.log(`
+      Unrecognised field ${key} in column list
       Listing table: ${table}
       Parent: ${parent}
-      Report: ${reportData.friendlyName}`);
-      fieldList[i++] = key;
+      Report: ${reportData.friendlyName}`,
+      trace.line('s'));
+      process.exit();
     }
     if (extendedAttributes[key].canView && !extendedAttributes[key].collection) {
       fieldList[i++] = key;
@@ -727,7 +731,7 @@ if (parent && limit && limit != -1) {
     output += `
 
     function createFieldSelect() {
-      debug=false;
+      debug=true;
       if (debug) {console.log('createFieldSelect',num);}
       if (num >0) {
         let anyData=anyDataCheck();  // check that the last condition has been entered
@@ -1051,12 +1055,26 @@ if (parent && limit && limit != -1) {
 
       if (!hideDetails) {
         output += `
-         <a href="${suds.mainPage}?table=${table}&mode=listrow&id=${target}" title="${lang.listRowHelpView}">${lang.TableListRow}</a>
+        <span id="spinnerv${i}" style="display: none">${lang.spinner}</span>
+         <a href="${suds.mainPage}?table=${table}&mode=listrow&id=${target}" 
+         title="${lang.listRowHelpView}"
+         id="view${i}"
+         onclick="document.getElementById('spinnerv${i}').style.display='inline'; document.getElementById('view${i}').style.display='none'"
+         >
+            ${lang.TableListRow}
+         </a>
 &nbsp;`;
       }
       if (tableData.canEdit && !hideEdit) {
         output += `
-                     <a href="${suds.mainPage}?table=${table}&mode=populate&id=${target}" title="${lang.listRowHelpEdit}">${lang.TableEditRow}</a>`;
+                    <span id="spinnere${i}" style="display: none">${lang.spinner}</span>
+                    <a href="${suds.mainPage}?table=${table}&mode=populate&id=${target}" 
+                    title="${lang.listRowHelpEdit}"
+                    id="edit${i}"
+                    onclick="document.getElementById('spinnere${i}').style.display='inline'; document.getElementById('edit${i}').style.display='none'"
+                              >
+                    ${lang.TableEditRow}
+                    </a>`;
       }
       if ((tableData.canEdit && !hideEdit) || !hideDetails) {
         output += `
@@ -1091,13 +1109,13 @@ if (parent && limit && limit != -1) {
         prev = `<a href="${suds.mainPage}?table=${table}&mode=list&page=${page - 1}&sortkey=${sortKey}&direction=${direction}">${lang.prev}</a>`;
       }
       let anotherPage = false;
-      if (suds.database.countable) {
+      if (suds[suds.dbDriver].countable) {
         if (limit * page <= count) { anotherPage = true; }
       }
       else {
         if (limit <= count) { anotherPage = true; }
       }
-      trace.log({ countable: suds.database.countable, limit: limit, page: page, count: count, another: anotherPage });
+      trace.log({ countable: suds[suds.dbDriver].countable, limit: limit, page: page, count: count, another: anotherPage });
       if (anotherPage) {
         next = `<a href="${suds.mainPage}?table=${table}&mode=list&page=${page + 1}&sortkey=${sortKey}&direction=${direction}">${lang.next}</a>`;
       }

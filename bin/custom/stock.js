@@ -11,7 +11,7 @@
  */
 
  let suds = require('../../config/suds');
- let db = require('../suds/'+suds.dbDriver);
+ let db = require('../suds/db');
  let trace = require('track-n-trace');
 
 

@@ -9,7 +9,7 @@ let suds = require('../../config/suds');
 let reports = require('../../config/reports');
 let trace = require('track-n-trace');
 const { authorisation } = require('../../config/suds');
-const db = require('./' + suds.dbDriver);
+const db = require('./db');
 const lang = require('../../config/language')['EN'];
 
 let validModes = [
@@ -100,19 +100,24 @@ async function admin(req, res) {
     if (req.cookies.user) {
         req.session.userId = req.cookies.user;
     }
-    let aut = suds.authorisation;
+    let aut=suds.authorisation[suds[suds.dbDriver].authtable];
     if (req.session.userId) {
         user = await db.getRow(aut.table, req.session.userId);
-        if (user[aut.superuser]) { permission = '#superuser#' } else { permission = user[aut.permissionSet]; }
-        if (suds.superuser == user[aut.emailAddress]) { permission = '#superuser#' }
-        /*** Last seen at */
-        let now = Date.now();
-        let rec = {};
-        rec[aut.primaryKey] = req.session.userId;
-        rec.lastSeenAt = now;
-        await db.updateRow(aut.table, rec);
+        if (user.err) {
+           console.log(`Unknown user ${req.session.userId}`);
+        }
+        else {
+            if (user[aut.superuser]) { permission = '#superuser#' } else { permission = user[aut.permissionSet]; }
+            if (suds.superuser == user[aut.emailAddress]) { permission = '#superuser#' }
+            /*** Last seen at */
+            let now = Date.now();
+            let rec = {};
+            rec[aut.primaryKey] = req.session.userId;
+            rec.lastSeenAt = now;
+            await db.updateRow(aut.table, rec);
 
-        trace.log({ 'User record': user, level: 'verbose' });
+            trace.log({ 'User record': user, level: 'verbose' });
+        }
     }
 
     /* validate permission set   */
@@ -450,7 +455,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
             trace.log(table, reportObject);
 
             reportData.table = table;
-            let copyfields = ['friendlyName', 'title', 'open', 'openGroup', 'searchFields','view'];
+            let copyfields = ['friendlyName', 'title', 'open', 'openGroup', 'searchFields', 'view'];
             for (let i = 0; i < copyfields.length; i++) {
                 fieldName = copyfields[i];
                 if (reportObject[fieldName]) { reportData[fieldName] = reportObject[fieldName]; }
@@ -469,8 +474,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
              */
             if (reportObject.search) {
                 reportData.search = {};
-                reportObject.search.andor='and';
-                if (reportData.search.andor) {reportData.search.andor = reportObject.search.andor};
+                reportObject.search.andor = 'and';
+                if (reportData.search.andor) { reportData.search.andor = reportObject.search.andor };
                 if (req.query.andor) { reportData.search.andor = req.query.andor }
                 reportData.search.searches = [];
                 if (reportObject.search.searches) {
@@ -741,7 +746,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     * ******************************************** */
 
     if (mode == 'update') {
-
+        trace.log('**** update ***');
         output = await updateForm(
             permission,
             table,

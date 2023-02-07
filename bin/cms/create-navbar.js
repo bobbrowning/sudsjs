@@ -16,7 +16,7 @@ let classes = require('../../config/classes')['navbar'];
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
 let suds = require('../../config/suds');
-let db = require('../suds/'+suds.dbDriver);
+let db = require('../suds/db');
 let tableDataFunction = require('../suds/table-data');
 
 let loopcount = 0;
@@ -119,8 +119,8 @@ async function nextLevel(table, tableData, id, thisId, slug, title) {
 module.exports = async function (thisId) {
   let navbar = `
     <ul${classtag('top')}>`;
-  let table = cms.pageFile.table;
-  tableData = tableDataFunction(table, '#superuser#');
+    let table=suds[suds.dbDriver].pageFile;
+    tableData = tableDataFunction(table, '#superuser#');
   trace.log(table, cms.homePage)
   let home = await db.getRow(table, cms.homePage, 'slug');
   let homeId = home[tableData.primaryKey];

@@ -25,6 +25,10 @@ let tableData;
  */
 module.exports = function (table, permission, subschemas, additionalAttributes) {
   trace.log({ inputs: arguments, });
+   if (table == 'clear-cache') {
+    cache={};
+   return;
+   }
   if (!additionalAttributes) { additionalAttributes = {} }
   trace.log({ table: table, permission: permission, cached: Object.keys(cache) });
   tableData = require('../../tables/' + table);
@@ -64,8 +68,9 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
       */
     standardHeader = {};
     if (tableData.standardHeader) {
-      standardHeader = require('../../config/standard-header');
+      standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader];
     }
+    trace.log(standardHeader);
     let rawAttributes = { ...standardHeader, ...tableData.attributes, ...additionalAttributes };
     let rawAttributesDeep = dcopy(rawAttributes);
     trace.log({ header: standardHeader, rawAttributes: rawAttributesDeep, level: 'verbose' });
@@ -168,12 +173,11 @@ function standardise(
     if (!merged[key].process) { merged[key].process = {}; }
     if (!merged[key].display) { merged[key].display = {}; }
     /** field type */
-    if (merged[key].primaryKey) { merged[key].type = suds.dbkey }
-    if (merged[key].model && suds.dbkey) { merged[key].type = suds.dbkey; }
+    if (merged[key].primaryKey && suds[suds.dbDriver].dbkey) { merged[key].type = suds[suds.dbDriver].dbkey }
+    if (merged[key].model && suds[suds.dbDriver].dbkey) { merged[key].type = suds[suds.dbDriver].dbkey; }
 
     if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean' && merged[key].type != 'object') {
-      trace.fatal(`Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`);
-      process.exit(1);
+      throw(`Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`);
     }
 
     /** Input and input type */

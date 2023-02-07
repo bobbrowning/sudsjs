@@ -31,7 +31,7 @@ module.exports = function (table, permission) {
   
   standardHeader = {};
   if (tableData.standardHeader) {
-    standardHeader = require('../../config/standard-header');
+    standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader];;
   }
   let combined= { ...standardHeader, ...tableData.attributes }
    /** default priomary key t the first field */

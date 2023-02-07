@@ -30,7 +30,7 @@ app.use(suds.session())
 app.locals.config = {};
 app.locals.suds = require('../config/suds');
 app.locals.language = require('../config/language');
-app.locals.home = require('../config/home');
+// app.locals.home = require('../config/home');
 
 // view engine setup
 let homeDir = __dirname;

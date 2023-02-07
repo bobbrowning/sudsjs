@@ -4,7 +4,7 @@
 * *************************************************** */
 let suds = require('../../config/suds');
 let trace = require('track-n-trace');
-let db = require('../../bin/suds/'+suds.dbDriver);
+let db = require('../../bin/suds/db');
 
 module.exports = async function (query) { 
     trace.log('#get record called ', query);

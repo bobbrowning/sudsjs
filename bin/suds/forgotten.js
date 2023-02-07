@@ -3,7 +3,7 @@ let suds = require('../../config/suds');
 let sendView = require('./send-view');
 //let getRow = require('./get-row');
 //let updateRow = require('./update-row');
-let db = require('./'+suds.dbDriver);
+let db = require('./db');
 
 //let createRow = require('./create-row');
 let crypto = require('crypto');

@@ -6,7 +6,7 @@
 let trace = require('track-n-trace');
 let suds = require('../../config/suds');
 let lang = require('../../config/language')['EN'];
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 const fs = require('fs');
 
 

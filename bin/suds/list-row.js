@@ -5,7 +5,7 @@ let mergeAttributes = require('./merge-attributes');
 let tableDataFunction = require('./table-data');
 let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 let evalPermission = require('./eval-permission');
 
 //let countRows = require('./count-rows');

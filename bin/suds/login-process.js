@@ -5,13 +5,13 @@ let sendView = require('./send-view');
 //let createRow = require('./create-row');
 let suds = require('../../config/suds');
 let crypto = require('crypto');
-let db = require('./'+suds.dbDriver);
+let db = require('./db');
 
 module.exports = async function (req, res) {
     console.log(__dirname);
     trace.log('login process');
     let allParms = { ...req.body };
-    let aut=suds.authorisation;
+    let aut=suds.authorisation[suds[suds.dbDriver].authtable];
 
     trace.log(allParms);
     let next = '';

@@ -3,7 +3,7 @@
 
 let suds = require('../../config/suds');                 // Primary configuration file
 let trace = require('track-n-trace');                    // Debug tool
-let db = require('./' + suds.dbDriver);                                // Database routines
+let db = require('./db');                                // Database routines
 
 /**
  * 

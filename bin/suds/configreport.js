@@ -9,7 +9,7 @@ let sudshome = require('../../config/home');
 let sudsReports = require('../../config/reports');
 let lang = require('../../config/language')['EN'];
 //let getRow = require('./get-row');
-let db = require('./' + suds.dbDriver);
+let db = require('./db');
 const fs = require('fs');
 
 let mergeAttributes = require('./merge-attributes');
@@ -395,10 +395,11 @@ module.exports = async function (req, res) {
      </tr>
     </thead>
     <tbody>`;
-  for (let key of Object.keys(suds.database)) {
+    trace.log(suds[suds.dbdriver,suds.dbDriver])
+  for (let key of Object.keys(suds[suds.dbDriver])) {
     if (key == 'connection') {
-      for (let con of Object.keys(suds.database[key])) {
-        let value = suds.database[key][con];
+      for (let con of Object.keys(suds[suds.dbDriver][key]))  {
+        let value = suds[suds.dbDriver][key][con];
         if (con == 'password') { value = '****************' }
         output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
       }
@@ -408,7 +409,7 @@ module.exports = async function (req, res) {
         output += `   <tr><td>driver</td><td>Generic driver (db.js)</td></tr>`;
       }
       else {
-        output += `   <tr><td>${key}</td><td>${suds.database[key]}</td></tr>`;
+        output += `   <tr><td>${key}</td><td>${suds[suds.dbDriver][key]}</td></tr>`;
       }
     }
   }
@@ -953,7 +954,7 @@ module.exports = async function (req, res) {
 
           /** Dataase field type */
           case 'database':
-            output += `Database field (may be specific to ${suds.database.client}.)`;
+            output += `Database field (may be specific to ${suds.dbDriver}.)`;
             trace.log(properties[col][prop]);
             for (let subprop of Object.keys(properties[col][prop])) {
               output += `<br />&nbsp;&nbsp;${subprop}: ${properties[col][prop][subprop]}: `;

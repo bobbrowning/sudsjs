@@ -14,7 +14,7 @@ var debug = require('debug')('base:server');
 var http = require('http');
 var suds = require('../config/suds.js');
 let trace = require('track-n-trace');
-
+let db=require('./suds/db');
 /**
  * Get port from environment and store in Express.
  */
@@ -31,8 +31,6 @@ app.set('port', port);
 require('dotenv').config();
 // console.log(process.env);
 /** Establish database connection */
-trace.log({driver: './suds/' + suds.dbDriver, level: 'verbose'})
-let db=require('./suds/' + suds.dbDriver);
 trace.log({required: db, level: 'verbose'});
 
 db.connect();

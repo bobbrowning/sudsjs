@@ -11,11 +11,11 @@ let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let cms = require('../../config/cms');
 let suds = require('../../config/suds');
-let db = require('../suds/'+suds.dbDriver);
+let db = require('../suds/db');
 let sendView = require('../suds/send-view');
 let createNavBar=require('./create-navbar');
 
-const table=cms.pageFile.table;
+
   const status=cms.pageFile.status;
   const embargo=cms.pageFile.embargo;
   const expires=cms.pageFile.expires;
@@ -45,6 +45,7 @@ function checkPage(pageData) {
 module.exports = async function (req, res) {
 
   /* table and Fields used  */
+   let table=suds[suds.dbDriver].pageFile;
   let headerTags='';
   if (cms.headerTags) {headerTags=cms.headerTags}
 

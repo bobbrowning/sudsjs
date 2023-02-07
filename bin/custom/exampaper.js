@@ -5,7 +5,7 @@
  ***************************************************** */
  let trace = require('track-n-trace');
  let suds = require('../../config/suds');
- let db = require('../suds/'+suds.dbDriver);
+ let db = require('../suds/db');
 module.exports=  async function (query) {
      trace.log(query);
     let exam=query.parentValue0;
