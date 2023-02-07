@@ -24,6 +24,7 @@ module.exports = {
     { version: '2.1.0', date: '2022-05-22', author: 'Bob', description: 'MongoDB compatible version' },
     { version: '2.1.1', date: '2022-09-01', author: 'Bob', description: 'Bugs fixed' },
     { version: '2.2.0', date: '2022-12-04', author: 'Bob', description: 'CouchDB compatible version' },
+    { version: '2.3.0', date: '2023-01-24', author: 'Bob', description: 'Switch between databases via admin area' },
   ],
 
   /** **********************************************
@@ -64,6 +65,7 @@ module.exports = {
     logout: '../bin/suds/logout',
     forgotten: '../bin/suds/forgotten',
     docs: '../bin/docs.js',
+    switchdb: '../bin/suds/switchdb',
     /** Custom  */
     getvariants: '../bin/custom/get-variants',
     getsubvariants: '../bin/custom/get-subvariants',
@@ -105,23 +107,120 @@ module.exports = {
    * 
    *********************************************** */
 
-
+  databases: ['couch', 'mongo', 'sqlite'],
+  dbDriver: 'mongo',
 
   /** **************** SQLite3 configuration ***************
-  *
-  
+      useNullAsDefault: true,
+      debug: true,
+  * */
 
-  dbDriver: 'db.js',
-  dbkey: 'number',
-  database: {
+  sqlite: {
+    pageFile: 'webpages',
+    dbkey: 'number',
+    friendlyName: 'SQLite 3',
+    homepage: 'home-sql',
+    standardHeader: 'sql',
+    authtable: 'sql',
+    countable: true,
     client: 'sqlite3',
     connection: {
-      filename: './suds.db',
-    },
-    useNullAsDefault: true,
-    countable: true,
+      /* connection parameters in local/suds/sqlite3 to help mwith testing  */
+     },
   },
-*/
+
+
+
+
+  /** ******************* Couchdb configuration *********
+     * 
+     *     The authorisation codes are stored in local/auth.js
+     * 
+     *
+  */
+  couch: {
+    pageFile: 'webpagesnosql',
+    dbkey: 'string',
+    friendlyName: 'CouchDB',
+    homepage: 'home',
+    authtable: 'nosql',    // see authorisation section below
+    standardHeader: 'couch',
+    countable: false,
+    connection: {
+      database: 'sudsjs',
+      host: 'localhost:5984',
+      requestDefaults: {},
+    },
+
+  },
+
+  /** **************** MongoDB configuration ***************
+    * 
+    *  */
+  mongo: {
+    pageFile: 'webpagesnosql',
+    dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
+    friendlyName: 'Mongo DB',
+    homepage: 'home',
+    authtable: 'nosql',
+    dbDriverKey: 'objectId',
+    standardHeader: 'mongo',
+    caseInsensitive: true,
+    connection: {
+      database: 'suds',
+      host: 'localhost:27017',
+      //      maxpoolsize: 20,   // add query string parameters here...
+      //      w: 'majority',
+    },
+  },
+
+
+
+
+
+  /** *********   Postgresql config ***************************
+   * commented out as we are using sqlite for the demo version... 
+   * However I have done some testing with mysql and postgresql 
+   * 
+   * Quotecolname puts quotes around the column name in where instructions.
+   * You may need this if your column names include upper case because 
+   * postgresql folds all column names to lower case unless quoted.
+   * 
+   */
+  postgresql: {
+    pageFile: 'webpages',
+    dbkey: 'number',
+    friendlyName: 'PostgreSQL',
+    homepage: 'homesql',
+    standardHeader: 'sql',
+    authtable: 'sql',
+    countable: true,
+    quoteColName: true,
+    client: 'pg',
+    connection: {
+      host: 'localhost',
+      database: 'suds',
+    },
+  },
+
+  /** *********   mysql config ***************************
+  */
+  mysql: {
+    dbkey: 'number',
+    pageFile: 'webpages',
+    dbkey: 'number',
+    friendlyName: 'MySQL',
+    homepage: 'homesql',
+    standardHeader: 'sql',
+    authtable: 'sql',
+    countable: true,
+    client: 'mysql',
+    connection: {
+      host: 'localhost',
+      database: 'suds',
+    },
+  },
+
 
 
   /** ******************* Firebase configuration *********
@@ -156,74 +255,8 @@ module.exports = {
     }
   },*/
 
-  /** ******************* Couchdb configuration *********
-     * 
-     *     The authorisation codes are stored in local/auth.js
-     * 
-     *
-  */
-  dbDriver: 'db-couchdb.js',
-  dbkey: 'string',
-  dbDriverName: 'CouchDB',
-  database: {
-    database: 'sudsjs',
-    requestDefaults: {},
-    countable: false,
-  },
 
 
-
-  /** **************** MongoDB configuration ***************
-    * 
-    *  
- 
-   dbDriver: 'db-mongo.js',
-   dbDriverKey: 'objectId',
-   caseInsensitive: true,
-   dbkey: 'string',       // The database key is actually an object, but the driver converts to string   
-   database: {
-     uri: `cassandra://localhost:27017`,
-     name: 'suds',
-   },
- */
-
-
-
-
-  /** *********   Postgresql config ***************************
-   * commented out as we are using sqlite for the demo version... 
-   * However I have done some testing with mysql and postgresql 
-  /*
-  dbDriver: 'db.js',
-  dbkey: 'number',
-   database:
-   {
-     client: 'postgresql',
-     connection: {
-       host: 'localhost',
-       user: 'postgres',
-       password: 'xxxxxxxxx',
-       database: 'suds',
-       countable: true,
-     },
-   },
-  
-  /** *********   mysql config ***************************
-  
-  dbDriver: 'db.js',
-  dbkey: 'number',
-     database:
-      {
-       client: 'mysql',
-        connection: {
-          host: 'localhost',
-          user: 'bob',
-          password: 'xxxxxxxxxx',
-          database: 'suds',
-          countable: true,
-        },
-      },
-  */
 
 
 
@@ -233,6 +266,7 @@ module.exports = {
     'user',
     'audit',
     'webpages',
+    'webpagesnosql',
     'contacts',
     'products',
     'salesorders',
@@ -278,12 +312,7 @@ module.exports = {
 
   qualifyColName: false,
 
-  /** This puts quotes around the column name in where instructions.
-   * You may need this if your column names include upper case because 
-   * postgresql folds all column names to lower case unless quoted.
-   * 
-   */
-  quoteColName: true,
+
 
   /** 
    * This provides session middleware. See https://www.npmjs.com/package/express-session
@@ -318,16 +347,30 @@ module.exports = {
   csrf: false,
 
   authorisation: {
-    table: 'user',
-    /** Columns in authorisation table */
-    primaryKey: '_id',                            /* *********** change to _id for cassandra, id otherwise ******************* */
-    passwordHash: 'password',
-    salt: 'salt',
-    permissionSet: 'permission',
-    superuser: 'isSuperAdmin',
-    emailAddress: 'emailAddress',
-    forgottenPasswordToken: 'forgottenPasswordToken',
-    forgottenPasswordExpire: 'forgottenPasswordExpire',
+    nosql: {
+      table: 'user',
+      /** Columns in authorisation table */
+      primaryKey: '_id',                             /* *********** change to _id for cassandra, id otherwise ******************* */
+      passwordHash: 'password',
+      salt: 'salt',
+      permissionSet: 'permission',
+      superuser: 'isSuperAdmin',
+      emailAddress: 'emailAddress',
+      forgottenPasswordToken: 'forgottenPasswordToken',
+      forgottenPasswordExpire: 'forgottenPasswordExpire',
+    },
+    sql: {
+      table: 'user',
+      /** Columns in authorisation table */
+      primaryKey: 'id',                             /* *********** change to _id for cassandra, id otherwise ******************* */
+      passwordHash: 'password',
+      salt: 'salt',
+      permissionSet: 'permission',
+      superuser: 'isSuperAdmin',
+      emailAddress: 'emailAddress',
+      forgottenPasswordToken: 'forgottenPasswordToken',
+      forgottenPasswordExpire: 'forgottenPasswordExpire',
+    }
   },
 
 

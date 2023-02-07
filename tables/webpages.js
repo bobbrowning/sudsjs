@@ -32,7 +32,7 @@ module.exports = {
     /** 'normal' columns for a table listing.  The detailed listing of each row will have 
      *   every column the user is permitted to see. */
     list: {
-        columns: ['_id', 'title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
+        columns: ['title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
     },
 
     /** This determines how each row is to be described in things like links. 
@@ -87,8 +87,40 @@ module.exports = {
      *   description is used in the tooltip for that field in the update form as well as 
      *     being documentation.  If omitted the friendlyName is used.
      */
-    standardHeader: true,
+ 
     attributes: {
+        pageno: {
+            friendlyName: 'Document ID',
+            primaryKey: true,
+            type: 'string',
+            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+        },
+
+        /*** remove rev and xcollection for databases other than CouchDB  */
+         createdAt: {
+            friendlyName: 'Date created',
+            type: 'number',
+            display: { type: 'datetime', truncateForTableList: 16 },
+            input: { type: 'date' },            // input by the system not the user.
+            process: { type: 'createdAt' },
+            permission: { view: ['none'] },
+        },
+        updatedAt: {
+            friendlyName: 'Date last updated',
+            type: 'number',
+            display: { type: 'datetime', truncateForTableList: 16 },
+            input: { type: 'date' },
+            process: { type: 'updatedAt' },
+            permission: { view: ['none'] },
+        },
+        updatedBy: {
+            friendlyName: 'Last updated by',
+            description: `The person who last updated the row.`,
+            type: 'number',
+            model: 'user',
+            process: { type: 'updatedBy' },
+            permission: { view: ['none'] },
+        },
 
         title: {
             type: 'string',
@@ -287,7 +319,7 @@ module.exports = {
             via: 'parent',                               // The column in the child record that links to this
             collectionList: {                            // How child records are to be displayed
                 heading: 'Sub pages',                    //Heading to the listing 
-                columns: ['_id', 'title', 'slug', 'pagetype', 'status', 'onMenu'],
+                columns: ['title', 'slug', 'pagetype', 'status', 'onMenu'],
                 sort: ['onMenu', 'ASC'],
             },
         },

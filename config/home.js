@@ -104,7 +104,7 @@ module.exports = {
     img: '/images/suds/www.jpg',
     permission: ['admin', 'web','demo'],
     links: [
-      { table: 'webpages', title: 'Web Pages' },
+      { table: 'webpagesnosql', title: 'Web Pages' },
       { www: '/', title: 'Home page', target: '_blank' },
       { www: 'https://www.google.com/analytics', title: 'Google analytics', target: '_blank' }
     ],
@@ -219,6 +219,14 @@ views: {
 
 */
 
+switchdb: {
+  title: 'Switch Database',
+  permission: ['admin','demo'],
+  description: 'Switch database',
+  links: [
+    { user: 'switchdb', title: 'Select' },
+   ],
+},
 
   //  Setup / admin section
   you: {

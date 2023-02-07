@@ -80,7 +80,7 @@ module.exports = {
     website: {
       friendlyName: 'Website',
       open: 'website',                                                       // List web pages authored by this user
-      columns: ['webpages'],
+      columns: ['webpages','webpagesnosql'],
       permission: { all: ['admin', 'web'] },
     },
     security: {
@@ -318,11 +318,17 @@ module.exports = {
     //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
 
     webpages: {
-      description: `Web pages authored by this user`,
+      description: `Web pages authored by this user. Web pages will be listed for SQL systems. For technical reasons the NOSQL and SQL databases are configured differently for the web pages file.`,
+      friendlyName: 'Web pages authored on SQL system',
       collection: 'webpages',
       via: 'author',
     },
-
+    webpagesnosql: {
+      description: `Web pages authored by this user. Web pages will be listed for CpouchDB or MongoDB.`,
+      friendlyName: 'Web pages authored on NOSQL system',
+      collection: 'webpagesnosql',
+      via: 'author',
+    },
 
     /* The contacts made with this user is one of the collections in the model.        */
     /* Contact notes are listed below the person's record.                            */
@@ -356,7 +362,7 @@ module.exports = {
       friendlyName: 'Sales orders',
       via: 'customer',
       collectionList: {
-        columns: ['date', '_id', 'status', 'totalValue'],
+        columns: ['date',  'status', 'totalValue'],
         derive: {
           nosales: { type: 'count', friendlyName: 'Number of sales ' },
           totsales: { type: 'total', column: 'totalValue', friendlyName: 'Total sales', display: { currency: true } },

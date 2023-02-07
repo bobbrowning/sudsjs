@@ -14,7 +14,7 @@
 module.exports = {
     homePage: 'index',     /* slug of the home page */
     pageFile: {
-        table: 'webpages',
+        table: 'webpagesnosql;',
         /* Columns in the page File */
         id: 'pageno',
         title: 'title',

@@ -54,7 +54,7 @@ module.exports = {
     filterBy: 'Filtered by ',                                           // List Table
     filterSelect: 'Which field?',               // List table
     filterStart: 'Start search',                 // Filter button on table list
-    footnoteText: 'SUDSjs version 1.0.0',
+    footnoteText: 'SUDSjs version {{version}}',
     forgottenPassword: 'Forgotten password (disabled)',
     formGroup: 'Click for further data: ',
     forTable: 'for table',
@@ -121,6 +121,7 @@ module.exports = {
     rowUpdated: 'Row updated in table ',
     select: 'Please select',
     sortedBy: 'Sorted by: ',
+    spinner: '<div class="spinner-border spinner-border-sm text-secondary" role="status"><span class="sr-only">&nbsp</span></div>',
     startOver: 'Filter',        // atternate text on filter button
     startswith: 'saterts with',
     startTyping: 'or start typing ...',

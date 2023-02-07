@@ -64,7 +64,7 @@ results: [
  */
 
  let suds = require('../config/suds');
- let db = require('../bin/suds/'+suds.dbDriver);
+ let db = require('../bin/suds/db');
 let lookup = require('../bin/suds/lookup-value');
 
 

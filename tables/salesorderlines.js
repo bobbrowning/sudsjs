@@ -4,7 +4,7 @@
   */
 
  let suds = require('../config/suds');
- let db = require('../bin/suds/'+suds.dbDriver);
+ let db = require('../bin/suds/db');
 let stock = require('../bin/custom/stock');
 
 

@@ -5,7 +5,7 @@
  * @docs        :: https://sailsjs.com/docs/concepts/models-and-orm/models
  */
 let suds = require('../config/suds');
-let db = require('../bin/suds/'+suds.dbDriver);
+let db = require('../bin/suds/db');
 
 module.exports = {
   friendlyName: 'Sales orders',

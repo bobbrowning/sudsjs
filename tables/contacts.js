@@ -8,7 +8,7 @@
 
 const { stringify } = require('querystring');
 let suds = require('../config/suds');
-let db = require('../bin/suds/'+suds.dbDriver);
+let db = require('../bin/suds/db');
 
 
 module.exports = {
@@ -172,7 +172,7 @@ module.exports = {
         limit: 5,                   // number of options returned
         placeholder: 'Type part of the note',
         idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
-        default: '#loggedInUser',    // 
+  
       },
     },
     result: {
