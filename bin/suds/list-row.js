@@ -89,7 +89,7 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
   let tableName = tableData.friendlyName;
   trace.log(record);
 
-  let stringify = `Row: ${id}`;              //  Row title defailts to Row: x  
+  let stringify = `${lang.rowNumber}: ${id}`;              //  Row title defailts to Row: x  
   if (tableData.stringify) {    // This is a function to create the recognisable name from the record, e.g. 'firstname lastname' 
     if (typeof (tableData.stringify) == 'string') {
       stringify = record[tableData.stringify];

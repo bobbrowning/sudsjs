@@ -20,9 +20,9 @@
  * 
  * The paramerters are field name, API name, parent name, value
  * 
- * The API code is found in 
- * bin -> custom -> APIname.js the parentName can be an array and sungkle values 
- * care standardised to an array (in this case). These are passed to the API code as 
+ * The API code is found in bin -> custom -> APIname.js 
+ * The parentName can be an array or sungle values. Single values 
+ * are standardised to an array (in this case). These are passed to the API code as 
  * parentValue0, 1,2, etc.
  * 
  * The API does not need a routing entry because there is a routing function 
