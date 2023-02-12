@@ -18,10 +18,9 @@
  * 
  * updateRow(permission, table, id)
  * 
- * @name generic_database__driver
  * 
  * ********************************************** */
-let Generic_Database__Driver = 'mongodb';    // To make documentation.js work...
+let Database__Driver = 'mongodb';    // To make documentation.js work...
 
 exports.connect = connect;
 exports.createTable = createTable;
@@ -54,7 +53,6 @@ let ObjectId = require('mongodb').ObjectId;
  * a global 'knex'
  * 
  * ********************************************* */
-
 
 async function connect() {
   trace.log(suds.mongo.connection.host);
@@ -109,19 +107,19 @@ function rawAttributes(table) {
 /** *********************************************
  * 
  * Given a representation of the record key, returns
- * the standard format. Basically a stub for mongo
+ * the standard format. Not convinced this is used!
  * @param {undefined} Record key
  * 
  * ******************************************** */
 function standardiseId(id) {
-  return id;
+  return  objectifyId(id);
 }
 
 
 /** *********************************************
  * 
  * Given a representation of the record key, returns
- * the format that can be p[assed in a URL
+ * the format that can be passed in a URL
  * @param {undefined} Record key
  * 
  * ******************************************** */
@@ -136,6 +134,13 @@ function stringifyId(id) {
   }
   return value;
 }
+
+
+/**
+ * 
+ * @param {*} id record key - normally string. 
+ * @returns Object representation of the record key
+ */
 
 function objectifyId(id) {
   let value;
@@ -158,8 +163,7 @@ function objectifyId(id) {
  * 
  *        GET INSTRUCTION
  * 
- * Turns a search specification into an sql search and bindings 
- * Won't work with MONGO 
+ * Turns a search specification into an  
  *
  * @example
  * Typical  filter specification
@@ -177,7 +181,7 @@ function objectifyId(id) {
  * 
  * @param {string} table - Table name
  * @param {Object} spec - Filter specification - see above
- * @returns {array}  instruction + bindings
+ * @returns {array}  Query object
  *  
  */
 
@@ -278,7 +282,6 @@ function getInstruction(table, spec) {
  * 
  * Try and ensure the record is database-ready
  * Makes sure numeric fields are numeric and boolean fields are boolean
- * Yeah I know wouldn't be necessary with Typescript.
  * Any id fields change to objectID 
  * 
  * record is the input record  this is transferred to rec so 
@@ -390,7 +393,9 @@ function fixWrite(table, record, attributes, mode) {
 /** ************************************************
  * 
  * Fix any iassues with the record read.
- * Change ObjectId to string
+ * Change ObjectId to string.  OUtside this module SUDSJS 
+ * treats the record key as a string. It is converted to an 
+ * object before writing.  
  * 
  * *********************************************** */
 function fixRead(record, attributes) {

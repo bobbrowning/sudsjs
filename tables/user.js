@@ -15,7 +15,7 @@ module.exports = {
 
   /** Permission sets who can edit / see this file  */
   permission: {
-    all: ['sales', 'purchasing', 'admin'], view: ['all']
+    all: ['sales', 'purchasing', 'admin', 'demo'], view: ['all']
   },
 
   /** Words that appear in the add button */
