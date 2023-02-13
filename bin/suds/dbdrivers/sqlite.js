@@ -51,8 +51,10 @@ function connect() {
   trace.log({ connect: spec })
   try {
     let connection = spec.connection;
-    for (let key of Object.keys(local.sqlite3.connection)) {
-      connection[key]=local.sqlite3.connection[key];
+    if (local.sqlite3 && local.sqlite3.connection) {
+      for (let key of Object.keys(local.sqlite3.connection)) {
+        connection[key] = local.sqlite3.connection[key];
+      }
     }
     trace.log({ client: spec.client, connection: connection });
     globalThis.knex = require('knex')({

@@ -108,7 +108,7 @@ module.exports = {
    *********************************************** */
 
   databases: ['couch', 'mongo', 'sqlite'],
-  dbDriver: 'mongo',
+  dbDriver: 'sqlite',
 
   /** **************** SQLite3 configuration ***************
       useNullAsDefault: true,
@@ -125,7 +125,7 @@ module.exports = {
     countable: true,
     client: 'sqlite3',
     connection: {
-      /* connection parameters in local/suds/sqlite3 to help mwith testing  */
+      filename: '/home/bob/suds/suds.db',
      },
   },
 
