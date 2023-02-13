@@ -38,9 +38,24 @@ unzip master.zip
 mv sudsjs-main appName
 cd ./appName
 npm install
-
 ```
- 
+
+Edit config/suds.js  
+Find dbDriver: 'mongo' and change 'mongo' to your database of choice (mongo, couch, sqlite, postgresql or mysql).  These codes should match database configurations following this line.  The configrations that are there are relevnt to the test data.
+
+If you want a quick test, change it to 'sqlite'.  This  
+
+then to start SUDJS
+```
+./bin/www
+```
+
+In your browser http://localhost:3000
+
+Administration page http://localhost:3000. 
+
+If you are starting from scratch you will need to use the system to register a new user. Then edit suds.js and look for superuser: change the email address to the one that you have just registered. 
+
 
 # Test data
 

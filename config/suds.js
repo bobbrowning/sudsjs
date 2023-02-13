@@ -166,6 +166,7 @@ module.exports = {
     dbDriverKey: 'objectId',
     standardHeader: 'mongo',
     caseInsensitive: true,
+    countable: true,
     connection: {
       database: 'suds',
       host: 'localhost:27017',
