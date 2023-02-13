@@ -1,5 +1,16 @@
 /** Database authorisation for couchdb */
-module.exports=    {
-    user: '********',
-    password: '*********',
-  }
+module.exports = {
+  couch: {
+    user: '***',
+    password: '***',
+  },
+  postgresql: {
+    user: '***',
+    password: '***',
+  },
+  mysql: {
+    user: '****',
+    password: '******',
+  },
+  
+}
