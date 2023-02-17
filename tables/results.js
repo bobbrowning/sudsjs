@@ -20,7 +20,7 @@ module.exports = {
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
-            input: { type: 'select' },
+            input: { type: 'select' , mandatory: true},
         },
         subject: {
             type: 'string',

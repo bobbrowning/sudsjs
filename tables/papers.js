@@ -29,7 +29,7 @@ module.exports = {
       },
       results: {                // Each subject has a number of papers (child records)
          collection: 'results', // stored in the 'papers' file
-         via: 'paper',       // where the foreig key is 'subject'
+         via: 'paper',       // where the foreign key is 'subject'
          friendlyName: 'Exam results',
          collectionList: {
          }

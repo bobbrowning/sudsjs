@@ -115,8 +115,7 @@ module.exports = {
 relate: {
   title: 'Demo 1',
   description: 'Relational database',
-  img: '/images/suds/www.jpg',
-  permission: ['admin', 'demor','demo','trainer'],
+   permission: ['admin', 'demor','demo','trainer'],
   links: [
     { table: 'subjects', title: 'Subjects' },
     { table: 'papers', title: 'Papers' },
@@ -124,39 +123,7 @@ relate: {
     { report: 'resultsnorm', title: 'Results' },
   ],
 },
-denorm: {
-  title: 'Demo 2',
-  description: 'Denormalised/structured',
-  img: '/images/suds/www.jpg',
-  permission: ['admin', 'demo','trainer','demod'],
-  links: [
-    { table: 'subjectsdenorm', title: 'Subjects and papers' },
-    { table: 'studentdenorm', title: 'Students' },
-  ],
-},
-variable: {
-  title: 'Demo 3',
-  description: 'Variable content',
-  img: '/images/suds/www.jpg',
-  permission: ['admin', 'demo','trainer','demov'],
-  links: [
-    { table: 'studentsubschema', title: 'Students' },   
-    { report: 'studentSubschema',title: 'Subschemas' },
-  ],
-},
-views: {
-  title: 'Couch DB views',
-  description: 'Couch DB only',
-  img: '/images/suds/www.jpg',
-  permission: ['admin', 'demo'],
-  links: [
-    { report: 'allSubjects',title: 'Subjects list' },
-    { report: 'allUsers',title: 'User list' },
-    { report: 'resultsdenorm',title: 'Results' },
-    { report: 'productSales',title: 'Product sales' },
-    { report: 'salesByProduct',title: 'Monthly sales' },
-  ],
-},
+
   //  Setup / admin section
   setup: {
     title: 'Setup',

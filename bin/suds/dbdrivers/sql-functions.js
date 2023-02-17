@@ -377,8 +377,11 @@ async function deleteRows(table, spec) {
       await knex(table).whereRaw(instruction, bindings).del();
 
     } catch (err) {
-      console.log(`Database error deleting Rows in table ${table} `, err);
-      message = 'Unexpected error 51';
+      console.log(`Database error deleting Rows in table ${table}.
+      ${instruction}
+      ${bindings}
+      `, err);
+      message = 'Unexpected error - see console';
     }
     output = `
       <h2>Deleting records</h2>
@@ -419,15 +422,17 @@ async function deleteRow(permission, table, id) {
   let tableData = tableDataFunction(table);
   if (!mainPage) { mainPage = '/'; }
   let message = 'Deleting record';
+    let condition = {};
 
   try {
-    let condition = {};
     condition[tableData.primaryKey] = id;
     await knex(table).where(condition).del();
 
   } catch (err) {
-    console.log(`Database error deleting Row ${id} in table ${table} `, err);
-    message = 'Unexpected error 51';
+    console.log(`Database error deleting Row ${id} in table ${table}
+    ${condition}
+    `, err);
+    message = 'Unexpected error see console';
   }
   output = `
       <h2>${message}</h2>

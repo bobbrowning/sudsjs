@@ -36,7 +36,10 @@ module.exports = async function (permission, table, id) {
         }
 
     }
-
+    trace.log(  permission,
+        table,
+        id,
+    );
     output = await db.deleteRow(
         permission,
         table,

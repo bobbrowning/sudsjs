@@ -107,7 +107,7 @@ module.exports = {
    * 
    *********************************************** */
 
-  databases: ['couch', 'mongo', 'sqlite'],
+  databases: ['couch', 'mongo', 'sqlite',/* 'mysql', 'postgresql'*/],
   dbDriver: 'sqlite',
 
   /** **************** SQLite3 configuration ***************
@@ -192,7 +192,7 @@ module.exports = {
     pageFile: 'webpages',
     dbkey: 'number',
     friendlyName: 'PostgreSQL',
-    homepage: 'homesql',
+    homepage: 'home-sql',
     standardHeader: 'sql',
     authtable: 'sql',
     countable: true,
@@ -211,7 +211,7 @@ module.exports = {
     pageFile: 'webpages',
     dbkey: 'number',
     friendlyName: 'MySQL',
-    homepage: 'homesql',
+    homepage: 'home-sql',
     standardHeader: 'sql',
     authtable: 'sql',
     countable: true,

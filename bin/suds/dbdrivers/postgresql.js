@@ -63,7 +63,7 @@ function getRows(a, b, c, d, e, f) { return db.getRows(a, b, c, d, e, f); }
 function countRows(a, b) { return db.countRows(a, b); }
 function totalRows(a, b, c) { return db.totalRows(a, b, c); }
 function createRow(a, b) { return db.createRow(a, b); }
-function deleteRow(a, b) { return db.deleteRow(a, b); }
+function deleteRow(a, b, c) { return db.deleteRow(a, b, c); }
 function deleteRows(a, b, c) { return db.deleteRows(a, b, c); }
 function updateRow(a, b) { return db.updateRow(a, b); }
 function standardiseId(a) { return db.standardiseId(a); }
