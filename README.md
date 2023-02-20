@@ -31,7 +31,9 @@ SUDSjs is new and is in beta testing.  The software plus test data only takes a 
 
 # Setup 
 
-Download the zip file from https://github.com/bobbrowning/sudsjs, unzip it...
+You need to have node.js set up. https://nodejs.org/en/
+
+Download the SUDSJS zip file from https://github.com/bobbrowning/sudsjs, unzip it...
 ```
 curl -L -o master.zip https://github.com/bobbrowning/sudsjs/archive/refs/heads/main.zip
 unzip master.zip
@@ -48,6 +50,11 @@ npm install
 ```
 ./bin/www
 ```
+If that doesdn't work, try
+```
+node ./bin/www
+```
+
 * In your browser http://localhost:3000
 * Administration page http://localhost:3000/admin  login demo@demo.demo password demo.
 * CTRL-C to stop the software.
@@ -64,46 +71,18 @@ mongorestore
 * Start sudsjs again  Use the same login and password.
 
 
-# Configure your database
-
-The minimum schema requirement is for a user file to hold administration logins. The essential fields in the user file are listed in config/suds.js with field names. I have not tested the system with other fieldnames, but they should be changeable in this config file.  
-
-The file config/standard-header specificies stamdard header fields that can be includes in all (or most) files.
-
-Schemas are needed for all the files but I suggest you start with one or two files first.
-
-Edit config/suds.js 
-
-Have a look at each section and see what needs changing for you. The admin page is specified in config/home.js.  There are rwo home pages in the test data, one for SQ and another the NOSQL but you only need one. Tne admin page config references reports (predefined searches) in confog/reports.js.
-
-Find dbDriver: 'sqlite' and change to your database of choice (mongo, couch, sqlite, postgresql or mysql).  These codes should match database configurations following this line.  The configurations that are there are relevent to the test data and will need editing.
-
-Passwords are in local/auth.js
-
-
-You will need to use the system to register a new user. Then edit suds.js and look for superuser: change the email address to the one that you have just registered. 
-
-
-# Test data
-
-* The SQLite database is included in the download. 
-* The dump directory contains the MongoDB data. Use Mongorestore to restore it.
-* The CouchDB test database is in dumpedDB.JSON. Use couchdb-dump (https://github.com/danielebailo/couchdb-dump) to restore it.
-
- To go straight to the administration area:  http://localhost:3000/admin.  You will be asked to log in. The demonstration user with wide powers is demo@demo.demo password demo.
-
-Alternative logins are 
+Alternative logins on both databases are 
 * gladys@loman.demo password: demo, permission: Purchasing;
 * howard@wagner.demo password demo, permission: General manager
 * willy@loman.demo password demo, permission: Sales
 * trainer@demo.demo password demo, permission: Training (MongoDB test set only)
 
-The superuser password is my secret as this is the same database as on the demo site. To set up your own superuser, 
+To set up back office users click on Register. This is the only way to give password access to a user. Then edit the user to set the permission in the security section. Note that you only have access to the security section if you are superuser or have admin permission.
+
+The superuser password in the test data is my secret as this is the same database as on the demo site. To set up your own superuser, 
 1. Register a new user (click on Register in the Guest user page)
 1. Change the superuser email  address in the suds.js config file (see below) to the email address of the new user
-1. Now you can create other users.
-
-To set up back office users click on Register. Then edit the user to set the permission in the security section. Note that you only have access to the security section if you are superuser or have admin permission.
+1. Now you can create other users using this login.
 
 # Stop and start the application: 
 
@@ -112,7 +91,7 @@ To stop the application just ^C.
 To start the application
 ```
 cd myapp
-node bin/www
+./bin/www
 ```
 During development, you can start the application with Nodemon.
 ```
@@ -123,8 +102,6 @@ Nodemon needs installing (https://www.npmjs.com/package/nodemon) but will restar
 
 
 # Set up the configuration files
-
-The config and tables directories in the download are set up for CouchDB. There are sql versions as well. 
 
 ## Main configuration file 
 
@@ -140,35 +117,52 @@ The configuration files are in the config directory. The main file to change is 
 1. Set up the superuser email address in the security section. It also lists the permission sets you require.
 1. The input section includes a list of input field types. You can create your own handlers for special input types (/bin/suds/input for examples), in which case you add them here.
 1. The view configuration lists the view engine and views. The view engine is set to ejs (https://ejs.co/). Other view engines have not been tested.
-1. Edit database type and authorisation data. There are commented-out sections for other databases.
+1. Edit database type and authorisation data (below). There are sample sections for ditfferent  databases.
 
-## Standard document header
+## Database
+
+Find dbDriver: 'sqlite' in suds,js and change to your database of choice (mongo, couch, sqlite, postgresql or mysql).  These codes should match database configurations following this line.  The configurations that are there are relevent to the test data and will need editing.
+
+The minimum schema requirement is for a user file to hold administration logins.  The essential fields in the user file are listed in config/suds.js with field names. I have not tested the system with other fieldnames, but they should be changeable in this config file.
+
+Schemas are needed for all the files but I suggest you start with one or two files first.
+
+Passwords are in local/auth.js
+
+## Standard record header
 
 You may need to modify config/standard-header.js.  
+* There are differemt standard headers for different databases. You should only need one.
 * For SQL databases the normal key field is 'id'.  For NOSQL it is '_id'.  
-* The _rev and xcollection fields are for CouchDB only. These should be removed for other systems.
+* The _rev and xcollection fields are for CouchDB only. 
 
-## Database schema
+## Audt trail
+If auditing is selected in the config file (around line 410), the audit schems in the test data needs to be included. Note that the audit schema references the standard header. If your standard header deviates significantly from the standard header in the test data, you may need to transfer the fields into the audit schema and change standardHeader to false.
 
-The tables directory contains the test data schema for MongoDB or CouchDB.  Schema for a SQL database are in tables.sql. You will need to retain the user schema and audit schema for the system to work.  You define the necessary fields in the user table in config/suds.js
+## Database schema files
 
-1. Update/create the table definitions
-There must be a user table defined and it must have certain fields in it. You will find these in the security section of suds.js. (If you change this you will be in uncharted territory but you can add/remove other fields in this table.) 
+The tables directory contains the test data schema.   You will need to retain the user schema and audit schema for the system to work.  You define the necessary fields in the user table in config/suds.js
+
+1. Update/create the table definitions.  There must be a user table defined and it must have certain fields in it. You will find these in the security section of suds.js. (If you change this you will be in uncharted territory but you can add/remove other fields in this table.) 
 If you have an audit file it has to have the same name and table definition as the one in the test database. 
 
 1. For relational databases, add the tables to the database with http://localhost:3000/createtables. You don't need this for MongoDB or CouchDB.  This program is not password-protected so you might want to comment out the route in the config file after you have used it. This program does the heavy lifting in setting up tables, but does not update tables once they have been set up. The program can be used if you add new tables.
 
-
-I have tested the software with sqlite3, mysql and postgresql relational systems. It's probably all right with other SQL database management systems (DBMS), but if you run into problems, the code is all in bin/suds/db.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this will be unreliable.
+I have tested the software with sqlite3, mysql and postgresql relational systems. It's probably all right with other SQL database management systems (DBMS), but if you run into problems, the code is all in bin/suds/dbdrivers.js.  The most likely issue is in the code to find the key of a newly inserted row. All three DBMS behave differently. There is a fall-back method which is the read the most recently added row back. But in a high traffic multi-user environment this will be unreliable.
 
 I started a Firestore database driver but it didn't go well (https://bob742.blogspot.com/2022/10/firestore-didnt-go-well-for-me.html) but the driver is there if you want to give it a shot. I never got round to working on the delete function.
 
 I started on Cassandra but the documentation defeated me.  I may pick that up in the future.
 
+## Home page layout
+
+The admin page is specified in config/home.js.  There are two home pages in the test data, one for SQL and another the NOSQL but you only need one. Tne admin page config file references reports (predefined searches) in config/reports.js, but you can add those later.
 
 # Final steps 
 
-To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.
+You need a superuser to get started. Use the system to register a new user. Then edit suds.js and look for superuser: change the email address to the one that you have just registered. 
+
+To run the admin page:  http://localhost:3000/admin. You will need to register the admin user first with the superuser email which is set up in config/suds.js.  The port number can be changed in the config files or at runtime as an environment variable (PORT).  dot env should work,
 
 Don't forget to validate the config files whenever you edit them. It doesn't pick up all errors, but the most common ones (at least the ones I make).  This is in the Setup section of the admin page.
 
