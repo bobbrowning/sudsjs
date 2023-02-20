@@ -99,20 +99,21 @@ module.exports = {
    * 
    *           Database
    *           --------
+   * The database list matches the configuration objects balow.
+   * The list specifies which databases you can switch inthe 
+   * admin area. 
    * 
-   *  The generic database driver is db.js. The database object set below
-   * is used to initialise the knex library when the software is loaded. 
-   * See knex documentation for details https://knexjs.org/#Installation-client
-   * cassandra uses a different driver db-mongo.js
+   * dbDriver is the database when the system is loaded.
    * 
    *********************************************** */
 
   databases: ['couch', 'mongo', 'sqlite',/* 'mysql', 'postgresql'*/],
-  dbDriver: 'sqlite',
+  dbDriver: 'mongo',
 
   /** **************** SQLite3 configuration ***************
-      useNullAsDefault: true,
-      debug: true,
+   * The database object set below  is used to initialise the knex library 
+   * when the software is loaded. See knex documentation for details 
+   * https://knexjs.org/#Installation-client
   * */
 
   sqlite: {

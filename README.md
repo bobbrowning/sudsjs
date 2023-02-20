@@ -39,23 +39,49 @@ mv sudsjs-main appName
 cd ./appName
 npm install
 ```
+## Quick test
 
-Edit config/suds.js  
-Find dbDriver: 'sqlite' and change to your database of choice (mongo, couch, sqlite, postgresql or mysql).  These codes should match database configurations following this line.  The configurations that are there are relevent to the test data.
-
-Passwords are in local/auth.js
-
-If you want a quick test, change dbDriver it to 'sqlite' (if not already) and edit the sqlite section to specify the path of the new directory, Then to start SUDJS
+* The download includes an SQlite 3 test database in the new directory. The filename is suds.db
+* Edit config/suds.js 
+* Change the location of the sqlite database to your new application directory (near line 130). 
+* Start sudsjs
 ```
 ./bin/www
 ```
+* In your browser http://localhost:3000
+* Administration page http://localhost:3000/admin  login demo@demo.demo password demo.
+* CTRL-C to stop the software.
 
-In your browser http://localhost:3000
+MongoDB tedt data is also included. 
 
-Administration page http://localhost:3000/admin  login demo@demo.demo password demo.
+* Set up MongoDB Community edition.  https://www.mongodb.com/docs/manual/administration/install-community/
+* Restore the data
+```
+mongorestore
+```
+* Edit config/suds.js.  
+* Find dbDriver: 'sqlite' and change to mongo.  
+* Start sudsjs again  Use the same login and password.
 
 
-If you are starting from scratch you will need to use the system to register a new user. Then edit suds.js and look for superuser: change the email address to the one that you have just registered. 
+# Configure your database
+
+The minimum schema requirement is for a user file to hold administration logins. The essential fields in the user file are listed in config/suds.js with field names. I have not tested the system with other fieldnames, but they should be changeable in this config file.  
+
+The file config/standard-header specificies stamdard header fields that can be includes in all (or most) files.
+
+Schemas are needed for all the files but I suggest you start with one or two files first.
+
+Edit config/suds.js 
+
+Have a look at each section and see what needs changing for you. The admin page is specified in config/home.js.  There are rwo home pages in the test data, one for SQ and another the NOSQL but you only need one. Tne admin page config references reports (predefined searches) in confog/reports.js.
+
+Find dbDriver: 'sqlite' and change to your database of choice (mongo, couch, sqlite, postgresql or mysql).  These codes should match database configurations following this line.  The configurations that are there are relevent to the test data and will need editing.
+
+Passwords are in local/auth.js
+
+
+You will need to use the system to register a new user. Then edit suds.js and look for superuser: change the email address to the one that you have just registered. 
 
 
 # Test data
