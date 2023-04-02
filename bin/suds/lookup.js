@@ -1,13 +1,13 @@
 
-let suds = require('../../config/suds');
-let tableDataFunction = require('./table-data');
-let lang = require('../../config/language')['EN'];
-let trace = require('track-n-trace');
-let db = require('./db');
+const suds = require('../../config/suds')
+const tableDataFunction = require('./table-data')
+const lang = require('../../config/language').EN
+const trace = require('track-n-trace')
+const db = require('./db')
 
-const friendlyName = 'Look up text corresponding to field value';
+const friendlyName = 'Look up text corresponding to field value'
 const description = `Looks up the value in a values object in the table 
-definition, or a linked table if this is a foreign key`;
+definition, or a linked table if this is a foreign key`
 
 /*
     inputs: {
@@ -16,100 +16,82 @@ definition, or a linked table if this is a foreign key`;
       children: { type: 'number' },
       permission: { type: 'string' },    // Permission set of the current logged in user
     },
-  
+
   */
 
 module.exports =
 
   async function (attributes, val) {
-    if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-    trace.log(arguments);
-    let display = false;
-    let value = val;
+    if (arguments[0] == suds.documentation) { return ({ friendlyName, description }) }
+    trace.log(arguments)
+    let display = false
+    let value = val
     /** The field is a key to another table.  */
     if (attributes.model) {
       trace.log(attributes.model)
-      value = db.standardiseId(value);
+      value = db.standardiseId(value)
       trace.log(attributes.model, value)
       if (value && value != 'NaN' && value != '0') {
-        let tableData = tableDataFunction(attributes.model);
+        const tableData = tableDataFunction(attributes.model)
         if (tableData.stringify) {
-          trace.log({table:attributes.model,value: value,stringify: tableData.stringify});
-          let record = await db.getRow(attributes.model, value);     // linked parent record
-          trace.log(record);
+          trace.log({ table: attributes.model, value, stringify: tableData.stringify })
+          const record = await db.getRow(attributes.model, value) // linked parent record
+          trace.log(record)
           if (record.err) {
-            display = `<span class="text-danger">${record.errmsg}</span>`;
-          }
-          else {
-            if (typeof (tableData.stringify) == 'string') {
-              display = record[tableData.stringify];
-            }
-            else {
-              display = await tableData.stringify(record);
+            display = `<span class="text-danger">${record.errmsg}</span>`
+          } else {
+            if (typeof (tableData.stringify) === 'string') {
+              display = record[tableData.stringify]
+            } else {
+              display = await tableData.stringify(record)
             }
           }
-
-
+        } else {
+          display = value
         }
-        else {
-          display = value;
-        }
-        trace.log(display);
-        let listLink = lang.listParentLink;
+        trace.log(display)
+        let listLink = lang.listParentLink
         if (attributes.child === false) { listLink = lang.listLink }
-        let openLink = '';
+        let openLink = ''
         if (attributes.display.openGroup) { openLink += `&opengroup=${attributes.display.openGroup}` }
         if (attributes.display.open) { openLink += `&open=${attributes.display.open}` }
         display += `
             &nbsp;<a href="${suds.mainPage}?table=${attributes.model}&mode=listrow&id=${value}${openLink}" >
             ${listLink} 
-          </a>`;
-      }
-      else {
-        display = lang.notSpecified;
+          </a>`
+      } else {
+        display = lang.notSpecified
       }
     }
 
     /** Look up text based on values in the table definition onbject.
      * This may be:
-     * - a function 
+     * - a function
      * - an array of valid values in which case no action
-     * - an object 
+     * - an object
      */
     else {
       if (attributes.values && value) {
-        if (typeof attributes.values == 'function') {
-          let lvObject = attributes.values();
-          if (Array.isArray(lvObject)) {return(value)}
-          display = lvObject[value];
-        }
-        else {
+        if (typeof attributes.values === 'function') {
+          const lvObject = attributes.values()
+          if (Array.isArray(lvObject)) { return (value) }
+          display = lvObject[value]
+        } else {
           if (Array.isArray(attributes.values)) {
-            display = value;
-          }
-          else {
-            if (typeof attributes.values == 'string') {
-              let values = require(`../../config/${attributes.values}`)
-              display = values[value];
-            }
-
-            else {
-              display = attributes.values[value];
+            display = value
+          } else {
+            if (typeof attributes.values === 'string') {
+              const values = require(`../../config/${attributes.values}`)
+              display = values[value]
+            } else {
+              display = attributes.values[value]
             }
           }
         }
-      }
-
-      else {
-        display = value;
+      } else {
+        display = value
       }
     }
-    trace.log(display);
-    return (display);
+    trace.log(display)
+    return (display)
   }
-
-
-
-
-
-

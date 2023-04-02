@@ -32,7 +32,8 @@ module.exports = {
   /** Columns on the table listing. All columns are in the detail page
    *  This can be over-ridden in a report. */
   list: {
-    columns: [ 'fullName', 'emailAddress', 'userType', 'permission', 'organisation'],
+    view: 'allUsers',
+    columns: [ 'fullName', 'emailAddress', 'userType', 'permission', ],
   },
 
   /** The columns can be split into groups for editing and display purposes   
@@ -141,7 +142,7 @@ module.exports = {
       permission: { all: ['#superuser#'] },
       type: 'number',
       display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
+      database: { type: 'bigint' },
 
     },
     isSuperAdmin: {
@@ -158,7 +159,7 @@ module.exports = {
       example: 1502844074211,
       input: { type: 'date', },
       display: { type: 'date' },
-      database: { type: 'biginteger' }
+      database: { type: 'bigint' }
     },
     streetAddress: {
       type: 'string',
@@ -296,6 +297,7 @@ module.exports = {
     notes: {
       type: 'string',
       friendlyName: 'Notes',
+      database: {type: 'varchar', length: 2000},
       input: {
         type: 'ckeditor4',
         placeholder: `Please enter any notes about this user.`,

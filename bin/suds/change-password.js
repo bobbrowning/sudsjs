@@ -1,13 +1,13 @@
-let trace = require('track-n-trace');
-let sendView = require('./send-view');
-let suds=require('../../config/suds');
+const trace = require('track-n-trace')
+const sendView = require('./send-view')
+const suds = require('../../config/suds')
 
 module.exports = async function (req, res) {
-    console.log(__dirname);
-    trace.log('login form' );
-    let csrf='';
-    if (suds.csrf) {csrf=`<input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />`}
-     output=`
+  console.log(__dirname)
+  trace.log('login form')
+  let csrf = ''
+  if (suds.csrf) { csrf = `<input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />` }
+  output = `
     <h1>Change password</h1>
     <form name="cp" action="/changepw" method="post" style="width: 500px" onsubmit="return validateForm()">
     ${csrf}
@@ -36,12 +36,8 @@ module.exports = async function (req, res) {
          }
      }
  </script>
-`;
+`
 
-    let result = await sendView(res, 'admin',output);
-    trace.log(result);
-    return;
- 
-
-
+  const result = await sendView(res, 'admin', output)
+  trace.log(result)
 }

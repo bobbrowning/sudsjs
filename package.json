@@ -25,6 +25,7 @@
     "fs": "0.0.1-security",
     "hjs": "~0.0.6",
     "http-errors": "~1.6.3",
+    "json-schema-library": "^7.4.7",
     "knex": "^0.95.15",
     "knex-utils": "^5.5.1",
     "mongodb": "^4.9.1",

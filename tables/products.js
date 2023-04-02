@@ -143,6 +143,7 @@ module.exports = {
     },
     overview: {
       type: 'string',
+      database: {type: 'varchar', length: 2000},
       input: {
         type: 'textarea',
         rows: 4,
@@ -155,7 +156,8 @@ module.exports = {
     },
     description: {
       type: 'string',
-      input: {
+      database: {type: 'varchar', length: 2000},
+     input: {
         format: 'col',
         type: 'ckeditor4',
         height: 300,

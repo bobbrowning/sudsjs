@@ -20,14 +20,14 @@ module.exports = {
       friendlyName: 'Date created',
       type: 'number',
       display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
+      database: { type: 'bigint' },
       process: { createdAt: true }
     },                                      // You don't actually enter these
     updatedAt: {                            // but if you did they would be dates. 
       friendlyName: 'Date last updated',    // so this also governs how they are diaplayed
       type: 'number',
       display: { type: 'datetime', truncateForTableList: 16 },
-      database: { type: 'biginteger' },
+      database: { type: 'bigint' },
       process: { updatedAt: true }
     },
     updatedBy: {

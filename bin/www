@@ -2,49 +2,47 @@
 
 /**
  * www
- * 
+ *
  * @name Entry
- * 
+ *
  */
 
-
-
-var app = require('./app');
-var debug = require('debug')('base:server');
-var http = require('http');
-var suds = require('../config/suds.js');
-let trace = require('track-n-trace');
-let db=require('./suds/db');
+const app = require('./app')
+const debug = require('debug')('base:server')
+const http = require('http')
+const suds = require('../config/suds.js')
+const trace = require('track-n-trace')
+const db = require('./suds/db')
 /**
  * Get port from environment and store in Express.
  */
 
-trace.log(process.argv, { level: 'verbose' }); 
-for (let arg of process.argv.slice(2)) {
-  let arg2 = arg.split('=');
-  process.env[arg2[0]] = arg2[1];
+trace.log(process.argv, { level: 'verbose' })
+for (const arg of process.argv.slice(2)) {
+  const arg2 = arg.split('=')
+  process.env[arg2[0]] = arg2[1]
 }
-trace.log(process.env, { level: 'verbose' });
-var port = normalizePort(process.env.PORT || suds.port);
-app.set('port', port);
+trace.log(process.env, { level: 'verbose' })
+const port = normalizePort(process.env.PORT || suds.port)
+app.set('port', port)
 
-require('dotenv').config();
+require('dotenv').config()
 // console.log(process.env);
 /** Establish database connection */
-trace.log({required: db, level: 'verbose'});
+trace.log({ required: db, level: 'verbose' })
 
-db.connect();
-trace.log({connected: suds.dbDriver, level: 'verbose'})
+db.connect()
+trace.log({ connected: suds.dbDriver, level: 'verbose' })
 
 process.on('uncaughtException', err => {
   console.error('There was an uncaught error', err)
-  process.exit(1) //mandatory (as per the Node.js docs)  
-});
+  process.exit(1) // mandatory (as per the Node.js docs)
+})
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+const server = http.createServer(app)
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -54,59 +52,59 @@ console.log(`
 Starting SUDSJS: ${new Date().toISOString()}
 Listening on port ${port}
 Logging format: ${suds.morgan.format}
-`);
+`)
 if (process.env.NODE_ENV) {
-  console.log(`${process.env.NODE_ENV} mode`);
+  console.log(`${process.env.NODE_ENV} mode`)
 }
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+server.listen(port)
+server.on('error', onError)
+server.on('listening', onListening)
 
 /**
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val) {
-  var port = parseInt(val, 10);
+function normalizePort (val) {
+  const port = parseInt(val, 10)
 
   if (isNaN(port)) {
     // named pipe
-    return val;
+    return val
   }
 
   if (port >= 0) {
     // port number
-    return port;
+    return port
   }
 
-  return false;
+  return false
 }
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+function onError (error) {
   if (error.syscall !== 'listen') {
-    throw error;
+    throw error
   }
 
-  var bind = typeof port === 'string'
+  const bind = typeof port === 'string'
     ? 'Pipe ' + port
-    : 'Port ' + port;
+    : 'Port ' + port
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
+      console.error(bind + ' requires elevated privileges')
+      process.exit(1)
+      break
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
+      console.error(bind + ' is already in use')
+      process.exit(1)
+      break
     default:
-      throw error;
+      throw error
   }
 }
 
@@ -114,10 +112,10 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
+function onListening () {
+  const addr = server.address()
+  const bind = typeof addr === 'string'
     ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+    : 'port ' + addr.port
+  debug('Listening on ' + bind)
 }

@@ -3,75 +3,72 @@
 *  Documemnt the config file
 *
 **************************************** */
-let trace = require('track-n-trace');
-let suds = require('../../config/suds');
-let sudshome = require('../../config/home');
-let sudsReports = require('../../config/reports');
-let lang = require('../../config/language')['EN'];
-//let getRow = require('./get-row');
-let db = require('./db');
-const fs = require('fs');
+const trace = require('track-n-trace')
+const suds = require('../../config/suds')
+const sudshome = require('../../config/home')
+const sudsReports = require('../../config/reports')
+const lang = require('../../config/language').EN
+// let getRow = require('./get-row');
+const db = require('./db')
+const fs = require('fs')
 
-let mergeAttributes = require('./merge-attributes');
-let tableDataFunction = require('./table-data');
-let sendView = require('./send-view');
-let humaniseFieldName = require('./humanise-fieldname');
-
-
+const mergeAttributes = require('./merge-attributes')
+const tableDataFunction = require('./table-data')
+const sendView = require('./send-view')
+const humaniseFieldName = require('./humanise-fieldname')
 
 module.exports = async function (req, res) {
-  console.log(__dirname);
-  trace.init(req, './');
+  console.log(__dirname)
+  trace.init(req, './')
 
+  trace.log({ starting: 'Config report', break: '#' })
 
-  trace.log({ starting: 'Config report', break: '#', });
-
-  let user = {};
-  permission = '#guest#';
+  let user = {}
+  permission = '#guest#'
 
   if (req.cookies.user) {
-    req.session.userId = req.cookies.user;
+    req.session.userId = req.cookies.user
   }
 
   if (req.session.userId) {
-    user = await db.getRow('user', req.session.userId);
-    if (user.isSuperAdmin) { permission = '#superuser#' } else { permission = user.permission; }
+    user = await db.getRow('user', req.session.userId)
+    if (user.isSuperAdmin) { permission = '#superuser#' } else { permission = user.permission }
     if (suds.superuser == user.emailAddress) { permission = '#superuser#' }
-    trace.log({ 'User record': user, level: 'verbose' });
+    trace.log({ 'User record': user, level: 'verbose' })
   }
   if (!suds.report.permission.includes(permission) && permission !== '#superuser#') {
-    res.send('<h2>Sorry, you don\'t have permission to run this program</h2>');
-    return;
+    res.send('<h2>Sorry, you don\'t have permission to run this program</h2>')
+    return
   }
 
-  const permissions = ['all', 'any', 'view', 'edit', 'delete'];
-  let tableList = [];
-  let tableDataStore = {};
-  let attributesStore = {};
-  let tables = suds.tables;
+  const permissions = ['all', 'any', 'view', 'edit', 'delete']
+  const tableList = []
+  const tableDataStore = {}
+  const attributesStore = {}
+  const tables = suds.tables
   for (let i = 0; i < tables.length; i++) {
-    table = tables[i];
-    tableDataStore[table] = tableDataFunction(table, permission);
-    attributesStore[table] = mergeAttributes(table, permission);
-    let friendlyName = table;
+    table = tables[i]
+    tableDataStore[table] = tableDataFunction(table, permission)
+    attributesStore[table] = mergeAttributes(table, permission)
+    let friendlyName = table
     if (tableDataStore[table].friendlyName) {
-      friendlyName = `${tableDataStore[table].friendlyName}`;
+      friendlyName = `${tableDataStore[table].friendlyName}`
     }
-    tableList.push([table, friendlyName]);
+    tableList.push([table, friendlyName])
   }
 
-  trace.log(tableList);
+  trace.log(tableList)
 
   /* ****************************************
    *
    *  Introduction
    *
    **************************************** */
-  let title = `Unnamed project`;
-  let description = ``;
+  let title = 'Unnamed project'
+  let description = ''
   if (suds.title) { title = suds.title }
   if (suds.description) { description = suds.description }
-  let superwarning = '';
+  const superwarning = ''
   output = `
       <div class="sudsReport">
       <div style="margin-bottom: 60px;">   <!--  header page -->
@@ -88,14 +85,14 @@ module.exports = async function (req, res) {
           <a href="#ds">Database</a><br />
         </p>
         <p>
-          <b>Tables</b><br />`;
+          <b>Tables</b><br />`
   for (let i = 0; i < tableList.length; i++) {
     output += `
           <a href="#${tableList[i][0]}">${tableList[i][1]}</a><br />
-          `;
+          `
   }
   output += `
-       </p>`;
+       </p>`
 
   output += `
            <a name="vh"></a><h3 style="margin-top: 50px;">Version history</h3>
@@ -108,24 +105,23 @@ module.exports = async function (req, res) {
             <th >Notes</th>
            </tr>
           </thead>
-          <tbody>`;
+          <tbody>`
 
-  hist = [];
+  hist = []
   if (suds.versionHistory) { hist = suds.versionHistory }
   for (let i = 0; i < hist.length; i++) {
     output += `
      <tr><td>${hist[i].version}</td><td>${hist[i].date}</td><td>${hist[i].author}</td><td>${hist[i].description}</td></tr>
-      `;
+      `
   }
   output += `
     </tbody>
-    </table>`;
+    </table>`
 
   output += `
   <p>Report date: ${Date().substring(0, 16)}</p>
      </div>            <!--  header page -->      
-     <hr class="sudsreporthr">`;
-
+     <hr class="sudsreporthr">`
 
   /* ****************************************
      *
@@ -133,20 +129,19 @@ module.exports = async function (req, res) {
      *
      **************************************** */
 
-  let val = '';
+  let val = ''
   try {
     const data = fs.readFileSync('lastvalidate.txt', 'utf8')
-    let lines = data.split('\n');
+    const lines = data.split('\n')
     val = `
     ${lines[0]}<br />
     ${lines[1]}<br />
     ${lines[2]}<br />
-    `;
+    `
   } catch (err) {
     console.error(err)
-    val = `Needs validation`;
+    val = 'Needs validation'
   }
-
 
   output += `
      <a name="ot"></a><h1>Basic settings</h1>
@@ -166,10 +161,7 @@ module.exports = async function (req, res) {
      <tr><td>Currrency </td><td>${suds.currency.currency}<br />${suds.currency.locale}<br />${suds.currency.digits} digits</td></tr>
      <tr><td>Last validation run<br />(Needed when configuration changes) </td><td>${val}</td></tr>
      </tbody>
-    </table>`;
-
-
-
+    </table>`
 
   /* ****************************************
     *
@@ -189,32 +181,27 @@ module.exports = async function (req, res) {
     <tr><td>Width of input fields for searches</td><td>${suds.search.fieldWidth}</td></tr>
     <tr><td>Maximum number of conditions</td><td>${suds.search.maxConditions}</td></tr>
     <tr><td>Users normally have an option to search equals, less than, greater than etc. 
-    However the following fields are always treated as 'equals' tests.</td><td>[`;
+    However the following fields are always treated as 'equals' tests.</td><td>[`
   for (let i = 0; i < suds.search.allwaysEquals.length; i++) {
     if (i > 0) { output += ', ' }
-    output += suds.search.allwaysEquals[i];
+    output += suds.search.allwaysEquals[i]
   }
   output += `
   ]</td></tr> 
    <tr><td>The search operation normally presents field options in the same format as the input field. 
     So for example if the input is radio buttons than the search is also radio buttons.
-    However for the following input types the search field is a simple text input field:</td><td>[`;
+    However for the following input types the search field is a simple text input field:</td><td>[`
   for (let i = 0; i < suds.search.allwaysText.length; i++) {
     if (i > 0) { output += ', ' }
-    output += suds.search.allwaysText[i];
+    output += suds.search.allwaysText[i]
   }
   output += `]</td></tr>
     </tbody>
-    </table>`;
-
+    </table>`
 
   output += `
     </p>
-    <hr class="sudsreporthr">`;
-
-
-
-
+    <hr class="sudsreporthr">`
 
   /* ****************************************
     *
@@ -243,49 +230,45 @@ module.exports = async function (req, res) {
           text:  ${suds.forgottenPasswordOptions.text}<br />
           </td></tr>
    <tr><td>Remember login expires after (days)</td><td>${suds.rememberPasswordExpire}</td></tr>
-   `;
+   `
 
   output += `
    <tr><td>Audit trail</td><td> `
   if (suds.audit.include) {
-    output += `Included`;
+    output += 'Included'
     if (suds.audit.trim) {
       output += `<br />Audit trail trimmed back to ${suds.audit.trim[0]}
-       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`;
+       most recent entries, when the number of entries goes over ${suds.audit.trim[1]}`
     }
+  } else {
+    output += 'Not included'
   }
-  else {
-    output += `Not included`;
-  }
-  output += `</td></tr>`
-
+  output += '</td></tr>'
 
   output += `
-  <tr><td>Permission sets</td><td> `;
-  for (let set of Object.keys(suds.permissionSets)) {
+  <tr><td>Permission sets</td><td> `
+  for (const set of Object.keys(suds.permissionSets)) {
     output += `
-        ${set} (<i>${suds.permissionSets[set]}</i>)<br /> `;
+        ${set} (<i>${suds.permissionSets[set]}</i>)<br /> `
   }
-  output += `</td></tr>`;
+  output += '</td></tr>'
 
   output += `
-  <tr><td>The authorisation table (<i>${suds.authorisation['table']}</i>)
+  <tr><td>The authorisation table (<i>${suds.authorisation.table}</i>)
    has the following columns
-  </td><td>`;
-  for (let set of Object.keys(suds.authorisation)) {
+  </td><td>`
+  for (const set of Object.keys(suds.authorisation)) {
     if (set == 'table') { continue }
     output += `
-        ${humaniseFieldName(set)}  -> ${suds.authorisation[set]}<br /> `;
+        ${humaniseFieldName(set)}  -> ${suds.authorisation[set]}<br /> `
   }
-  output += `</td></tr>`;
-
+  output += '</td></tr>'
 
   output += ` 
    </tbody>
    </table>
 
-    <hr class="sudsreporthr">`;
-
+    <hr class="sudsreporthr">`
 
   /* ****************************************
     *
@@ -294,7 +277,7 @@ module.exports = async function (req, res) {
     **************************************** */
   output += `
   <br />  
-  <a name="it"></a><h1>Input</h1>`;
+  <a name="it"></a><h1>Input</h1>`
 
   output += `
  <table class=".table-bordered" style=" margin-bottom: 10px;">
@@ -307,12 +290,12 @@ module.exports = async function (req, res) {
  <tbody>
   <tr><td>Default input field width (autocomplete only)</td><td>${suds.defaultInputFieldWidth}</td></tr>
  <tr><td>Input Forms default format</td><td>${suds.input.default}<br />class: ${suds.input.class}</td></tr>
- <tr><td> Input types handled as a standard input tag with no special handling</td><td>`;
+ <tr><td> Input types handled as a standard input tag with no special handling</td><td>`
 
-  let inputFieldTypes = suds.inputFieldTypes;
+  const inputFieldTypes = suds.inputFieldTypes
   for (let i = 0; i < inputFieldTypes.length; i++) {
     output += `
-        ${inputFieldTypes[i]},&nbsp;`;
+        ${inputFieldTypes[i]},&nbsp;`
   }
   output += `
     </td></tr>  </tbody>
@@ -329,25 +312,25 @@ module.exports = async function (req, res) {
      </tr>
     </thead>
     <tbody>
- `;
-  trace.log(suds.inputTypeHandlers);
-  for (let fieldType of suds.inputTypeHandlers) {
-    helperName = '';
+ `
+  trace.log(suds.inputTypeHandlers)
+  for (const fieldType of suds.inputTypeHandlers) {
+    helperName = ''
     for (let i = 0; i < fieldType.length; i++) {
       if (fieldType.charAt(i) == fieldType.charAt(i).toUpperCase()) {
-        helperName += '-';
+        helperName += '-'
       }
-      helperName += fieldType.charAt(i).toLowerCase();
+      helperName += fieldType.charAt(i).toLowerCase()
     }
 
-    docs = await require(`./input/${helperName}`).documentation;
+    docs = await require(`./input/${helperName}`).documentation
     output += `
-         <tr><td>${fieldType}</td><td>${docs.friendlyName}</td><td>${docs.description}</td></tr> `;
+         <tr><td>${fieldType}</td><td>${docs.friendlyName}</td><td>${docs.description}</td></tr> `
   }
   output += `
     <tbody>
     </table>
-     <hr class="sudsreporthr">`;
+     <hr class="sudsreporthr">`
 
   /* ****************************************
   *
@@ -355,20 +338,19 @@ module.exports = async function (req, res) {
   *
   **************************************** */
 
-  let parentChild = [];
+  const parentChild = []
   for (let i = 0; i < tables.length; i++) {
-    table = tables[i];
-    properties = attributesStore[table];
-    addToList(properties);
-    function addToList(properties) {
-      for (let property of Object.keys(properties)) {
+    table = tables[i]
+    properties = attributesStore[table]
+    addToList(properties)
+    function addToList (properties) {
+      for (const property of Object.keys(properties)) {
         if (properties[property].object) {
-          addToList(properties[property].object);
-        }
-        else {
+          addToList(properties[property].object)
+        } else {
           if (properties[property].model) {
-            let parent = properties[property].model;
-            parentChild.push([parent, table, property, properties[property].friendlyName]);
+            const parent = properties[property].model
+            parentChild.push([parent, table, property, properties[property].friendlyName])
           }
         }
       }
@@ -380,12 +362,11 @@ module.exports = async function (req, res) {
   *  Database structure
   *
   **************************************** */
-  trace.log(parentChild);
+  trace.log(parentChild)
 
-
-  output += `<a name="ds"></a><h1>Database</h1>`;
+  output += '<a name="ds"></a><h1>Database</h1>'
   if (suds.dbDriverName) {
-    output+=`This database is runnung under <b>${suds.dbDriverName}</b>`;
+    output += `This database is runnung under <b>${suds.dbDriverName}</b>`
   }
   output += `<table class=".table-bordered" style="width: 900px; margin-bottom: 10px;">
     <thead>
@@ -394,66 +375,61 @@ module.exports = async function (req, res) {
       <th >Value</th>
      </tr>
     </thead>
-    <tbody>`;
-    trace.log(suds[suds.dbdriver,suds.dbDriver])
-  for (let key of Object.keys(suds[suds.dbDriver])) {
+    <tbody>`
+  trace.log(suds[suds.dbdriver, suds.dbDriver])
+  for (const key of Object.keys(suds[suds.dbDriver])) {
     if (key == 'connection') {
-      for (let con of Object.keys(suds[suds.dbDriver][key]))  {
-        let value = suds[suds.dbDriver][key][con];
+      for (const con of Object.keys(suds[suds.dbDriver][key])) {
+        let value = suds[suds.dbDriver][key][con]
         if (con == 'password') { value = '****************' }
-        output += `   <tr><td>${con}</td><td>${value}</td></tr>`;
+        output += `   <tr><td>${con}</td><td>${value}</td></tr>`
       }
-    }
-    else {
+    } else {
       if (key == 'driver' && suds.dbDriver == 'db.js') {
-        output += `   <tr><td>driver</td><td>Generic driver (db.js)</td></tr>`;
-      }
-      else {
-        output += `   <tr><td>${key}</td><td>${suds[suds.dbDriver][key]}</td></tr>`;
+        output += '   <tr><td>driver</td><td>Generic driver (db.js)</td></tr>'
+      } else {
+        output += `   <tr><td>${key}</td><td>${suds[suds.dbDriver][key]}</td></tr>`
       }
     }
   }
   output += `
     </tbody>
-    </table>`;
+    </table>`
   if (suds.qualifyColName) {
-    output += `<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>`;
+    output += '<p>SUDS will qualify column name with table when constructing queries (e.g. "where tablename.columnname=value")</p>'
   }
 
-
-
-  let switching, shouldSwitch;
-  switching = true;
-  let row;
+  let switching, shouldSwitch
+  switching = true
+  let row
   /* Make a loop that will continue until
   no switching has been done: */
   while (switching) {
     // Start by saying: no switching is done:
-    switching = false;
+    switching = false
     /* Loop through all table rows */
     for (row = 0; row < parentChild.length - 1; row++) {
       // Start by saying there should be no switching:
-      shouldSwitch = false;
+      shouldSwitch = false
       /* Get the two elements you want to compare,
       one from current row and one from the next: */
       // Check if the two rows should switch place:
       if (parentChild[row][0] > parentChild[row + 1][0]) {
         // If so, mark as a switch and break the loop:
-        shouldSwitch = true;
-        break;
+        shouldSwitch = true
+        break
       }
     }
     if (shouldSwitch) {
       /* If a switch has been marked, make the switch
       and mark that a switch has been done: */
-      let temp = parentChild[row];
-      parentChild[row] = parentChild[row + 1];
-      parentChild[row + 1] = temp;
-      switching = true;
+      const temp = parentChild[row]
+      parentChild[row] = parentChild[row + 1]
+      parentChild[row + 1] = temp
+      switching = true
     }
   }
-  trace.log(parentChild);
-
+  trace.log(parentChild)
 
   output += `
                <p>The following table lists the relationship between tables. Note that SUDS only
@@ -469,137 +445,130 @@ module.exports = async function (req, res) {
                 </tr>
               </thead>
               <tbody>
-                `;
-  let last = '';
-  for (let row of parentChild) {
+                `
+  let last = ''
+  for (const row of parentChild) {
     if (row[0] == 'user' && row[2] == 'updatedBy') { continue } // ignore spurious foreign key
     if (row[0] != last) {
       output += `
       <tr>
-        <td>${row[0]}</td>`;
-      last = row[0];
-    }
-    else {
+        <td>${row[0]}</td>`
+      last = row[0]
+    } else {
       output += `
       <tr>
-        <td></td>`;
+        <td></td>`
     }
     output += `
         <td>${row[1]}</td>
                 <td>${row[2]} (${row[3]})</td>
-     </tr>`;
+     </tr>`
   }
 
   output += `
     <tbody>
     </table>
-    `;
-
-
-
-
+    `
 
   /* ****************************************
   *
   *  List tables     *
   **************************************** */
 
-  trace.log(tables);
+  trace.log(tables)
   for (let t = 0; t < tables.length; t++) {
-    table = tables[t];
-    trace.log(table);
-    let tabledata = tableDataStore[table];
-    let sudsdata = {};
+    table = tables[t]
+    trace.log(table)
+    const tabledata = tableDataStore[table]
+    const sudsdata = {}
     /* ****************************************
     *
     *  Table overview
     *
     **************************************** */
-    let friendlyName = table;
+    let friendlyName = table
     if (sudsdata.friendlyName) {
-      friendlyName = `${sudsdata.friendlyName} (${table})`;
+      friendlyName = `${sudsdata.friendlyName} (${table})`
     }
 
     output += `
         <hr class="sudsreporthr">
         <div class="sudsReportTable">     <!-- ------------------------- ${table} -------------------- -->   
-          <a name="${table}"><h1>Table: ${friendlyName}</h1>`;
+          <a name="${table}"><h1>Table: ${friendlyName}</h1>`
     if (tabledata.description && tabledata.description != table) {
       output += `
-          <p>${tabledata.description}</p>`;
+          <p>${tabledata.description}</p>`
     }
-    output += '\n          <p>';
+    output += '\n          <p>'
 
     if (tabledata.extendedDescription) {
       output += `
           <p>${tabledata.extendedDescription}</p>
-          `;
+          `
     }
 
-    properties = attributesStore[table];
-    trace.log(properties);
+    properties = attributesStore[table]
+    trace.log(properties)
     if (tabledata.tableName && tabledata.tableName != table) {
-      output += `The database table is ${tabledata.tableName}. <br /> `;
+      output += `The database table is ${tabledata.tableName}. <br /> `
     }
-    output += `<p>`;
+    output += '<p>'
     if (tabledata.primaryKey) {
       output += `
-           The primary key is  <i>${tabledata.primaryKey}</i>. <br /> `;
+           The primary key is  <i>${tabledata.primaryKey}</i>. <br /> `
     }
     if (tabledata.addRow) {
       output += `
-           The add row button is titled  "${tabledata.addRow}". <br /> `;
+           The add row button is titled  "${tabledata.addRow}". <br /> `
     }
     if (tabledata.recordTypeColumn) {
       output += `
-           This table has record types identified by field  <i>${tabledata.recordTypeColumn}</i>.  See below. <br /> `;
+           This table has record types identified by field  <i>${tabledata.recordTypeColumn}</i>.  See below. <br /> `
     }
-    trace.log(table );
-    output += `</p>`;
+    trace.log(table)
+    output += '</p>'
 
     if (tabledata.list && tabledata.list.columns) {
-      output += `<p>A standard listing in tabular form has the following columns listed<br />`;
+      output += '<p>A standard listing in tabular form has the following columns listed<br />'
       for (let i = 0; i < tabledata.list.columns.length; i++) {
         if (i > 0) { output += ', ' }
-        trace.log(i,tabledata.list.columns[i])
-        output += properties[tabledata.list.columns[i]].friendlyName;
+        trace.log(i, tabledata.list.columns[i])
+        output += properties[tabledata.list.columns[i]].friendlyName
       }
-      output += `</p>`;
+      output += '</p>'
     }
 
-
-
-    let defaultDescription = ` For details see the 
-    table definition file in the tables directory`;
+    const defaultDescription = ` For details see the 
+    table definition file in the tables directory`
     if (tabledata.edit.postProcess) {
-      let description = defaultDescription;
+      let description = defaultDescription
       if (tabledata.edit.postProcessDescription) {
-        description = tabledata.edit.postProcessDescription;
+        description = tabledata.edit.postProcessDescription
       }
 
       output += `
             <p>The configuration includes a function which is invoked 
-            after the database has been updated. ${description}</p>`;
+            after the database has been updated. ${description}</p>`
     }
 
     if (tabledata.edit.preProcess) {
-      let description = defaultDescription;
+      let description = defaultDescription
       if (tabledata.edit.preProcessDescription) {
-        description = tabledata.edit.preProcessDescription;
+        description = tabledata.edit.preProcessDescription
       }
       output += `
             <p>The configuration includes a function which is invoked 
-            before the database has been updated. ${description}  </p>`;
+            before the database has been updated. ${description}  </p>`
     }
 
     if (tabledata.edit.preForm) {
-      let description = defaultDescription;
+      let description = defaultDescription
       if (tabledata.edit.preFormDescription) {
-        description = tabledata.edit.preFormDescription;
+        description = tabledata.edit.preFormDescription
       }
       output += `
             <p>The configuration includes a function which is invoked 
-            before input form has been generated. ${description} </p>`;
+            before input form has been generated. ${description} </p>`
     }
 
     output += `
@@ -612,7 +581,7 @@ module.exports = async function (req, res) {
     **************************************** */
 
     if (tabledata.permission) {
-      let permissions = tabledata.permission;
+      const permissions = tabledata.permission
       output += `
         <h3>Permission sets</h3>
         <table class=".table-bordered" style="margin-bottom: 30px" >
@@ -622,23 +591,23 @@ module.exports = async function (req, res) {
               <th width="400">Permission sets</th>
             </tr>
           </thead>
-          <tbody>`;
-      for (let ptype of Object.keys(permissions)) {
-        let sets = permissions[ptype];
+          <tbody>`
+      for (const ptype of Object.keys(permissions)) {
+        const sets = permissions[ptype]
         output += `
             <tr>
               <td>${ptype}</td>
-              <td>`;
+              <td>`
         for (let i = 0; i < sets.length; i++) {
           if (i > 0) { output += ', ' }
-          output += sets[i];
+          output += sets[i]
         }
         output += `</td>
-            </tr>`;
+            </tr>`
       }
       output += `
           </tbody>
-        </table>`;
+        </table>`
     }
 
     /* ****************************************
@@ -646,7 +615,7 @@ module.exports = async function (req, res) {
       *  List groups - if there are any
       *
       **************************************** */
-    trace.log({ table: table, data: tabledata, maxdepth: 2 });
+    trace.log({ table, data: tabledata, maxdepth: 2 })
     if (tabledata.groups && Object.keys(tabledata.groups).length > 1) {
       output += `
         <h3 style="margin-top: 30px">Groups of columns</h3>
@@ -659,83 +628,82 @@ module.exports = async function (req, res) {
               <th style="width: 40%">Columns</th>
             </tr>
           </thead>
-          <tbody>`;
-      for (let group of Object.keys(tabledata.groups)) {
-        groupData = tabledata.groups[group];
-        let name = group;
+          <tbody>`
+      for (const group of Object.keys(tabledata.groups)) {
+        groupData = tabledata.groups[group]
+        let name = group
         if (groupData.friendlyName) { name = groupData.friendlyName }
         output += `
             <tr>
               <td>
               ${name}
               </td>
-              <td>`;
-        let first = true;
+              <td>`
+        let first = true
         if (groupData.description) {
-          output += `<i>${groupData.description}</i> `;
-          first = false;
+          output += `<i>${groupData.description}</i> `
+          first = false
         }
         if (groupData.static) {
-          output += `This is a static group. `;
-          first = false;
+          output += 'This is a static group. '
+          first = false
         }
         if (groupData.open && groupData.open != 'none') {
           if (!first) { output += '<br />' };
-          output += `Listing of ${groupData.open} child records is automatically opened.`;
-          first = false;
+          output += `Listing of ${groupData.open} child records is automatically opened.`
+          first = false
         }
         if (groupData.recordTypes) {
           if (!first) { output += '<br />' };
-          let types = groupData.recordTypes;
-          output += `Only shown for record types: <i> `;
+          const types = groupData.recordTypes
+          output += 'Only shown for record types: <i> '
           for (let i = 0; i < types.length; i++) {
             if (i > 0) { output += ', ' }
-            output += types[i];
+            output += types[i]
           }
-          output += '</i>';
+          output += '</i>'
         }
 
         if (groupData.permission) {
           if (!first) { output += '<br />' };
-          first = false;
-          output += `Permission sets: <i>`;
-          for (let ptype of Object.keys(groupData.permission)) {
-            let sets = groupData.permission[ptype];
+          first = false
+          output += 'Permission sets: <i>'
+          for (const ptype of Object.keys(groupData.permission)) {
+            const sets = groupData.permission[ptype]
             output += `
-              ${ptype}: `;
+              ${ptype}: `
             for (let i = 0; i < sets.length; i++) {
               if (i > 0) { output += ', ' }
-              output += sets[i];
+              output += sets[i]
             }
           }
-          output += '</i>';
+          output += '</i>'
         }
         output += `
           </td>
-          <td>`;
+          <td>`
         if (groupData.columns) {
-          let cols = groupData.columns;
+          const cols = groupData.columns
           for (let i = 0; i < cols.length; i++) {
             if (i > 0) { output += ', ' }
-            output += cols[i];
+            output += cols[i]
           }
         }
         output += `
           </td>
-          </tr>`;
+          </tr>`
       }
 
       output += `
           </tbody>
-        </table>`;
-
+        </table>`
     }
     /* ****************************************
       *
       * Collections
       *
       **************************************** */
-    let anycollections = false;
+    let anycollections = false
     let collections = `
         <h3 style="margin-top: 30px">Links to this table.</h3>
         <p>Where this table is parent in a parent/child relationship.</p>
@@ -747,104 +715,97 @@ module.exports = async function (req, res) {
               <th style="width: 50%">Characteristics</th>
             </tr>
           </thead>
-          <tbody>`;
+          <tbody>`
 
-    trace.log({ table: table, attributes: properties, level: table })   // trick to only log for one table... 
-    for (let col of Object.keys(properties)) {
+    trace.log({ table, attributes: properties, level: table }) // trick to only log for one table...
+    for (const col of Object.keys(properties)) {
       if (!properties[col].collection) { continue }
-      anycollections = true;
-      let fld = properties[col].friendlyName;
+      anycollections = true
+      const fld = properties[col].friendlyName
       collections += `
               <tr>
                 <td >${fld}<br />(<i>${col}</i>}</td>
-                <td >`;
+                <td >`
 
       if (properties[col].description) {
-        collections += properties[col].description;
+        collections += properties[col].description
       }
       collections += `</td>
-                <td >`;
-      let autocreate = false;
-      let needBreak = false;
-      for (let prop of Object.keys(properties[col])) {
-        trace.log(col, prop, properties[col][prop]);
+                <td >`
+      const autocreate = false
+      let needBreak = false
+      for (const prop of Object.keys(properties[col])) {
+        trace.log(col, prop, properties[col][prop])
         if (properties[col].collection && prop == 'permission') { continue }
         if (prop == 'friendlyName') { continue }
         if (prop == 'canEdit') { continue }
         if (prop == 'canView') { continue }
         if (prop == 'description') { continue }
-        let value = properties[col][prop];
+        const value = properties[col][prop]
         if (!value) { continue }
 
         if (needBreak) {
-          collections += '<br />';
+          collections += '<br />'
         }
-        needBreak = true;;
-
+        needBreak = true
 
         /** Big Switch - attribute characteristics */
         /** ************************************** */
 
-        let line = '';
+        let line = ''
         switch (prop) {
-
           /** */
           case 'collectionList':
             line = `
-              Child list parameters: `;
-            for (let key of Object.keys(value)) {
+              Child list parameters: `
+            for (const key of Object.keys(value)) {
               if (key == 'columns') {
                 line += `<br />&nbsp;&nbsp;Columns listed:<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;[`;
-                let cols = value[key];
+                    &nbsp;&nbsp;&nbsp;&nbsp;[`
+                const cols = value[key]
                 for (let i = 0; i < cols.length; i++) {
                   if (i > 0) { line += ', ' }
-                  line += cols[i];
+                  line += cols[i]
                 }
-                line += ']';
-              }
-              else {
+                line += ']'
+              } else {
                 if (key == 'derive') {
-                  line += `<br />&nbsp;&nbsp;Derived information: <i>`;
-                  for (let der of Object.keys(value.derive)) {
+                  line += '<br />&nbsp;&nbsp;Derived information: <i>'
+                  for (const der of Object.keys(value.derive)) {
                     line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${value.derive[der].friendlyName}`
                   }
-                  line += `</i>`;
-                }
-                else {
-                  line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
+                  line += '</i>'
+                } else {
+                  line += `<br />&nbsp;&nbsp;${key}: ${value[key]}`
                 }
               }
             }
-            collections += line;
-            break;
+            collections += line
+            break
           /** Extended description */
           case 'via':
-            collections += `Foreign key in child table: <i>${value}</i>`;
-            break;
+            collections += `Foreign key in child table: <i>${value}</i>`
+            break
 
           case 'collection':
-            collections += `Child table: <i>${value}</i>`;
-            break;
-
+            collections += `Child table: <i>${value}</i>`
+            break
 
           /** Extended description */
           case 'extendedDescription':
-            collections += `Extended description: <br /><i>${value}</i>`;
-            break;
-
-
+            collections += `Extended description: <br /><i>${value}</i>`
+            break
         }
       }
     }
     collections += `
-              </td>`;
+              </td>`
     collections += `
             </tbody>    
-          </table>`;
+          </table>`
 
     if (anycollections) {
-      output += collections;
+      output += collections
     }
 
     output += `
@@ -857,31 +818,31 @@ module.exports = async function (req, res) {
         <th style="width: 50%">Characteristics</th>
       </tr>
     </thead>
-    <tbody>`;
+    <tbody>`
 
-    trace.log({ table: table, attributes: properties, level: table })   // trick to only log for one table... 
-    for (let col of Object.keys(properties)) {
+    trace.log({ table, attributes: properties, level: table }) // trick to only log for one table...
+    for (const col of Object.keys(properties)) {
       if (properties[col].collection) { continue }
-      let fld = properties[col].friendlyName;
+      const fld = properties[col].friendlyName
       output += `
         <tr>
           <td >${fld}<br />(<i>${col}</i>}</td>
-          <td >`;
-      for (let prop of Object.keys(properties[col])) {
+          <td >`
+      for (const prop of Object.keys(properties[col])) {
         if (prop == 'collection') {
-          continue;
-          output += `<b>Not a database column.</b> <br />It identifies a link from a child table<br />`;
+          continue
+          output += '<b>Not a database column.</b> <br />It identifies a link from a child table<br />'
         }
       }
       if (properties[col].description) {
-        output += properties[col].description;
+        output += properties[col].description
       }
       output += `</td>
-          <td >`;
-      let autocreate = false;
-      let needBreak = false;
-      for (let prop of Object.keys(properties[col])) {
-        trace.log(col, prop, properties[col][prop]);
+          <td >`
+      let autocreate = false
+      let needBreak = false
+      for (const prop of Object.keys(properties[col])) {
+        trace.log(col, prop, properties[col][prop])
         if (prop == 'collection') { continue }
         if (properties[col].collection && prop == 'input') { continue }
         if (properties[col].collection && prop == 'required') { continue }
@@ -892,228 +853,222 @@ module.exports = async function (req, res) {
         if (prop == 'canView') { continue }
         if (prop == 'description') { continue }
         if (prop == 'autoMigrations') { continue }
-        if (prop == 'database' && !Object.keys(properties[col][prop]).length) { continue; }
-        if (prop == 'process' && !Object.keys(properties[col][prop]).length) { continue; }
+        if (prop == 'database' && !Object.keys(properties[col][prop]).length) { continue }
+        if (prop == 'process' && !Object.keys(properties[col][prop]).length) { continue }
 
-        let value = properties[col][prop];
+        const value = properties[col][prop]
         if (!value) { continue }
 
         if (needBreak) {
-          output += '<br />';
+          output += '<br />'
         }
-        needBreak = true;;
-
+        needBreak = true
 
         /** Big Switch - attribute characteristics */
         /** ************************************** */
 
-        let line = ''
+        const line = ''
         switch (prop) {
-
           /** Permission */
           case 'permission':
-            output += `Permissions`;
-            for (let i = 0; i < permissions.length; i++) {  // try all the permissions
-              if (value[permissions[i]]) {    // say permissions[i] == edit then this is ['none'] like this 
-                output += `<br />&nbsp;&nbsp;${permissions[i]}: `;
+            output += 'Permissions'
+            for (let i = 0; i < permissions.length; i++) { // try all the permissions
+              if (value[permissions[i]]) { // say permissions[i] == edit then this is ['none'] like this
+                output += `<br />&nbsp;&nbsp;${permissions[i]}: `
                 for (let j = 0; j < value[permissions[i]].length; j++) {
-                  output += `${value[permissions[i]][j]}, `;
+                  output += `${value[permissions[i]][j]}, `
                 }
               }
             }
-            break;
+            break
           /** Primary key */
           case 'primaryKey':
             if (properties[col][prop]) {
-              output += "This is the primary key."
+              output += 'This is the primary key.'
             }
-            break;
+            break
 
-            case 'array':
-              if (properties[col][prop]) {
-                output += "This is an array ."
-              }
-              break;
-  
-              case 'object':
-                output+=`Object contains:
-                <ul>`;
-                for (let subprop of Object.keys(properties[col][prop])) {
-                  output+=`<li>${subprop}</li>`
-                } 
-                output+=`</ul>`;
-              break;
+          case 'array':
+            if (properties[col][prop]) {
+              output += 'This is an array .'
+            }
+            break
+
+          case 'object':
+            output += `Object contains:
+                <ul>`
+            for (const subprop of Object.keys(properties[col][prop])) {
+              output += `<li>${subprop}</li>`
+            }
+            output += '</ul>'
+            break
 
           /** Autoincrement */
           case 'autoincrement':
             if (properties[col][prop]) {
-              output += "This is an autoincrement field."
-              autocreate = true;
+              output += 'This is an autoincrement field.'
+              autocreate = true
             }
-            break;
+            break
 
           /** Dataase field type */
           case 'database':
-            output += `Database field (may be specific to ${suds.dbDriver}.)`;
-            trace.log(properties[col][prop]);
-            for (let subprop of Object.keys(properties[col][prop])) {
-              output += `<br />&nbsp;&nbsp;${subprop}: ${properties[col][prop][subprop]}: `;
+            output += `Database field (may be specific to ${suds.dbDriver}.)`
+            trace.log(properties[col][prop])
+            for (const subprop of Object.keys(properties[col][prop])) {
+              output += `<br />&nbsp;&nbsp;${subprop}: ${properties[col][prop][subprop]}: `
             }
-            break;
+            break
 
           /** Process */
           case 'process':
             {
-              let line = `Process`;
-              for (let subprop of Object.keys(properties[col][prop])) {
-                let content = `${subprop}: ${properties[col][prop][subprop]}: `;
-                if (subprop == 'updatedBy') { content = `Automatically populated with user who updated.` }
-                if (subprop == 'updatedAt') { content = `Automatically populated with date-time updated.` }
-                if (subprop == 'createdAt') { content = `Automatically populated with date-time created.` }
-                line += `<br />&nbsp;&nbsp;${content} `;
-                autocreate = true;
+              let line = 'Process'
+              for (const subprop of Object.keys(properties[col][prop])) {
+                let content = `${subprop}: ${properties[col][prop][subprop]}: `
+                if (subprop == 'updatedBy') { content = 'Automatically populated with user who updated.' }
+                if (subprop == 'updatedAt') { content = 'Automatically populated with date-time updated.' }
+                if (subprop == 'createdAt') { content = 'Automatically populated with date-time created.' }
+                line += `<br />&nbsp;&nbsp;${content} `
+                autocreate = true
               }
-              output += line;
+              output += line
             }
-            break;
+            break
 
           /** helptext */
           case 'helpText':
             if (autocreate) {
-              needBreak = false;
+              needBreak = false
               continue
             }
 
-            break;
+            break
 
           /** Type */
           case 'type':
-            output += `Data type: ${value}`;
-            break;
+            output += `Data type: ${value}`
+            break
 
           /** Input  */
           case 'input':
             if (autocreate) {
-              needBreak = false;
+              needBreak = false
               continue
             }
             {
-              let line = `Input specification`;
-              for (let key of Object.keys(value)) {
+              let line = 'Input specification'
+              for (const key of Object.keys(value)) {
                 if (key == 'class' && value[key] == suds.input.class) { continue }
-                let thisline = `<br />&nbsp;&nbsp;${key}: ${value[key]}`;
-                if (key == 'search' && typeof value[key] == 'object') {
-                  let andor = 'and';
+                let thisline = `<br />&nbsp;&nbsp;${key}: ${value[key]}`
+                if (key == 'search' && typeof value[key] === 'object') {
+                  let andor = 'and'
                   if (value[key].andor && value[key].andor == 'or') { andor = 'or' }
-                  thisline = `<br />&nbsp;&nbsp;search:`;
+                  thisline = '<br />&nbsp;&nbsp;search:'
                   for (let i = 0; i < value[key].searches.length; i++) {
                     if (i > 0) { line += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${andor}` }
-                    let search = value[key].searches[i];
-                    thisline += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${search[0]} ${search[1]} ${search[2]}`;
+                    const search = value[key].searches[i]
+                    thisline += `<br />&nbsp;&nbsp;&nbsp;&nbsp;${search[0]} ${search[1]} ${search[2]}`
                   }
                 }
                 if (key == 'validations') {
                   if (Object.keys(value[key]).length == 0) {
-                    thisline = '';
+                    thisline = ''
                     continue
                   }
-                  thisline = `Validations: `;
-                  for (let subkey of Object.keys(value[key])) {
-                    let val = value[key][subkey];
-                    if (typeof (val) == 'object') { val = `See <i>${table}</i> config file` }
-                    thisline += `<br />&nbsp;&nbsp;${subkey}: ${val}`;
+                  thisline = 'Validations: '
+                  for (const subkey of Object.keys(value[key])) {
+                    let val = value[key][subkey]
+                    if (typeof (val) === 'object') { val = `See <i>${table}</i> config file` }
+                    thisline += `<br />&nbsp;&nbsp;${subkey}: ${val}`
                   }
 
-                  let val = value[key];
-                  if (typeof (val) == 'object') { val = `See <i>${table}</i> config file` }
-                  thisline = `<br />&nbsp;&nbsp;${key}: ${val}`;
+                  let val = value[key]
+                  if (typeof (val) === 'object') { val = `See <i>${table}</i> config file` }
+                  thisline = `<br />&nbsp;&nbsp;${key}: ${val}`
                 }
-                line += thisline;
+                line += thisline
               }
-              output += line;
+              output += line
             }
-            break;
+            break
 
           /** Output format */
           case 'display':
             {
-              let line = '';
-              let count = 0;
-              for (let key of Object.keys(value)) {
+              let line = ''
+              let count = 0
+              for (const key of Object.keys(value)) {
                 if (!value[key]) {
                   needBreak = false
-                  continue;
+                  continue
                 }
                 count++
-                let name = key;
+                let name = key
                 if (key == 'linkedTable') { name = 'Lookup in table' }
-                line += `<br />&nbsp;&nbsp;${name}: ${value[key]}`;
-                if (key == 'titleField') { line += `&nbsp;&nbsp;(<i>Shown this field in the linked table</i>)`; }
+                line += `<br />&nbsp;&nbsp;${name}: ${value[key]}`
+                if (key == 'titleField') { line += '&nbsp;&nbsp;(<i>Shown this field in the linked table</i>)' }
               }
               if (count) {
-                line = `Output format: ${line}`;
+                line = `Output format: ${line}`
               }
-              output += line;
+              output += line
             }
-            break;
+            break
 
           /** Values */
           case 'values':
 
             output += `
-        Values: `;
+        Values: `
             {
               let line = ''
-              if (typeof (value) == 'string') { line = `Set in item <i>${value}</i> in config file suds.js.`; }
-              if (typeof (value) == 'object') { line = `Set in table definition ${table}.js.`; }
-              if (typeof (value) == 'function') { line = `Set in a function in table definition <i>${table}.js</i>.`; }
-              output += line;
+              if (typeof (value) === 'string') { line = `Set in item <i>${value}</i> in config file suds.js.` }
+              if (typeof (value) === 'object') { line = `Set in table definition ${table}.js.` }
+              if (typeof (value) === 'function') { line = `Set in a function in table definition <i>${table}.js</i>.` }
+              output += line
             }
 
-            break;
+            break
 
           /** Extended description */
           case 'extendedDescription':
-            output += `Extended description: <br /><i>${value}</i>`;
-            break;
+            output += `Extended description: <br /><i>${value}</i>`
+            break
 
           /** required */
           case 'required':
-            output += `Required`;
-            break;
+            output += 'Required'
+            break
 
           /** Foreign key */
           case 'model':
-            output += `Foreign key - links to table ${properties[col].model}`;
-            break;
+            output += `Foreign key - links to table ${properties[col].model}`
+            break
 
           /** Example */
           case 'example':
-            output += `Example:  ${properties[col].example}`;
-            break;
+            output += `Example:  ${properties[col].example}`
+            break
 
           /** Default */
           default:
-            output += `${prop}: ${value}`;
-            break;
-
+            output += `${prop}: ${value}`
+            break
         }
       }
     }
     output += `
-        </td>`;
+        </td>`
     output += `
       </tbody>    
-    </table>`;
+    </table>`
     output += `
-</div> <!-- End ${table} -->`;
-
-
+</div> <!-- End ${table} -->`
   }
   output += `
-    </div> <!-- sudsReport -->`;
+    </div> <!-- sudsReport -->`
 
-  let result = sendView(res, 'report', output);
-  return result;
-
+  const result = sendView(res, 'report', output)
+  return result
 }

@@ -1,32 +1,29 @@
 
-/*inputs: {
+/* inputs: {
   fieldType: { type: 'string' },
   fieldName: { type: 'string' },
   fieldValue: { type: 'string' },
   attributes: { type: 'ref' },
   errorMsg: { type: 'string' },
 
-},*/
-let suds = require('../../../config/suds');
-let documentation= {
-friendlyName: 'Checkbox',
-description: 'Creates a checkbox field. ',
+}, */
+const suds = require('../../../config/suds')
+const documentation = {
+  friendlyName: 'Checkbox',
+  description: 'Creates a checkbox field. '
 }
 
+const lang = require('../../../config/language').EN
+const getLabelsValues = require('../get-labels-values')
 
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
+  trace = require('track-n-trace')
+  trace.log(arguments)
 
-let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('../get-labels-values');
-
-
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-  trace = require('track-n-trace');
-  trace.log(arguments);
-
-  let results = '';
-  let checked = '';
+  let results = ''
+  let checked = ''
   if (fieldValue && fieldValue != 'false') {
-    checked = 'checked';
+    checked = 'checked'
   }
   results = `
         <div class="form-check-inline">
@@ -38,11 +35,9 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
             value="true" ${checked}
             > 
           <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
-       </div>`;
-  return (results);
+       </div>`
+  return (results)
 }
 
-
-exports.documentation=documentation;
-exports.fn=fn;
-
+exports.documentation = documentation
+exports.fn = fn

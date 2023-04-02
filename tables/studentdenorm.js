@@ -76,7 +76,7 @@ module.exports = {
     permission: { all: ['admin', 'demo', 'trainer','demod'] },
     list: { columns: ['name', 'address', 'results'], },
     standardHeader: true,
-    attributes: {
+    properties: {
         name: {
             type: 'string'
         },
@@ -105,7 +105,7 @@ module.exports = {
                 let subject = await db.getRow('subjectsdenorm', data.subject);
                 return (`${subject.name}`)
             },
-            object: {
+            properties: {
                 subject: {
                     type: 'string',
                     model: 'subjectsdenorm',

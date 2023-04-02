@@ -152,6 +152,7 @@ views: {
   links: [
     { report: 'allSubjects',title: 'Subjects list' },
     { report: 'allUsers',title: 'User list' },
+    { report: 'allAudit',title: 'Audit list' },
     { report: 'resultsdenorm',title: 'Results' },
     { report: 'productSales',title: 'Product sales' },
     { report: 'salesByProduct',title: 'Monthly sales' },
@@ -166,7 +167,7 @@ views: {
     links: [
       { table: 'user', title: 'All users' },
       { table: 'subschema', title: 'Subschema' },   
-     { report: 'auditTrail', title: 'Audit trail', },
+     { table: 'audit', title: 'Audit trail', },
       { www: '/configreport', title: 'Configuration report' },
       { www: '/admin?table=fieldtypes&mode=new', title: 'Field type test' },
 
@@ -184,6 +185,18 @@ views: {
       { user: 'lastValidate', title: 'Results' },
      ],
   },
+
+// dump / restore
+dumprestore: {
+  title: 'Dump / restore',
+  img: '/images/suds/settings.jpg',
+  permission: ['admin'],
+  description: 'Use with care',
+  links: [
+    { www: '/dump', title: 'Dump as JSON file' },
+    { www: '/restore', title: 'Import from JSON file' },
+   ],
+},
 
 
   trouble: {

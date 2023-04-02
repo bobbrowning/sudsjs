@@ -1,46 +1,42 @@
 
-
-/*inputs: {
+/* inputs: {
   fieldType: { type: 'string' },
   fieldName: { type: 'string' },
   fieldValue: { type: 'string' },
   attributes: { type: 'ref' },
   errorMsg: { type: 'string' },
 
-},*/
-let suds = require('../../../config/suds');
+}, */
+const suds = require('../../../config/suds')
 
-let documentation = {
+const documentation = {
   friendlyName: 'js',
-  description: `Create container for javascript-created field field.`,
+  description: 'Create container for javascript-created field field.'
 }
 
+const lang = require('../../../config/language').EN
+const getLabelsValues = require('../get-labels-values')
 
-let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('../get-labels-values');
-
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
-  if (arguments[0] == suds.documentation) { return ({ friendlyName: friendlyName, description: description }) }
-  trace = require('track-n-trace');
-  trace.log(arguments);
-  let content='';
-  let onclick = '';
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record) {
+  if (arguments[0] == suds.documentation) { return ({ friendlyName, description }) }
+  trace = require('track-n-trace')
+  trace.log(arguments)
+  const content = ''
+  let onclick = ''
   if (attributes.input.oncick) {
-    onclick = `onblur="${attributes.input.onclick}"`;
-    onclick=onclick.replace('{{fieldName}}',fieldName);
+    onclick = `onblur="${attributes.input.onclick}"`
+    onclick = onclick.replace('{{fieldName}}', fieldName)
   }
-  let results = `
+  const results = `
     <div id="${fieldName}_html">
     </div>
    <div id="${fieldName}_switch"      ${onclick}>
     click here
     </div>
-      `;
-  
+      `
 
-  return (results);
+  return (results)
 }
 
-exports.documentation = documentation;
-exports.fn = fn;
-
+exports.documentation = documentation
+exports.fn = fn

@@ -1,31 +1,30 @@
 
-/*inputs: {
+/* inputs: {
   fieldType: { type: 'string' },
   fieldName: { type: 'string' },
   fieldValue: { type: 'string' },
   attributes: { type: 'ref' },
   errorMsg: { type: 'string' },
 
-},*/
+}, */
 
-let suds = require('../../../config/suds');
-let documentation = {
+const suds = require('../../../config/suds')
+const documentation = {
   friendlyName: 'Yes-No radio buttons.',
-  description: `Radio buttons alternative to checkbox.`,
+  description: 'Radio buttons alternative to checkbox.'
 }
 
-let lang = require('../../../config/language')['EN'];
+const lang = require('../../../config/language').EN
 
-
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-   trace = require('track-n-trace');
-  trace.log(arguments);
-  let results = '';
-  let button1 = '';
-  let button2 = '';
-  let value1 = 'false';
-  let value2 = 'false';
-  if (fieldValue) { button1 = 'checked'; } else { button2 = 'checked'; }
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
+  trace = require('track-n-trace')
+  trace.log(arguments)
+  let results = ''
+  let button1 = ''
+  let button2 = ''
+  const value1 = 'false'
+  const value2 = 'false'
+  if (fieldValue) { button1 = 'checked' } else { button2 = 'checked' }
 
   results = `
         <div class="form-check-inline" id="${fieldName}" style="margin-right: 20px">  
@@ -49,12 +48,12 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
         <label for="${fieldName}_2" class="form-check-label">
           ${lang.no}
         </label>    
-      </div>`;
+      </div>`
   results += `
         <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
-      `;
-  return (results);
+      `
+  return (results)
 }
 
-exports.documentation = documentation;
-exports.fn = fn;
+exports.documentation = documentation
+exports.fn = fn

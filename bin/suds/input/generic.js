@@ -1,14 +1,11 @@
-let suds = require('../../../config/suds');
+const suds = require('../../../config/suds')
 
-
-let documentation = {
+const documentation = {
   friendlyName: 'Generic input',
-  description: 'Generic routine geneating an input tag.',
+  description: 'Generic routine geneating an input tag.'
 }
 
-
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
   /*
     inputs: {
       fieldType: { type: 'string' },
@@ -19,15 +16,15 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
     },
   */
 
-  trace = require('track-n-trace');
-  trace.log(arguments);
-  let input = attributes.input;
+  trace = require('track-n-trace')
+  trace.log(arguments)
+  const input = attributes.input
 
-  if (typeof fieldValue == 'string' && fieldValue.includes('"')) { fieldValue = fieldValue.replace(/"/g, '&quot;') }
-  let apicall = '';
+  if (typeof fieldValue === 'string' && fieldValue.includes('"')) { fieldValue = fieldValue.replace(/"/g, '&quot;') }
+  let apicall = ''
   if (attributes.input.validations.api) {
     apicall = `onchange="apiCheck_${fieldName}()"
-          oninput="apiWait_${fieldName}()"`;
+          oninput="apiWait_${fieldName}()"`
   }
   // field size is in table input config, or default size or 100
   let result = `
@@ -39,29 +36,29 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
           name="${fieldName}"
           aria-describedby="${attributes.description}"
           ${apicall}
-          value="${fieldValue}"`;
+          value="${fieldValue}"`
 
-  // Any other items in the input property in the config file 
-  //  are copied in here. 
+  // Any other items in the input property in the config file
+  //  are copied in here.
   // e.g {rows: '5', cols: '60', placeholder: 'Plea...'}
-  let ignore = ['type', 'name', 'width', 'validations', 'required'];
-  for (let inprop of Object.keys(input)) {
-    if (ignore.includes(inprop)) { continue }  // skip the ones we have already done
+  const ignore = ['type', 'name', 'width', 'validations', 'required']
+  for (const inprop of Object.keys(input)) {
+    if (ignore.includes(inprop)) { continue } // skip the ones we have already done
     result += `
-          ${inprop}="${input[inprop]}" `;
+          ${inprop}="${input[inprop]}" `
   }
   if (suds.useHTML5Validation) {
     if (input.required) {
       result += `
-    required`;
+    required`
     }
   }
   result += `>
         <span id="err_${fieldName}" class="sudserror">${errorMsg}</span>
-      `;
-  trace.log(result);
-  return (result);
+      `
+  trace.log(result)
+  return (result)
 }
 
-exports.documentation = documentation;
-exports.fn = fn;
+exports.documentation = documentation
+exports.fn = fn

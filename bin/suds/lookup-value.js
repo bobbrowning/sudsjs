@@ -1,13 +1,13 @@
 
-let suds = require('../../config/suds');
-let tableDataFunction = require('./table-data');
-let lang = require('../../config/language')['EN'];
-let trace = require('track-n-trace');
-let mergeAttributes = require('./merge-attributes');
-let lookup = require('./lookup');
-const friendlyName = 'Look up text corresponding to field value';
+const suds = require('../../config/suds')
+const tableDataFunction = require('./table-data')
+const lang = require('../../config/language').EN
+const trace = require('track-n-trace')
+const mergeAttributes = require('./merge-attributes')
+const lookup = require('./lookup')
+const friendlyName = 'Look up text corresponding to field value'
 const description = `Looks up the value in a values object in the table 
-definition, or a linked table if this is a foreign key`;
+definition, or a linked table if this is a foreign key`
 
 /*
     inputs: {
@@ -16,20 +16,11 @@ definition, or a linked table if this is a foreign key`;
       children: { type: 'number' },
       permission: { type: 'string' },    // Permission set of the current logged in user
     },
-  
+
   */
 
 module.exports =
 
-  async function (table,col,val) {
-
-    return await lookup(mergeAttributes(table)[col],val)
+  async function (table, col, val) {
+    return await lookup(mergeAttributes(table)[col], val)
   }
-
-
-
-
-
-
-
-

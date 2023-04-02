@@ -1,36 +1,34 @@
 
-let suds = require('../../../config/suds');
+const suds = require('../../../config/suds')
 
-let documentation={
- friendlyName: 'Summernote WYSIWYG rich text input field',
- description: `A very simple and light input field which creats HTML. There are many such text editors on the market, but this one is (a) Free an (b) very easy to set up.  
+const documentation = {
+  friendlyName: 'Summernote WYSIWYG rich text input field',
+  description: `A very simple and light input field which creats HTML. There are many such text editors on the market, but this one is (a) Free an (b) very easy to set up.  
   However if you want to use one of the more sophisticated products available then you
-  might ue this as a starting point for writing a helper for it.`,
+  might ue this as a starting point for writing a helper for it.`
 }
 
-
-/*inputs: {
+/* inputs: {
   fieldType: { type: 'string' },
   fieldName: { type: 'string' },
   fieldValue: { type: 'string' },
   attributes: { type: 'ref' },
   errorMsg: { type: 'string' },
 
-},*/
+}, */
 
-let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('../get-labels-values');
+const lang = require('../../../config/language').EN
+const getLabelsValues = require('../get-labels-values')
 
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
+  trace = require('track-n-trace')
+  trace.log(arguments)
 
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg) {
-   trace = require('track-n-trace');
-  trace.log(arguments);
+  let results = ''
+  const headerTags = suds.inputTypes.summernote.headerTags
+  let conf = ''
 
-  let results = '';
-  let headerTags = suds.inputTypes.summernote.headerTags;
-  let conf = '';
-
-  for (let key of [
+  for (const key of [
     'height',
     'blockquoteBreakingLevel',
     'dialogsInBody',
@@ -42,94 +40,85 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
     'codeviewIframeFilter',
     'codeviewFilterRegex',
     'spellCheck',
-    'disableGrammar',
+    'disableGrammar'
 
   ]) {
     if (attributes.input[key]) {
       conf += `
-                ${key}: ${attributes.input[key]},`;
-    }
-    else {
+                ${key}: ${attributes.input[key]},`
+    } else {
       if (suds.inputTypes.summernote[key]) {
         conf += `
-                  ${key}: ${suds.inputTypes.summernote[key]},`;
+                  ${key}: ${suds.inputTypes.summernote[key]},`
       }
     }
   };
-
-
 
   if (suds.inputTypes.summernote.styleTags) {
     conf += `
-                styleTags: [`;
-    for (let style of suds.inputTypes.summernote.styleTags) {
+                styleTags: [`
+    for (const style of suds.inputTypes.summernote.styleTags) {
       conf += `
-                   {`;
-      for (let item of Object.keys(style)) {
+                   {`
+      for (const item of Object.keys(style)) {
         conf += ` ${item}: '${style[item]}', `
       }
-      conf += `},`;
+      conf += '},'
     }
     conf += `
-                 ],`;
+                 ],`
   }
 
-  for (let arrayConf of ['fontNames', 'fontNamesIgnoreCheck', 'lineHeights', 'codeviewIframeWhitelistSrc']) {
+  for (const arrayConf of ['fontNames', 'fontNamesIgnoreCheck', 'lineHeights', 'codeviewIframeWhitelistSrc']) {
     if (suds.inputTypes.summernote[arrayConf]) {
       conf += `
-                ${arrayConf}: [`;
-      for (let font of suds.inputTypes.summernote[arrayConf]) {
+                ${arrayConf}: [`
+      for (const font of suds.inputTypes.summernote[arrayConf]) {
         conf += `'${font}', `
       }
 
-      conf += ` ],`
+      conf += ' ],'
     }
   };
 
-
   if (suds.inputTypes.summernote.toolbar) {
     conf += `
-                toolbar: [`;
-    for (let group of Object.keys(suds.inputTypes.summernote.toolbar)) {
+                toolbar: [`
+    for (const group of Object.keys(suds.inputTypes.summernote.toolbar)) {
       conf += `
-                 ['${group}', [`;
-      for (let tool of suds.inputTypes.summernote.toolbar[group]) {
-        conf += `'${tool}', `;
+                 ['${group}', [`
+      for (const tool of suds.inputTypes.summernote.toolbar[group]) {
+        conf += `'${tool}', `
       }
-      conf += ']],';
+      conf += ']],'
     }
     conf += `
-                ],`;
+                ],`
   }
   if (suds.inputTypes.summernote.popover) {
     conf += `
                 popover: {`
-    for (let tag of ['image', 'link', 'table', 'air']) {
+    for (const tag of ['image', 'link', 'table', 'air']) {
       conf += `
-                 ${tag}: [`;
-      for (let group of suds.inputTypes.summernote.popover[tag]) {
-        trace.log(group[1]);
+                 ${tag}: [`
+      for (const group of suds.inputTypes.summernote.popover[tag]) {
+        trace.log(group[1])
         conf += `
-                    ['${group[0]}', [`;
-        for (let tool of group[1]) {
-          conf += `'${tool}', `;
+                    ['${group[0]}', [`
+        for (const tool of group[1]) {
+          conf += `'${tool}', `
         }
-        conf += ']],';
+        conf += ']],'
       }
       conf += `
-                 ],`;
+                 ],`
     }
     conf += `
               }`
   }
 
-
-
-
-
-
-  let placeholder = '';
-   if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
+  let placeholder = ''
+  if (attributes.input.placeholder) { placeholder = attributes.input.placeholder }
   results = `
    
           <textarea name="${fieldName}"  
@@ -144,11 +133,9 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg)
                 placeholder: '${placeholder}',
                 ${conf}
            });
-          </script>`;
-  return ([results, headerTags]);
+          </script>`
+  return ([results, headerTags])
 }
 
-exports.documentation=documentation;
-exports.fn=fn;
-
-
+exports.documentation = documentation
+exports.fn = fn

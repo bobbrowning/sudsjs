@@ -146,9 +146,19 @@ module.exports = {
       design: 'reports',
       view: 'allUsers',
     },
-    sort: ['emailAddress', 'ASC'],                            // sort field
-    columns: ['fullName', 'emailAddress', 'mainPhone', 'mobilePhone', 'userType', 'organisation',],
+ //   sort: ['emailAddress', 'ASC'],                            // sort field
+    columns: [ 'fullName', 'emailAddress', 'userType', 'permission',],
   },
+
+  allAudit: {
+    table: 'audit',
+    friendlyName: 'Audit list',
+    view: {
+      design: 'reports',
+      view: 'allAudit',
+    },
+ columns: [ 'createdAt', 'tableName', 'mode', 'row'],
+},
 
 
   /* *****************************************************

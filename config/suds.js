@@ -54,7 +54,6 @@ module.exports = {
     configreport: '../bin/suds/configreport',
     login: '../bin/suds/login',                      // e.g. http://localhost:3000/login results in bin/suds/login.js being run.
     changepw: '../bin/suds/change-password',
-    restore: '../bin/suds/restore',
     resetpw: '../bin/suds/reset-password',
     auto: '../bin/suds/api/autocomplete',
     lookup: '../bin/suds/api/lookup',
@@ -66,6 +65,9 @@ module.exports = {
     forgotten: '../bin/suds/forgotten',
     docs: '../bin/docs.js',
     switchdb: '../bin/suds/switchdb',
+    dump: '../bin/suds/dump',
+    restore: '../bin/suds/restore',
+
     /** Custom  */
     getvariants: '../bin/custom/get-variants',
     getsubvariants: '../bin/custom/get-subvariants',
@@ -107,8 +109,8 @@ module.exports = {
    * 
    *********************************************** */
 
-  databases: ['couch', 'mongo', 'sqlite',/* 'mysql', 'postgresql'*/],
-  dbDriver: 'mongo',
+  databases: ['couch', 'couch1', 'mongo', 'sqlite', 'mysql', /*'postgresql'*/],
+  dbDriver: 'couch',
 
   /** **************** SQLite3 configuration ***************
    * The database object set below  is used to initialise the knex library 
@@ -127,7 +129,7 @@ module.exports = {
     client: 'sqlite3',
     connection: {
       filename: '/home/bob/suds/suds.db',
-     },
+    },
   },
 
 
@@ -147,6 +149,7 @@ module.exports = {
     authtable: 'nosql',    // see authorisation section below
     standardHeader: 'couch',
     countable: false,
+    views: true,
     connection: {
       database: 'sudsjs',
       host: 'localhost:5984',
@@ -154,6 +157,27 @@ module.exports = {
     },
 
   },
+
+  /** ******************* Couch 1 ******************** 
+   * This is an exact copy of the mongoDB database. 
+   * So it doesn't have any views set up.  It is for performance testing.
+  */
+  couch1: {
+    pageFile: 'webpagesnosql',
+    driverFile: 'couch',
+    dbkey: 'string',
+    friendlyName: 'Couch: Mongo copy',
+    homepage: 'home',
+    authtable: 'nosql',    // see authorisation section below
+    standardHeader: 'couch',
+    countable: false,
+    connection: {
+      host: 'localhost:5984',
+      requestDefaults: {},
+    },
+
+  },
+
 
   /** **************** MongoDB configuration ***************
     * 
@@ -181,9 +205,6 @@ module.exports = {
 
 
   /** *********   Postgresql config ***************************
-   * commented out as we are using sqlite for the demo version... 
-   * However I have done some testing with mysql and postgresql 
-   * 
    * Quotecolname puts quotes around the column name in where instructions.
    * You may need this if your column names include upper case because 
    * postgresql folds all column names to lower case unless quoted.
@@ -216,6 +237,7 @@ module.exports = {
     standardHeader: 'sql',
     authtable: 'sql',
     countable: true,
+    qualifyColName: true,
     client: 'mysql',
     connection: {
       host: 'localhost',
@@ -409,7 +431,7 @@ module.exports = {
 
   audit: {                                    // Audit trail file - logs every operation
     include: true,
-    trim: [100, 120],                       // Audit trail trimmed to 1000 records.
+    trim: [1000, 1200],                       // Audit trail trimmed to 1000 records.
     log: ['ip', 'method', 'query', 'body'],      // items from the request to be listed. See https://expressjs.com/en/api.html#req. Stored as a JSON scring.
     /** If omitted al operations are logged.  */
     operations: ['new', 'update', 'populate', 'delete', 'login', 'changepw'],  // can include 'list' and listrow'

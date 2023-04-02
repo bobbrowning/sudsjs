@@ -1,29 +1,29 @@
-let trace = require('track-n-trace');
-let sendView = require('./send-view');
-let suds = require('../../config/suds');
+const trace = require('track-n-trace')
+const sendView = require('./send-view')
+const suds = require('../../config/suds')
 
 module.exports = async function (req, res) {
-    console.log(__dirname);
-   let csrfToken='';
-   if (suds.csrf) {
-        csrfToken=req.csrfToken();                                                  
-   }
-    trace.log('login form' );
-    let next='';
-    let log='';
-    let pass='';
-    if (req.query.next) {next=req.query.next}
-    if (req.query.l) {log=req.query.l}
-    if (req.query.p) {pass=req.query.p}
-    let go='';
-    if (req.query.l) {
-      go=`
+  console.log(__dirname)
+  let csrfToken = ''
+  if (suds.csrf) {
+    csrfToken = req.csrfToken()
+  }
+  trace.log('login form')
+  let next = ''
+  let log = ''
+  let pass = ''
+  if (req.query.next) { next = req.query.next }
+  if (req.query.l) { log = req.query.l }
+  if (req.query.p) { pass = req.query.p }
+  let go = ''
+  if (req.query.l) {
+    go = `
       <script>
       document.getElementById("login").submit();
-      </script>`;
-    }
-    
-    output=`
+      </script>`
+  }
+
+  output = `
     <div class="suds">
 
     <h1>Log in</h1>
@@ -47,12 +47,8 @@ module.exports = async function (req, res) {
 </form>
 </div>
 ${go}
-`;
+`
 
-    let result = await sendView(res, 'admin',output);
-    trace.log(result);
-    return;
-
-
-
+  const result = await sendView(res, 'admin', output)
+  trace.log(result)
 }

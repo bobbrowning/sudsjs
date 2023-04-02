@@ -1,55 +1,52 @@
 
-
-/*inputs: {
+/* inputs: {
   fieldType: { type: 'string' },
   fieldName: { type: 'string' },
   fieldValue: { type: 'string' },
   attributes: { type: 'ref' },
   errorMsg: { type: 'string' },
 
-},*/
-let suds = require('../../../config/suds');
+}, */
+const suds = require('../../../config/suds')
 
-let documentation = {
-    friendlyName: 'Select',
-    description: `Create select dropdown based on values in the table definition, 
-or values in a linked table, or provided by a function.`,
+const documentation = {
+  friendlyName: 'Select',
+  description: `Create select dropdown based on values in the table definition, 
+or values in a linked table, or provided by a function.`
 }
 
+const lang = require('../../../config/language').EN
+const getLabelsValues = require('../get-labels-values')
 
-let lang = require('../../../config/language')['EN'];
-let getLabelsValues = require('../get-labels-values');
-
-let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record, tableData, tabs) {
-     trace = require('track-n-trace');
-    trace.log(arguments);
-    let results = '';
-    trace.log(tableData.recordTypes);
-    let values = Object.keys(tableData.recordTypes);
-    let labels = [];
-    let i = 0;
-    let omits = `      {`;
-    for (let key of values) {
-        labels[i++] = tableData.recordTypes[key].friendlyName;
-        if (tableData.recordTypes[key].omit) {
-            omits += `
-          ${key}:[`;
-            for (let omit of tableData.recordTypes[key].omit) {
-                omits += `'${omit}',`;
-            }
-            omits += `],`;
-        }
+const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg, record, tableData, tabs) {
+  trace = require('track-n-trace')
+  trace.log(arguments)
+  let results = ''
+  trace.log(tableData.recordTypes)
+  const values = Object.keys(tableData.recordTypes)
+  const labels = []
+  let i = 0
+  let omits = '      {'
+  for (const key of values) {
+    labels[i++] = tableData.recordTypes[key].friendlyName
+    if (tableData.recordTypes[key].omit) {
+      omits += `
+          ${key}:[`
+      for (const omit of tableData.recordTypes[key].omit) {
+        omits += `'${omit}',`
+      }
+      omits += '],'
     }
-    omits += `
-        }`;
-    trace.log(omits, tabs);
-    let groups = '[';
-    for (let item of tabs) { groups += `'${item}', `; }
+  }
+  omits += `
+        }`
+  trace.log(omits, tabs)
+  let groups = '['
+  for (const item of tabs) { groups += `'${item}', ` }
 
-    groups += ']';
+  groups += ']'
 
-
-    results = `
+  results = `
           <script>
               function recordType(fieldName) {
                   let allGroups=${groups};
@@ -73,22 +70,21 @@ let fn = async function (fieldType, fieldName, fieldValue, attributes, errorMsg,
            }
           </script>
           <select name="${fieldName}"  class="form-control" aria-label="${attributes.friendlyName}"  id="${fieldName}" onchange="recordType('${fieldName}')" style="width: ${attributes.input.width}" >
-          <option value="">${lang.select}</option>`;
-    for (let i = 0; i < values.length; i++) {
-        selected = '';
-        if (values[i] == fieldValue) { selected = 'selected' }
-        results += `
-          <option value="${values[i]}" ${selected}>${labels[i]} </option>
-     `;
-    }
+          <option value="">${lang.select}</option>`
+  for (let i = 0; i < values.length; i++) {
+    selected = ''
+    if (values[i] == fieldValue) { selected = 'selected' }
     results += `
+          <option value="${values[i]}" ${selected}>${labels[i]} </option>
+     `
+  }
+  results += `
         </select>
         <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
-`;
+`
 
-    return (results);
+  return (results)
 }
 
-exports.documentation = documentation;
-exports.fn = fn;
-
+exports.documentation = documentation
+exports.fn = fn

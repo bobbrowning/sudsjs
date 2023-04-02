@@ -1,12 +1,10 @@
-let trace = require('track-n-trace');
-let sendView = require('./send-view');
-
-
+const trace = require('track-n-trace')
+const sendView = require('./send-view')
 
 module.exports = async function (req, res) {
-    console.log(__dirname);
-    trace.log('login form' );
-    output=`
+  console.log(__dirname)
+  trace.log('login form')
+  output = `
     <h1>Reset password</h1>
     <form name="cp" action="/changepw" method="post" style="width: 500px" onsubmit="return validateForm()">
     <input type="hidden" name="user" value="${req.query.user}">
@@ -35,12 +33,8 @@ module.exports = async function (req, res) {
          }
      }
  </script>
-`;
+`
 
-    let result = await sendView(res, 'admin',output);
-    trace.log(result);
-    return;
- 
-
-
+  const result = await sendView(res, 'admin', output)
+  trace.log(result)
 }

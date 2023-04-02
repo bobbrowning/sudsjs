@@ -100,7 +100,8 @@ module.exports = {
         id: {
             friendlyName: 'Document ID',
             primaryKey: true,
-            type: 'string',
+            type: 'number',
+            autoincrement: true,
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
 
@@ -108,6 +109,7 @@ module.exports = {
          createdAt: {
             friendlyName: 'Date created',
             type: 'number',
+            database: {type: 'bigint'},
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },            // input by the system not the user.
             process: { type: 'createdAt' },
@@ -115,6 +117,7 @@ module.exports = {
         },
         updatedAt: {
             friendlyName: 'Date last updated',
+            database: {type: 'bigint'},
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },

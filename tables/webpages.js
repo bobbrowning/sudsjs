@@ -92,6 +92,7 @@ module.exports = {
         pageno: {
             friendlyName: 'Document ID',
             primaryKey: true,
+            autoincrement: true,
             type: 'string',
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
@@ -100,6 +101,7 @@ module.exports = {
          createdAt: {
             friendlyName: 'Date created',
             type: 'number',
+            database: {type: 'bigint'},
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },            // input by the system not the user.
             process: { type: 'createdAt' },
@@ -107,6 +109,7 @@ module.exports = {
         },
         updatedAt: {
             friendlyName: 'Date last updated',
+            database: {type: 'bigint'},
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },
@@ -248,6 +251,7 @@ module.exports = {
         /**   HTML page  only  */
         pageContent: {
             type: 'string',
+            database: {type: 'text'},    // Mysql use 'longtext'
             description: `This is the main content of the page. 
             If you want to include images, you can go to the images section 
             and upload an image. Then submit.  Go back to edit / images. 

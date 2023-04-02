@@ -1,14 +1,9 @@
 
-let tableDataFunction = require('../table-data');
-  let trace = require('track-n-trace');
+const tableDataFunction = require('../table-data')
+const trace = require('track-n-trace')
 
 module.exports = async function (attributes, fieldValue) {
-  trace.log(arguments);
+  trace.log(arguments)
 
-  return fieldValue+'vvv'; 
+  return fieldValue + 'vvv'
 }
-
-
-
-
-

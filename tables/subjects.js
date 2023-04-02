@@ -16,7 +16,7 @@ module.exports = {
     * In CouchDB  databases there is also a 'collection' field.
     * 
     */
-   attributes: {
+   properties: {
       name: {                          // Subject name
          friendlyName: 'Subject name', // Appears where the field is listed
          type: 'string',

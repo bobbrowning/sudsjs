@@ -37,6 +37,7 @@ module.exports = {
 
     /** This determines how each row is to be described in things like links. 
      *  In this case the title column. */
+    stringifyView : true,
     stringify: 'title',
 
     /** The columns are split into groups for the row listing and the edit form */
