@@ -59,8 +59,16 @@ node ./bin/www
 * Administration page http://localhost:3000/admin  login demo@demo.demo password demo.
 * CTRL-C to stop the software.
 
-MongoDB tedt data is also included. 
+There are other test databases in the backups folder. Copy these to the main directory to use them.
+CouchDB: dumpedDB.json
+MySQL: mysqldump.sql
+postgresql: postgresqldump.sql
+SQLite 3: suds.db.bak
+mongoDB: dump
 
+To run MongoDB:  
+
+* Copy dump to the main directory
 * Set up MongoDB Community edition.  https://www.mongodb.com/docs/manual/administration/install-community/
 * Restore the data
 ```
@@ -70,6 +78,7 @@ mongorestore
 * Find dbDriver: 'sqlite' and change to mongo.  
 * Start sudsjs again  Use the same login and password.
 
+Couch is backed up using couchdb-dump.sh  (https://github.com/danielebailo/couchdb-dump)
 
 Alternative logins on both databases are 
 * gladys@loman.demo password: demo, permission: Purchasing;

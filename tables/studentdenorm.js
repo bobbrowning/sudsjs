@@ -63,17 +63,17 @@ results: [
  * 
  */
 
- let suds = require('../config/suds');
- let db = require('../bin/suds/db');
+let suds = require('../config/suds');
+let db = require('../bin/suds/db');
 let lookup = require('../bin/suds/lookup-value');
 
 
 module.exports = {
-    description: 'Student - structured model',
+    title: 'Student - structured model',
 
     friendlyName: 'Student',
     stringify: 'name',
-    permission: { all: ['admin', 'demo', 'trainer','demod'] },
+    permission: { all: ['admin', 'demo', 'trainer', 'demod'] },
     list: { columns: ['name', 'address', 'results'], },
     standardHeader: true,
     properties: {
@@ -82,7 +82,7 @@ module.exports = {
         },
         address: {
             type: 'object',
-            object: {
+            properties: {
                 address1: {
                     type: 'string'
                 },
@@ -98,36 +98,40 @@ module.exports = {
             },
         },
         results: {
-            array: { type: 'multiple' },
-            type: 'object',
+            type: 'array',
             friendlyName: 'Subject and results',
             stringify: async function (data) {
                 let subject = await db.getRow('subjectsdenorm', data.subject);
                 return (`${subject.name}`)
             },
-            properties: {
-                subject: {
-                    type: 'string',
-                    model: 'subjectsdenorm',
-                    input: { type: 'select', },
-                },
-                paper: {
-                    type: 'object',
-                    array: { type: 'multiple' },
-                    object: {
-                        paper: {
-                            type: 'string',
-                             input: {
-                                type: 'select',
-                                onevents: {
-                                    onload: `fillChildSelect('{{fieldName}}','exampaper','subject','{{fieldValue}}')`,
-                                    onfocus: `fillChildSelect('{{fieldName}}','exampaper','subject')`,
+            items: {
+                type: 'object',
+                properties: {
+                    subject: {
+                        type: 'string',
+                        model: 'subjectsdenorm',
+                        input: { type: 'select', },
+                    },
+                    paper: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                paper: {
+                                    type: 'string',
+                                    input: {
+                                        type: 'select',
+                                        onevents: {
+                                            onload: `fillChildSelect('{{fieldName}}','exampaper','subject','{{fieldValue}}')`,
+                                            onfocus: `fillChildSelect('{{fieldName}}','exampaper','subject')`,
+                                        },
+                                    },
                                 },
-                            },
-                        },
-                        score: {
-                            type: 'number',
-                            input: { type: 'number', max: 100 },
+                                score: {
+                                    type: 'number',
+                                    input: { type: 'number', max: 100 },
+                                }
+                            }
                         }
                     }
                 }
