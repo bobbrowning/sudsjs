@@ -16,7 +16,7 @@ You can see it in action at [sudsjs.com](http://sudsjs.com).
 * An extended permission system, 
 * An administration page,
 * Some starter applications. The test data includes a useable contact management system and website content management system. 
-* This is all controlled by configuration files.
+* This is all controlled by configuration files and a [schema](https://github.com/bobbrowning/sudsjs/blob/main/tables/subjects.js) based on the [JSON Schema standard](https://json-schema.org/).
 * Works with Mysql, PostgreSQL, SQLite 3, MongoDB, CouchDB
 
 The NOSQL database support adds

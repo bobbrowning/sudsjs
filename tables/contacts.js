@@ -12,6 +12,7 @@ let db = require('../bin/suds/db');
 
 
 module.exports = {
+  type: 'object',
   description: `A record should be created for all contacts with prospects, customers 
   or suppliers. It may be phone, email, text etc. When a contact is made, it may result in further 
   actions being needed. The expected date and the person responsible for the action is recorded. 
@@ -31,11 +32,10 @@ module.exports = {
   /*   plus the contact date.                                            */
   stringify: async function (record) {
     let date = new Date(record.date).toString().substring(0, 16);
-    let user=await db.getRow('user',record.user);
-    console.log(user.fullName) 
-     let text = record.note.substring(0, 30);
-     if (record.note.length > 30) { text += ' ...' }
-     return `${user.fullName}: ${text} - ${date}`; 
+    let user = await db.getRow('user', record.user);
+    let text = record.note.substring(0, 30);
+    if (record.note.length > 30) { text += ' ...' }
+    return `${user.fullName}: ${text} - ${date}`;
 
   },
 
@@ -60,7 +60,7 @@ module.exports = {
      */
     preForm: async function (record, mode) {
       if (record.isFollowUp) {
-         await db.updateRow('contacts', { _id: record.isFollowUp, closed: true })
+        await db.updateRow('contacts', { _id: record.isFollowUp, closed: true })
       }
       return;
     },
@@ -81,10 +81,10 @@ module.exports = {
       return;
     },
   },
-  standardHeader: true,
-  attributes: {
-
-
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     user: {
       description: 'The person or organisation contacted',
       model: 'user',
@@ -167,27 +167,33 @@ module.exports = {
             ['user', 'equals', '$user'],
             ['_id', 'ne', '$_id']
           ],
-          sort: ['date','DESC'], 
+          sort: ['date', 'DESC'],
         },
         limit: 5,                   // number of options returned
         placeholder: 'Type part of the note',
         idPrefix: 'User number: ',   // The program adds the id in brackets after the title. in this case 'User number n'
-  
+
       },
     },
     result: {
-      array: { type: 'single' },
+
       description: 'How did it go',
-      type: 'string',
+      type: 'array',
+
       values: {
-        E: 'Excellent - objectives reached',
-        G: 'Good - progress towards objective met',
-        N: 'Neutral',
-        B: 'Not as well as exected',
-        F: 'Failure',
+        E: 'Excellent - sale made',
+        C: 'Call back scheduled',
+        P: 'Purchasing plans dicussed',
+        M: 'Meeting scheduled',
+        Y: `Another person identified`,
+        U: 'Future sales unlikely',
       },
       input: {
         type: 'checkboxes',
+        single: true,  // presented on inout as a single field - normal for checkboxes..
+      },
+      items: {
+        type: 'string',
       },
       display: { type: 'list' },
     },
@@ -214,7 +220,7 @@ module.exports = {
         placeholder: 'Please enter notes on the contact'
       },
       display: {
-         truncateForTableList: 30,
+        truncateForTableList: 30,
         maxWidth: '500px',
       },
     },

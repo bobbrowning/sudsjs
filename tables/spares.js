@@ -5,7 +5,7 @@
 
 module.exports = {
  description: 'Spare parts',
-   attributes: {
+   properties: {
     id: {
       friendlyName: 'User No',                            // Visible name 
       type: 'number',

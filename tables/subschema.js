@@ -7,9 +7,9 @@ module.exports = {
 
   description: `This table contains the definitions of different record types.`,
 
-  permission: { all: ['admin', 'demo','demov','trainer'] },
+  permission: { all: ['admin', 'demo', 'demov', 'trainer'] },
   list: {
-    columns: ['_id', 'createdAt', 'group','friendlyName'],
+    columns: ['_id', 'createdAt', 'group', 'friendlyName'],
   },
   edit: {
     preProcess: function (record) {
@@ -18,9 +18,10 @@ module.exports = {
     },
   },
   stringify: 'friendlyName',
-  standardHeader: true,
-  attributes: {
-
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     group: {
       type: 'string',
       input: {
@@ -33,11 +34,11 @@ module.exports = {
 
     },
     friendlyName: { type: 'string' },
-    description: {type: 'string', input: {type: 'textarea'}}, 
+    description: { type: 'string', input: { type: 'textarea' } },
     item: {
       array: { type: 'multiple', bite: 5 },
       type: 'object',
-      object: {
+      properties: {
         name: {
           type: 'string',
           friendlyName: 'Field/Object Name',

@@ -9,9 +9,10 @@ module.exports = {
 
   description: 'Used to link products, such as product/spares or product/accessories.',
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
-  standardHeader: true,
-  attributes: {
- 
+  properties: {
+    /* This inserts a standard header from fragments.js
+       The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     mainproduct: {
       model: 'products',
       input: {

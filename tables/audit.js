@@ -10,10 +10,12 @@ module.exports = {
 
   permission: { view: ['admin', 'demo'] },
   list: {
-    columns: [ 'createdAt', 'tableName', 'mode', 'row'],
+    columns: ['createdAt', 'tableName', 'mode', 'row'],
   },
-  standardHeader: true,
-  attributes: {
+  properties: {
+    /* This inserts a standard header from fragments.js
+       The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     tableName: {
       type: 'string',
       database: { type: 'varchar', length: 50, },
@@ -32,7 +34,7 @@ module.exports = {
     data: {
       type: 'string',
       input: { type: 'textarea' },
-      display: { type: 'JSON' },
+      process: { type: 'JSON' },
       database: { type: 'text' },
     },
   }

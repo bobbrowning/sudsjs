@@ -3,24 +3,26 @@
  * Results table - normalised moned
  * 
  */
- let suds = require('../config/suds');
- let db = require('../bin/suds/db');
+let suds = require('../config/suds');
+let db = require('../bin/suds/db');
 module.exports = {
     description: 'Exam results',
 
     friendlyName: 'Exam results',
     permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
-    standardHeader: true,
     list: {
-        columns: ['subject','studentId', 'paper', 'score'],
+        columns: ['subject', 'studentId', 'paper', 'score'],
     },
     recordTypeColumn: 'subject',
     recordTypeInput: 'select',
-    attributes: {
+    properties: {
+        /* This inserts a standard header from fragments.js
+            The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+        $ref: '{{dbDriver}}Header',
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
-            input: { type: 'select' , mandatory: true},
+            input: { type: 'select', mandatory: true },
         },
         subject: {
             type: 'string',

@@ -69,32 +69,24 @@ let lookup = require('../bin/suds/lookup-value');
 
 
 module.exports = {
-    title: 'Student - structured model',
-
+    description: 'Student - structured model',
+    type: 'object',
     friendlyName: 'Student',
     stringify: 'name',
     permission: { all: ['admin', 'demo', 'trainer', 'demod'] },
     list: { columns: ['name', 'address', 'results'], },
-    standardHeader: true,
+    required: ['name'],
     properties: {
+        /* This inserts a standard header from fragments.js
+          The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+        $ref: '{{dbDriver}}Header',
         name: {
             type: 'string'
         },
         address: {
             type: 'object',
             properties: {
-                address1: {
-                    type: 'string'
-                },
-                address2: {
-                    type: 'string'
-                },
-                city: {
-                    type: 'string'
-                },
-                zip: {
-                    type: 'string'
-                },
+                $ref: '#/$defs/address',
             },
         },
         results: {
@@ -113,6 +105,9 @@ module.exports = {
                         input: { type: 'select', },
                     },
                     paper: {
+                        /*                        type: 'object',
+                                                array: { type: 'multiple' },
+                        */
                         type: 'array',
                         items: {
                             type: 'object',
@@ -138,5 +133,22 @@ module.exports = {
             }
         }
 
+    },
+    $defs: {
+        address: {
+            address1: {
+                type: 'string'
+            },
+            address2: {
+                type: 'string'
+            },
+            city: {
+                type: 'string'
+            },
+            zip: {
+                type: 'string'
+            },
+
+        }
     }
 }

@@ -56,7 +56,61 @@ const friendlyName = 'Central switching program.'
 
 let startTime;
 
+/**
+ *  This is catches any errors in the code and puts a message on screem.
+ * 
+ * The program will normally crash out with 
+ *    throw new Error ('program:message') 
+ * The program name may be omitted, but should help diagnose the problem.
+ * The program puts a message onscreen and the user may continue with a new
+ * transaction. A trace is left on the console. 
+ *  
+ *   Other than this the function just calls the main program.
+ * @param {Object} req 
+ * @param {Object} res 
+ */
 async function admin (req, res) {
+  try {
+    await adminprocess(req, res)
+  } catch (err) {
+    let dateStamp = new Date().toLocaleString()
+    console.log(`
+    
+********************** Error ***************************
+${dateStamp}`)
+    console.log(err)
+    console.log(`
+********************************************************
+    
+    ` )
+    let msg = 'Error';
+    let prog = 'The console log may have more details.';
+    if (typeof err === 'string') {
+      if (err.includes(':')) {
+        [file, msg] = err.split(':')
+        prog = `In source file ${file}.`
+      }
+      else {
+        msg = err;
+      }
+    }
+    else {
+      msg = err.message
+      if (msg.includes('::')) {
+        [file, msg] = msg.split('::')
+        prog = `In source file ${file}. The console log may have more details.`
+      }
+    }
+    await sendView(res, 'admin', `
+    <H1>There has been a problem</h1>
+    <h2>${msg}</h2>
+    <p>${prog}</p>
+    <a href='/admin'>Admin page</a>`)
+  }
+}
+
+
+async function adminprocess (req, res) {
   if (arguments[0] === suds.documentation) { return (friendlyName, '') }
   //   trace.log(req.connection);
   trace.log({
@@ -69,7 +123,7 @@ async function admin (req, res) {
     level: 'min'
 
   })
-  startTime=new Date().getTime()
+  startTime = new Date().getTime()
   let csrfToken
   if (suds.csrf) {
     csrfToken = req.csrfToken()
@@ -253,9 +307,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     table = reports[report].table
   }
   if (!table) {
-    console.log(`No table given. - may be an issue with report: ${report}`)
-    res.send(`No table - may be an issue with report: ${report}`)
-    return
+    throw new Error(`admin.js::No table given. - may be an issue with report: ${report}`)
   }
 
   const tableData = require('../../tables/' + table)
@@ -597,7 +649,6 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     }
     if (req.query.open) { open = req.query.open }
     if (req.query.opengroup) { openGroup = req.query.opengroup }
-
     output = await listRow(
       permission,
       req.query.table,
@@ -606,6 +657,7 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
       openGroup
     )
   }
+
 
   /** * *********************************************
     *
@@ -744,8 +796,9 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     viewData.heading = lang.homeHeading
     const result = await sendView(res, 'admin', viewData)
     trace.log(result)
-    trace.log({'Elapsed time (ms)': new Date().getTime()-startTime,level: 'timer',  })
+    trace.log({ 'Elapsed time (ms)': new Date().getTime() - startTime, level: 'timer', })
     return result
   }
 }
+
 module.exports = admin

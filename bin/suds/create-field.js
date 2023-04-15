@@ -25,7 +25,7 @@ async function createField(key, fieldValue, attributes, errorMsg, mode, record, 
 
   /* *******************************************************
      *
-     *  Extract field type from extra attributes. (defaults to text)
+     *  Extract field type. (defaults to text)
      *  If it is not a simple 'input' HTML tag, work out the helper name.
      *  The helpers are all input-fieldtype.js e.g field-radio.js
      *  new helpers can be added without changing this program.

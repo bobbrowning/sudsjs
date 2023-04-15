@@ -4,14 +4,14 @@
   */
 
 module.exports = {
-   friendlyName: 'Main product to Sub product link',
+  friendlyName: 'Main product to Sub product link',
 
-   description: 'Used to link products, such as product/spares or product/accessories.',
+  description: 'Used to link products, such as product/spares or product/accessories.',
 
-  permission: { all: ['admin', 'purchasing','demo'], view: ['sales'] },
+  permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
   stringify: function (record) {
     let suds = require('../config/suds')
-     let formatter = new Intl.NumberFormat(
+    let formatter = new Intl.NumberFormat(
       suds.currency.locale,
       {
         style: 'currency',
@@ -19,11 +19,12 @@ module.exports = {
         minimumFractionDigits: suds.currency.digits,
       })
     price = formatter.format(record.price);
-     return `${record.name} Guide retail price: ${price}`;
+    return `${record.name} Guide retail price: ${price}`;
   },
-  standardHeader: true,
-  attributes: {
-
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     product: {
       model: 'products',
       input: {
@@ -45,7 +46,7 @@ module.exports = {
         makeLink: true,             // hypertext link to the linked table
       },
     },
-    name: {type: 'string' },
+    name: { type: 'string' },
     price: {
       type: 'number',
       friendlyName: 'Guide retail unit price',
@@ -56,6 +57,6 @@ module.exports = {
       },
       display: { currency: true },
     },
-    note: {type: 'string' },
+    note: { type: 'string' },
   },
 }

@@ -21,16 +21,16 @@ module.exports = {
 
 
   list: {
-    columns: ['updatedAt', '_id', 'customer', 'status', 'date','orderlines'],
+    columns: ['updatedAt', '_id', 'customer', 'status', 'date', 'orderlines'],
     open: 'salesorderlines',
   },
   edit: {
     preProcess: async function (record, operation) {
-        await db.updateRow('user', {
-          _id: record.customer,
-          userType: 'C',
-          lastSale: record._id,
-        });
+      await db.updateRow('user', {
+        _id: record.customer,
+        userType: 'C',
+        lastSale: record._id,
+      });
       record.totalValue = 0;
       for (let i = 0; i < record.orderlines.length; i++) {
         console.log(record.orderlines[i].price);
@@ -40,10 +40,10 @@ module.exports = {
       return;
     }
   },
-  standardHeader: true,
-  attributes: {
-
-
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     customer: {
       description: 'Customer',
       model: 'user',
@@ -93,11 +93,11 @@ module.exports = {
       type: 'object',
       stringify: async function (data) {
         let record = await db.getRow('products', data.product);
-        shortname="Record not found"
-        if (record.name) {shortname = record.name.substr(0, 40)}
+        shortname = "Record not found"
+        if (record.name) { shortname = record.name.substr(0, 40) }
         return `${data.units} X ${shortname}`
       },
-      object: {
+      properties: {
         product: {
           description: 'Product',
           model: 'products',

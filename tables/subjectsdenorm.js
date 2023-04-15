@@ -5,11 +5,13 @@ module.exports = {
    friendlyName: 'Course Subjects (structured version)',
    permission: { all: ['admin', 'demo', 'trainer', 'demod'] }, // 'trainer' and 'demod' have limited home pages
    stringify: 'name',                                         // Summarise record content
-   standardHeader: true,                                      // Standard document header
    list: {
       columns: ['name', 'papers'],                            // Columns listed on a normal list
    },
-   attributes: {
+   properties: {
+      /* This inserts a standard header from fragments.js
+         The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+      $ref: '{{dbDriver}}Header',
       name: {
          type: 'string',
       },
@@ -21,7 +23,7 @@ module.exports = {
          array: { type: 'multiple' },
          type: 'object',
          friendlyName: 'Exam paper',
-         object: {
+         properties: {
             name: {
                type: 'string',
             },

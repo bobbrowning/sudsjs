@@ -11,6 +11,8 @@ const lang = require('../../config/language').EN
 // let getRow = require('./get-row');
 const db = require('./db')
 const fs = require('fs')
+const jsonFragments = require('../../tables/fragments')
+
 const standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
 
 module.exports = async function (req, res) {
@@ -170,6 +172,7 @@ module.exports = async function (req, res) {
     *
     **************************************** */
   const validProperties = [
+    'ref',
     'type',
     'primaryKey',
     'autoincrement',
@@ -220,6 +223,7 @@ module.exports = async function (req, res) {
     'stringify',
     'list',
     'groups',
+    'properties',
     'attributes',
     'parentData',
     'edit',
@@ -283,14 +287,10 @@ module.exports = async function (req, res) {
     const tableObject = require(`../../tables/${table}`)
     /* ****************************************
         *
-        *  consolidate attributes of this table
+        *  consolidate properties of this table
         *
         **************************************** */
-    let attributes = tableObject.attributes
-    if (tableObject.standardHeader) {
-      attributes = { ...standardHeader, ...tableObject.attributes }
-    }
-
+   
     /* ****************************************
         *
         *  Check table items
@@ -300,6 +300,7 @@ module.exports = async function (req, res) {
       if (!validTableData.includes(key)) {
         seterror(`table: ${table}
             ${key} is not  valid item`)
+            console.log(tableObject[key])
       }
     }
 
@@ -329,11 +330,12 @@ module.exports = async function (req, res) {
           *  Check search field exists
           *
           **************************************** */
-    trace.log('search')
+    let properties = tableObject.properties
+  trace.log('search')
     if (tableObject.search) {
       const search = tableObject.search
       for (const srch of Object.keys(search)) {
-        if (!tableObject.attributes[srch]) {
+        if (!properties[srch]) {
           seterror(`In project ${project}: 
               Table: ${table}  
               Search: ${srch} 
@@ -361,7 +363,7 @@ module.exports = async function (req, res) {
               `)
           } else {
             for (const column of columns) {
-              if (!attributes[column]) {
+              if (!properties[column]) {
                 seterror(`In table: ${table}  
             Group: ${group} 
             Sorry ${column} is not a valid field
@@ -384,7 +386,7 @@ module.exports = async function (req, res) {
       const columns = tableObject.list.columns
       trace.log(table, columns)
       for (let i = 0; i < columns.length; i++) {
-        if (!attributes[columns[i]]) {
+        if (!properties[columns[i]]) {
           seterror(`
       Table: ${table} 
       In columns for listing: ${columns[i]} is not a valid attribute
@@ -395,7 +397,7 @@ module.exports = async function (req, res) {
 
     if (tableObject.recordTypeColumn) {
       const recordTypeColumn = tableObject.recordTypeColumn
-      if (!tableObject.attributes[recordTypeColumn]) {
+      if (!tableObject.properties[recordTypeColumn]) {
         seterror(`
                 Table: ${table} 
                 Record type column ${recordTypeColumn} is not a valid attribute
@@ -405,24 +407,68 @@ module.exports = async function (req, res) {
 
     /* ****************************************
           *
-          *  All the attributes /  properties valid?
+          *  All the properties /  properties valid?
           *
           **************************************** */
+    dereference (properties, tableObject)
+    validateproperties(table, properties)
 
-    validateAttributes(table, attributes)
+    
+/**
+ * 
+ *   Dereference schema
+ * 
+ * @param {object} properties 
+ * @param {object} tableData 
+ * @param {object} parent 
+ */
+function dereference (properties, tableData) {
+  trace.log(properties)
+  for (const key of Object.keys(properties)) {
+    trace.log({ key: key , properties: properties[key]})
+    if (key === '$ref') {
+      let ref = properties[key]
+      if (ref.includes('{{dbDriver}}')) { ref = ref.replace('{{dbDriver}}', suds.dbDriver) }
+      if (ref.includes('#/$defs/')) {
+        ref = ref.replace('#/$defs/', '')
+        if (!(tableData['$defs'])) { throw new Error(`merge-attributes.js::No $defs object for ${ref}`) }
+        if (!(tableData['$defs'][ref])) { throw new Error(`merge-attributes.js::No $defs/${ref} object`) }
+        for (const jr of Object.keys(tableData['$defs'][ref])) {
+          trace.log(jr, tableData['$defs'][ref][jr])
+          properties[jr] = tableData['$defs'][ref][jr]
+        }
 
-    function validateAttributes (table, attributes) {
-      for (const attribute of Object.keys(attributes)) {
-        console.log('-- checking attributes ', attribute)
+      } else {
+        trace.log(`Replacing $ref with object in ${properties[key]} = ${ref}`)
+        for (const jr of Object.keys(jsonFragments[ref])) {
+          properties[jr] = jsonFragments[ref][jr]
+        }
+      }
+      delete properties[key]
 
-        if (typeof attributes[attribute] !== 'object') {
+    } else {
+      if (properties[key].type == 'object') {
+        trace.log(properties[key].properties)
+//        if (properties[key].object) dereference(properties[key].object, tableData)
+        if (properties[key].properties) dereference(properties[key].properties, tableData)
+      }
+    }
+  }
+  trace.log(properties)
+}
+
+    function validateproperties (table, properties) {
+      for (const attribute of Object.keys(properties)) {
+        console.log('-- checking properties ', attribute)
+         if (attribute === '$ref') {continue}
+        if (typeof properties[attribute] !== 'object') {
           seterror(`
             Table: ${table}  
             ${attribute} is not a valid attribute
             `)
         }
-        if (attributes[attribute].type == 'object') {
-          if (!attributes[attribute].object) {
+        if (properties[attribute].type == 'object') {
+          if (!properties[attribute].object) {
             seterror(`
                         Table: ${table}  
                         Column: ${attribute} 
@@ -430,21 +476,21 @@ module.exports = async function (req, res) {
                         `)
           } else {
             console.log('descending one level')
-            validateAttributes(table, attributes[attribute].object)
+            validateproperties(table, properties[attribute].object)
           }
         }
 
-        trace.log('table', attribute, attributes[attribute].type)
+        trace.log('table', attribute, properties[attribute].type)
 
-        if (attributes[attribute].type && !validTypes.includes(attributes[attribute].type)) {
+        if (properties[attribute].type && !validTypes.includes(properties[attribute].type)) {
           seterror(`
                 Table: ${table}  
                 Column: ${attribute} 
-                ${attributes[attribute].type} is not  valid type
+                ${properties[attribute].type} is not  valid type
                 `)
         }
 
-        for (const property of Object.keys(attributes[attribute])) {
+        for (const property of Object.keys(properties[attribute])) {
           if (!validProperties.includes(property)) {
             seterror(`
             Table: ${table}  
@@ -459,12 +505,12 @@ module.exports = async function (req, res) {
                   *  Input field types valid?
                   *
                   **************************************** */
-        if (attributes[attribute].input && attributes[attribute].input.type) {
-          if (!validInputFieldTypes.includes(attributes[attribute].input.type)) {
+        if (properties[attribute].input && properties[attribute].input.type) {
+          if (!validInputFieldTypes.includes(properties[attribute].input.type)) {
             seterror(`
                         Table: ${table}  
                         Column: ${attribute} 
-                        ${attributes[attribute].input.type} is not  valid input type
+                        ${properties[attribute].input.type} is not  valid input type
                         `)
           }
 
@@ -474,7 +520,7 @@ module.exports = async function (req, res) {
                      *
                      **************************************** */
 
-          if (attributes[attribute].input.type == 'summernote') {
+          if (properties[attribute].input.type == 'summernote') {
             summernotes++
             if (summernotes > 1) {
               seterror(`In project ${project}: 
@@ -490,7 +536,7 @@ module.exports = async function (req, res) {
                     *
                     **************************************** */
 
-          if (attributes[attribute].input.type == 'file') {
+          if (properties[attribute].input.type == 'file') {
             seterror(`In project ${project}: 
               Table: ${table}  
               Column: ${attribute} 
@@ -503,9 +549,9 @@ module.exports = async function (req, res) {
                   *  Check associations
                   *
                   **************************************** */
-        if (attributes[attribute].collectionList) {
-          if (!tableObject.attributes[attribute].collection) {
-            trace.log(attribute, attributes[attribute])
+        if (properties[attribute].collectionList) {
+          if (!tableObject.properties[attribute].collection) {
+            trace.log(attribute, properties[attribute])
             seterror(`In project ${project}: 
               Table: ${table}
               Column: ${attribute}  
@@ -514,7 +560,7 @@ module.exports = async function (req, res) {
               `)
             return
           }
-          for (key of Object.keys(attributes[attribute].collectionList)) {
+          for (key of Object.keys(properties[attribute].collectionList)) {
             if (!validChildData.includes(key)) {
               seterror(`
               Table: ${table}  
@@ -523,7 +569,7 @@ module.exports = async function (req, res) {
               `)
             }
           }
-          const columns = attributes[attribute].collectionList.columns
+          const columns = properties[attribute].collectionList.columns
           if (columns) {
             if (!Array.isArray(columns)) {
               seterror(`In project ${project}: 

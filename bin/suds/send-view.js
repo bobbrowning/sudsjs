@@ -22,7 +22,8 @@ module.exports = async function (res, view, output) {
     viewData.headerTags = headerTags + globalTags
     viewData.pageHeaderTags = suds.pageHeaderTags + globalTags
   }
-  viewData.footnote += '&nbsp;' + format(format.ISO8601_FORMAT, new Date())
+  let dateStamp = new Date().toLocaleString()
+  viewData.footnote += '&nbsp;' + dateStamp
   viewData.footnote = viewData.footnote.replace('{{version}}', suds.versionHistory[suds.versionHistory.length - 1].version)
   if (!viewData.headerTags) { viewData.headerTags = '<!-- space for program generated header tags -->' }
   if (!viewData.pageHeaderTags) { viewData.pageHeaderTags = '<!-- space for program generated header tags -->' }

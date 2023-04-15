@@ -147,9 +147,7 @@ async function displayField (attributes, value, children, permission, parent) {
       try {
         helper = require('./display/' + attributes.display.type)
       } catch (err) {
-        trace.error(`
-        Loading helper for type: ${attributes.display.type}
-        ${err}`)
+        throw new Error (`display-field.js::Cannot load display helper for type: ${attributes.display.type}, field ${attributes.friendlyName}`)
       }
       if (helper) {
         trace.log('using helper', attributes.display.type, value)

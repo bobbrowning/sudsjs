@@ -14,8 +14,10 @@ module.exports = {
         open: 'results',
     },
 
-    standardHeader: true,
-    attributes: {
+    properties: {
+        /* This inserts a standard header from fragments.js
+          The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+        $ref: '{{dbDriver}}Header',
         name: {
             type: 'string'
         },

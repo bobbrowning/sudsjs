@@ -50,7 +50,7 @@ module.exports = {
   },
 
   list: {
-    columns: ['_id','name', 'supplier', 'productGroup'],
+    columns: ['_id', 'name', 'supplier', 'productGroup'],
   },
 
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
@@ -98,11 +98,11 @@ module.exports = {
     },
   },
 
-  /** Every record has a standard header */
-  standardHeader: true,
 
-
-  attributes: {
+  properties: {
+    /* This inserts a standard header from fragments.js
+       The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     name: {
       type: 'string',
       description: 'Product name',
@@ -143,7 +143,7 @@ module.exports = {
     },
     overview: {
       type: 'string',
-      database: {type: 'varchar', length: 2000},
+      database: { type: 'varchar', length: 2000 },
       input: {
         type: 'textarea',
         rows: 4,
@@ -156,8 +156,8 @@ module.exports = {
     },
     description: {
       type: 'string',
-      database: {type: 'varchar', length: 2000},
-     input: {
+      database: { type: 'varchar', length: 2000 },
+      input: {
         format: 'col',
         type: 'ckeditor4',
         height: 300,
@@ -166,17 +166,17 @@ module.exports = {
       display: { truncateForTableList: 50 },
     },
 
-/**
- * The associated products list is structured as follows:
- *    associatedProducts 
- *           -product key
- *           -relationship to product
- *                        
- */
+    /**
+     * The associated products list is structured as follows:
+     *    associatedProducts 
+     *           -product key
+     *           -relationship to product
+     *                        
+     */
     associatedProducts: {
       type: 'object',
       array: { type: 'multiple', bite: 2 },
-      object: {
+      properties: {
         product: {
           friendlyName: 'associated products',
           model: 'products',
@@ -216,7 +216,7 @@ module.exports = {
       type: 'object',
       friendlyName: 'Variant',
       array: { type: 'multiple', bite: 5 },
-      object: {
+      properties: {
         friendlyName: { type: 'string' },
         SKU: {
           type: 'string',
@@ -249,7 +249,7 @@ module.exports = {
           friendlyName: 'Colour',
           stringify: 'friendlyName',
           array: { type: 'multiple', bite: 5 },
-          object: {
+          properties: {
             friendlyName: { type: 'string' },
             SKU: {
               type: 'string',

@@ -4,9 +4,10 @@ const trace = require('track-n-trace')
 const dcopy = require('deep-copy')
 const invertGroups = require('./invert-groups')
 const suds = require('../../config/suds')
-const { setInternalBufferSize } = require('bson')
-// const tableData = require('./table-data');
 humaniseFieldname = require('./humanise-fieldname')
+const jsonfrags = require('../../tables/fragments')
+const jsonFragments = require('../../tables/fragments')
+
 
 let cache = {}
 let tableData
@@ -31,8 +32,7 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
   trace.log({ table, permission, cached: Object.keys(cache) })
   tableData = require('../../tables/' + table)
   if (!tableData) {
-    trace.fatal(`Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`)
-    process.exit(1)
+    throw new Error(`merge-attributes.pl::Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`)
   }
   //   if (tableData.attributes_merged) {return attributes}   // only do this once
   //   tableData.attributes_merged=true;
@@ -66,9 +66,20 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
     if (tableData.standardHeader) {
       standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
     }
-    if (!tableData.attributes && tableData.properties) { tableData.attributes = tableData.properties }  // for compatibility with the JSON schema standard
     trace.log(standardHeader)
+    if (!tableData.attributes && tableData.properties) { tableData.attributes = tableData.properties }  // for compatibility with the JSON schema standard
+
+
     const rawAttributes = { ...standardHeader, ...tableData.attributes, ...additionalAttributes }
+    trace.log(table, rawAttributes, { level: 's2' })
+
+    /** Convert JSON schema standard to the internal format.  This is a kludge and long-term would
+     * like to convert the system to use the JSON schema internally.
+      */
+    dereference (rawAttributes, tableData) 
+    jsonSchemaConvert(rawAttributes, tableData)
+
+    /** Make a deep copy of the attributes (properties) */
     const rawAttributesDeep = dcopy(rawAttributes)
     trace.log({ header: standardHeader, rawAttributes: rawAttributesDeep, level: 'verbose' })
 
@@ -99,9 +110,120 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
   }
 
   /** Retun result. */
-  trace.log({ permission, key: cachekey, attributes: cache[cachekey], cached: Object.keys(cache), level: 'norm', maxdepth: 3 })
+  trace.log({ table: table, permission, key: cachekey, attributes: cache[cachekey], cached: Object.keys(cache), level: 'verbose', maxdepth: 4 })
   return (cache[cachekey])
 }
+
+
+
+/**
+ * 
+ *   Dereference schema
+ * 
+ * @param {object} properties 
+ * @param {object} tableData 
+ * @param {object} parent 
+ */
+function dereference (properties, tableData) {
+  trace.log(properties)
+  for (const key of Object.keys(properties)) {
+    trace.log({ key: key , properties: properties[key]})
+    if (key === '$ref') {
+      let ref = properties[key]
+      if (ref.includes('{{dbDriver}}')) { ref = ref.replace('{{dbDriver}}', suds.dbDriver) }
+      if (ref.includes('#/$defs/')) {
+        ref = ref.replace('#/$defs/', '')
+        if (!(tableData['$defs'])) { throw new Error(`merge-attributes.js::No $defs object for ${ref}`) }
+        if (!(tableData['$defs'][ref])) { throw new Error(`merge-attributes.js::No $defs/${ref} object`) }
+        for (const jr of Object.keys(tableData['$defs'][ref])) {
+          trace.log(jr, tableData['$defs'][ref][jr])
+          properties[jr] = tableData['$defs'][ref][jr]
+        }
+
+      } else {
+        trace.log(`Replacing $ref with object in ${properties[key]} = ${ref}`)
+        for (const jr of Object.keys(jsonFragments[ref])) {
+          properties[jr] = jsonFragments[ref][jr]
+        }
+      }
+      delete properties[key]
+
+    } else {
+      if (properties[key].type == 'object') {
+        trace.log(properties[key].properties)
+//        if (properties[key].object) dereference(properties[key].object, tableData)
+        if (properties[key].properties) dereference(properties[key].properties, tableData)
+      }
+    }
+  }
+  trace.log(properties)
+}
+
+
+
+/** ***********************************************************************
+ *  Convert JSON  Schema format to internal format
+ * 
+ * Lonbg-term a better solution is needed.
+ * 
+ * @param {object} properties 
+ */
+function jsonSchemaConvert (properties, tableData, parent) {
+  trace.log({properties:properties,  level: 's2' })
+  
+
+
+
+  /* Required list  */
+
+  if (parent && parent.required) {
+    for (const key of parent.required) {
+      if (!properties[key]) {
+        throw new Error(`merge-attributes.pl::No properties for field name ${key}`)
+      }
+      if (!properties[key].input) { properties[key].input = {} }
+      properties[key].input.required = true
+    }
+  }
+  trace.log('required list processed')
+
+  for (const key of Object.keys(properties)) {
+    trace.log({ key: key, type: properties[key].type, level: 's2' })
+    if (properties[key].type === 'object') {
+      if (!properties[key].object && properties[key].properties) { properties[key].object = properties[key].properties }
+ //     delete properties[key].properties
+      trace.log('next level', key,properties[key].type)
+      jsonSchemaConvert(properties[key].object, tableData, properties[key])
+    }
+    if (properties[key].type === 'array') {
+      trace.log({ key: key, properties: properties[key], level: 's1' })
+      properties[key].type = 'object'
+
+      if (properties[key].input && properties[key].input.single) {
+        properties[key].array = { type: 'single' }
+      } else {
+        properties[key].array = { type: 'multiple' }
+      }
+
+      if (properties[key].items.type === 'object') {
+        properties[key].object = properties[key].items.properties
+        trace.log('next level', key, )
+        jsonSchemaConvert(properties[key].object, tableData, properties[key])
+      }
+      else {
+        for (const item of Object.keys(properties[key].items)) {
+          properties[key][item] = properties[key].items[item]
+        }
+      }
+ //     delete properties[key].items
+      trace.log({ key: key, type: properties[key], level: 's1' })
+    }
+  }
+  trace.log(properties, { level: 's2' })
+  return;
+}
+
+
 
 /**
  *
@@ -128,6 +250,7 @@ function standardise (
   permission
 ) {
   trace.log({ arguments, level: 'verbose' })
+  trace.log(table, parentQualifiedName)
 
   /** main loop throiugh fields  */
   for (const key of Object.keys(merged)) {
@@ -154,7 +277,7 @@ function standardise (
     }
     if (merged[key].type === 'object') {
       if (!merged[key].object && merged[key].properties) { merged[key].object = merged[key].properties }
-      trace.log(merged[key].object)
+      trace.log(key, merged[key].object)
       standardise(table, merged[key].object, {}, merged[key].qualifiedName, merged[key].qualifiedFriendlyName)
     }
     /**
@@ -171,7 +294,7 @@ function standardise (
     if (merged[key].model && suds[suds.dbDriver].dbkey) { merged[key].type = suds[suds.dbDriver].dbkey }
 
     if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean' && merged[key].type != 'object') {
-      throw (`Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`)
+      throw new Error(`merge-attributes.pl::Table: ${table}, Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`)
     }
 
     /** Input and input type */

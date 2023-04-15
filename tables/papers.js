@@ -2,7 +2,7 @@
  * Papers collection
   */
 
- let suds = require('../config/suds');
+let suds = require('../config/suds');
 
 module.exports = {
    permission: { all: ['admin', 'demo', 'trainer', 'demor', 'demod'] },
@@ -10,12 +10,14 @@ module.exports = {
    stringify: async function (data) {
       return (data.name)
    },
-   standardHeader: true, // Standard document header
    list: {
       columns: ['subject', 'name', 'notes'],
       stringify: 'name',
    },
-   attributes: {
+   properties: {
+      /* This inserts a standard header from fragments.js
+         The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+      $ref: '{{dbDriver}}Header',
       subject: {
          model: 'subjects',
          input: { type: 'select' },

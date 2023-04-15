@@ -67,7 +67,8 @@ module.exports = {
     switchdb: '../bin/suds/switchdb',
     dump: '../bin/suds/dump',
     restore: '../bin/suds/restore',
-
+   // fix: '../bin/suds/fix',           // Changes all the collection names in couch...
+ 
     /** Custom  */
     getvariants: '../bin/custom/get-variants',
     getsubvariants: '../bin/custom/get-subvariants',
@@ -139,6 +140,11 @@ module.exports = {
      * 
      *     The authorisation codes are stored in local/auth.js
      * 
+     * CoucgDB doesn't have files or collections as such, so we have set up a special field
+     * which contains the n#me of the collection in each document.  We chose $collection
+     * to ensure uniqueness.  You have to escape the $ with two back spashes.
+     * (https://stackoverflow.com/questions/55976271/how-to-define-a-find-query-in-couchdb-mango-with-field-names-that-start-with-do)
+     * 
      *
   */
   couch: {
@@ -150,6 +156,7 @@ module.exports = {
     standardHeader: 'couch',
     countable: false,
     views: true,
+    collectionField: '\\$collection',  // Additional field in couch to indicate collection
     connection: {
       database: 'sudsjs',
       host: 'localhost:5984',
@@ -209,7 +216,7 @@ module.exports = {
    * You may need this if your column names include upper case because 
    * postgresql folds all column names to lower case unless quoted.
    * 
-   */
+   *
   postgresql: {
     pageFile: 'webpages',
     dbkey: 'number',

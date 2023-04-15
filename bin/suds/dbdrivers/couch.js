@@ -44,10 +44,10 @@ const mergeAttributes = require('../merge-attributes')
 const lang = require('../../../config/language').EN
 const Nano = require('nano')
 let nano
+const collection = suds.couch.collectionField
+const driverSubs = require('./driverSubs')
 
-const driverSubs=require('./driverSubs')
-
-const rawAttributes=driverSubs.rawAttributes
+const rawAttributes = driverSubs.rawAttributes
 
 let db
 /** *********************************************
@@ -79,10 +79,9 @@ function connect () {
     nano = Nano(opts)
 
     db = nano.db.use(dbSpec.connection.database)
-    console.log(`Connected to ${suds.dbDriver} database (${dbSpec.friendlyName})`)
+    console.log('Connected to CouchDB database ')
   } catch (err) {
-    console.log('Database connected failed', trace.line('s'), err)
-    process.exit()
+    throw new Error('Database connected failed ')
   }
 
   nano.db.list().then(
@@ -155,7 +154,7 @@ function objectifyId (id) {
 function getInstruction (table, spec) {
   trace.log({ input: arguments })
 
-  const attributes = rawAttributes(table)
+  const attributes = mergeAttributes(table)
   /* Rationalise the searchspec object */
   if (!spec.andor) { spec.andor = 'and' }
   // if (!spec.sort) {
@@ -165,7 +164,8 @@ function getInstruction (table, spec) {
   if (spec.searches) { searches = spec.searches }
   trace.log({ searches: spec.searches })
 
-  let query = { xcollection: table }
+  let query = {}
+  query[collection] = table
   if (spec.andor === 'or') { query = { $or: [] } }
 
   for (let i = 0; i < searches.length; i++) {
@@ -176,6 +176,7 @@ function getInstruction (table, spec) {
     let ta
     const qfield = searchField
     let path = [searchField]
+    trace.log(searchField)
     if (searchField.includes('.')) {
       trace.log(`*********************** ${searchField} *****************`)
       path = searchField.split('.')
@@ -259,7 +260,7 @@ async function fixWrite (table, record, attributes, mode) {
       key,
       type: attributes[key].type,
       array: attributes[key].array,
-      collection: attributes[key].xcollection,
+      collection: attributes[key][collection],
       val: record[key],
       num: Number(record[key]),
       isNan: isNaN(rec[key]),
@@ -365,10 +366,10 @@ async function fixWrite (table, record, attributes, mode) {
  *
  * *********************************************** */
 function fixRead (record, attributes) {
-  trace.log(record)
+  trace.log({ record: record, attributes: attributes, level: 's1' })
   if (record._id) { record._id = record._id.toString() }
   for (const key of Object.keys(record)) {
-    trace.log({ key, data: record[key], level: 'verbose' })
+    trace.log({ key, data: record[key], level: 's1' })
     if (!attributes[key]) { continue }; // do nothing if item not in schema
     if (attributes[key].array) {
       trace.log(record[key])
@@ -462,7 +463,7 @@ async function createRow (table, record) {
     if (attributes[key].process.createdAt) { rec[key] = Date.now() }
     if (attributes[key].process.updatedAt) { rec[key] = Date.now() }
   }
-  rec.xcollection = table
+  rec[collection] = table
   delete rec._rev // not valid for insert
   trace.log('inserting:', rec)
   try {
@@ -641,7 +642,8 @@ async function getRows (table, spec, offset, limit, sortKey, direction) {
   if (!spec) { spec = {} }
   if (!limit && spec.limit) { limit = spec.limit }
   let rows = {}
-  let instruction = { xcollection: table }
+  let instruction = {}
+  instruction[collection] = table
   // const tableData = tableDataFunction(table)
   if (!sortKey && spec.sort) { sortKey = spec.sort[0] }
   //  if (!sortKey) { sortKey = tableData.primaryKey; }
@@ -675,11 +677,11 @@ async function getRows (table, spec, offset, limit, sortKey, direction) {
   }
   trace.log(options)
   try {
-    let   startTime=new Date().getTime()
+    let startTime = new Date().getTime()
     trace.log({ where: 'Start of read', collection: table, options: options, level: 'timer' }) // timing
-     const result = await db.find(options)
+    const result = await db.find(options)
     rows = result.docs
-    trace.log({records: rows.length, 'Elapsed time (ms)': new Date().getTime()-startTime,level: 'timer',  })
+    trace.log({ records: rows.length, 'Elapsed time (ms)': new Date().getTime() - startTime, level: 'timer', })
   } catch (err) {
     trace.log(err)
     if (err.description.includes('No index exists for this sort,')) {
@@ -730,7 +732,7 @@ async function getView (table, spec, offset, limit, sortKey, direction) {
 
   if (spec && spec.searches && spec.searches.length) {
     if (spec.searches.length !== 1) {
-      console.log('** Warning ** Searches on a view can only have one item')
+      throw new Error('** Warning ** Searches on a view can only have one item')
     } else {
       if (typeof spec.view.key === 'string') {
         options.key = spec.searches[0][2]
@@ -751,11 +753,11 @@ async function getView (table, spec, offset, limit, sortKey, direction) {
   if (offset) {
     options.skip = offset
   }
-  trace.log(options, spec.view.tableVia)
-  let   startTime=new Date().getTime()
+  trace.log(spec.view.design, spec.view.view, options)
+  let startTime = new Date().getTime()
   trace.log({ where: 'Start of read', collection: table, options: options, level: 'timer' }) // timing
   const result = await db.view(spec.view.design, spec.view.view, options)
-  trace.log({records: result.rows.length, 'Elapsed time (ms)': new Date().getTime()-startTime,level: 'timer',  })
+  trace.log({ records: result.rows.length, 'Elapsed time (ms)': new Date().getTime() - startTime, level: 'timer', })
   trace.log({ result })
   /** Loop through the results which are an bject containing id, key and value. 
    * If the value is a string
@@ -804,8 +806,8 @@ function fixViewResult (result, spec) {
  */
 async function getViewItem (design, view, id) {
   if (typeof id === 'string') { id = [id] }
-  const result = await db.view(design, view, {keys: id})
-  let spec={}
+  const result = await db.view(design, view, { keys: id })
+  let spec = {}
   let rows = fixViewResult(result, spec)
 
 }

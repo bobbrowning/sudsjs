@@ -3,23 +3,23 @@
  * Purchase orders table schema
  */
 
-const stock=require('../bin/custom/stock');
+const stock = require('../bin/custom/stock');
 
 module.exports = {
   description: 'Purchase orders',
 
   friendlyName: 'Purchase Orders',
-  
+
   permission: { all: ['admin', 'purchasing', 'demo'], view: ['sales'] },
- addRow: 'Add new purchase order',   // text in the link to add a new row  
- list: {
-   columns: ['_id','supplier','date','status'],
- },
- open: 'purchaseorderlines',
- standardHeader: true,
- attributes: {
-
-
+  addRow: 'Add new purchase order',   // text in the link to add a new row  
+  list: {
+    columns: ['_id', 'supplier', 'date', 'status'],
+  },
+  open: 'purchaseorderlines',
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     supplier: {
       description: 'Supplier ID',
       model: 'user',
@@ -46,7 +46,7 @@ module.exports = {
       description: 'Date (ISO Format) of order',
       example: '2020-10-29 13:59:58.000',
       input: {
-        type: 'date', 
+        type: 'date',
         required: true,
         default: '#today',
       },
@@ -58,7 +58,7 @@ module.exports = {
       input: { type: 'textarea', rows: '5', cols: '40' },
       display: { maxWidth: '400px' },
     },
-     status:
+    status:
     {
       description: 'Status of the order',
       type: 'string',

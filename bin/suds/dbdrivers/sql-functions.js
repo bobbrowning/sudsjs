@@ -155,7 +155,7 @@ function getInstruction (table, spec) {
       trace.log(b - 1, compare, value, instruction, bindings)
       continue
     }
-    const attributes = rawAttributes(table)
+    const attributes = mergeAttributes(table)
     bindings[b++] = value
     if (compare == 'like') { instruction += `${qfield} like ?` }
     if (attributes[searchField].type == 'string') { value = '"' + value + '"' }

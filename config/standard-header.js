@@ -33,7 +33,6 @@ module.exports = {
                 default: '!table',
                 type: 'hidden',
             },
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
         /***  ************************* */
 

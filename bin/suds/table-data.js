@@ -1,11 +1,12 @@
 const suds = require('../../config/suds')
 const trace = require('track-n-trace')
 const humanise = require('./humanise-fieldname')
+const mergeAttributes = require('./merge-attributes')
 
 module.exports = function (table, permission) {
   // merge extra attributes with attributes
   trace.log({ inputs: arguments, level: 'verbose' })
-
+  let properties=mergeAttributes(table)
   const merged = {}
   const tableData = require('../../tables/' + table)
   trace.log({ tabledata: tableData, level: 'verbose' })
@@ -32,26 +33,25 @@ module.exports = function (table, permission) {
   if (tableData.standardHeader) {
     standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
   }
-  const combined = { ...standardHeader, ...tableData.attributes }
-  /** default priomary key t the first field */
-  if (!merged.primaryKey) { merged.primaryKey = combined[Object.keys(combined)[0]] }
+   /** default priomary key t the first field */
+  if (!merged.primaryKey) { merged.primaryKey = properties[Object.keys(properties)[0]] }
 
   /* add primary key as a top level value in the tableData object. */
-  for (const key of Object.keys(combined)) {
-    if (combined[key].primaryKey) {
+  for (const key of Object.keys(properties)) {
+    if (properties[key].primaryKey) {
       merged.primaryKey = key
     }
-    if (combined[key].process && combined[key].process.type == 'createdAt') {
+    if (properties[key].process && properties[key].process.type == 'createdAt') {
       merged.createdAt = key
     }
-    if (combined[key].process && combined[key].process.type == 'updatedAt') {
+    if (properties[key].process && properties[key].process.type == 'updatedAt') {
       merged.updatedAt = key
     }
   }
   /* If we haven't found one then use the first autoincrement field we find */
   if (!merged.primaryKey) {
-    for (const key of Object.keys(combined)) {
-      if (combined[key].autoincrement) {
+    for (const key of Object.keys(properties)) {
+      if (properties[key].autoincrement) {
         merged.primaryKey = key
         break
       }

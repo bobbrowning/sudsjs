@@ -3,8 +3,8 @@
  *
   */
 
- let suds = require('../config/suds');
- let db = require('../bin/suds/db');
+let suds = require('../config/suds');
+let db = require('../bin/suds/db');
 let stock = require('../bin/custom/stock');
 const { appendFile } = require('fs');
 module.exports = {
@@ -39,11 +39,11 @@ module.exports = {
 
   },
 
-  list: { columns: ['_id', 'product', 'product', 'units','total'], },
-  standardHeader: true,
-  attributes: {
-
-
+  list: { columns: ['_id', 'product', 'product', 'units', 'total'], },
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     purchaseorder: {
       description: 'Order',
       model: 'purchaseorders',
@@ -109,7 +109,7 @@ module.exports = {
           onfocus: `fillChildSelect('{{fieldName}}','get-subvariants',['autoid_product','variant'])`,
         },
 
-      }, 
+      },
     },
     units: {
       type: 'number',

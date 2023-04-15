@@ -9,7 +9,7 @@ module.exports = {
  can have many spare parts. 
  This table enables this by linking the two files. 
  There is one record for each time a spare part id used in a product.`,
-  attributes: {
+  properties: {
     id: {
       friendlyName: 'User No',                            // Visible name 
       type: 'number',

@@ -1168,7 +1168,7 @@ ${attributes.helpText}`
     form += `
     <script>
       function validateForm() {
-        let debug=false;
+        let debug=true ;
         if (debug) {console.log(614, '*******validateForm******');}
         let errCount=0;
         let value='';
@@ -1176,10 +1176,11 @@ ${attributes.helpText}`
         let mainform=document.getElementById('mainform');
         `
     for (const key of formList) {
+      trace.log({key: key, attributes: attributes[key],level:'s3'})
       if (attributes[key].collection) { continue } // not intersted in collections
       if (!attributes[key].canEdit) { continue } // can't validate if not editable
-      if (attributes[key].input.hidden) { continue }
-
+      if (attributes[key].input && attributes[key].input.type === 'hidden') { continue }
+      trace.log({key:key,level: 's3'})
       if (attributes[key].primaryKey ||
         attributes[key].process.type == 'createdAt' ||
         attributes[key].process.type == 'updatedAt'

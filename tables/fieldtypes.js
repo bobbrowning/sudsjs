@@ -13,10 +13,11 @@ module.exports = {
     list: {
         columns: ['_id', 'text']
     },
-    standardHeader: true,
-    attributes: {
+    properties: {
 
-        /* Application columns */
+        /* This inserts a standard header from fragments.js
+           The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+        $ref: '{{dbDriver}}Header',
         text: {
             friendlyName: 'Regular input field (hover here for tooltip).',
             type: 'string',
@@ -183,7 +184,7 @@ In this case the table the product table.`,
             values: 'countries',
             description: `This is an autocomplete field. The source values are from a file in the config directory (the same countries table as above).  
 Start typing and the progrem presents a limited number of matching records.  Select the one you want. This will be case sensitive.`,
-                   },
+        },
         autocompletedb: {
             friendlyName: "Autocomplete: data in database table (try 'A')",
             type: 'string',
@@ -192,13 +193,13 @@ Start typing and the progrem presents a limited number of matching records.  Sel
             description: `This is an autocomplete field. The source values are from a table in the database (The product table).  
 Start typing and the progrem presents a limited number of matching records.  Select the one you want. 
 This may be case sensitive depending on the database management system you are using.`,
-                    },
+        },
         summernote: {
             friendlyName: 'Summernote',
             type: 'string',
             input: { type: 'summernote' },
             description: 'Summernote is a very simple rich text editor.',
-        }, 
+        },
         ckeditor4: {
             friendlyName: 'CKEditor 4',
             type: 'string',

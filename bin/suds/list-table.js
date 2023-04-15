@@ -77,7 +77,7 @@ async function listTable (
     * */
   const attributes = mergeAttributes(table, permission)
   if (reportData.view && suds.dbDriver != 'couch') {
-    return ('Sorry - this only works with CouchDB')
+    throw new Error (`Sorry - views only works with CouchDB - trying to report on ${reportData.view}`)
   }
   if (reportData.view && reportData.view.fields) {
     for (const key of Object.keys(reportData.view.fields)) {
@@ -92,7 +92,7 @@ async function listTable (
   } else {
     extendedAttributes = attributes
   }
-  /**
+   /**
    * Set up the table (collection) data
    */
   const tableData = tableDataFunction(table, permission)
@@ -104,6 +104,7 @@ async function listTable (
   }
   let defaultSort = true
   let sortKey = tableData.primaryKey // default sort direction
+  trace.log(sortKey)
   let direction = 'ASC' //                    ^   ^
   let open
   let openGroup
@@ -155,6 +156,7 @@ async function listTable (
   }
   if (reportData.view) { searchSpec.view = reportData.view }
   if (reportData.sort) {
+    trace.log(reportData.sort)
     sortKey = reportData.sort[0]
     direction = reportData.sort[1]
     defaultSort = false
@@ -338,12 +340,12 @@ async function listTable (
 
   // number of rows in the table
   const count = await db.countRows(table, searchSpec, offset)
-  trace.log({ count, heading })
-
+  trace.log({ count:count, heading,heading, defaultSort: defaultSort })
+   trace.log(sortKey, extendedAttributes[sortKey])
+ 
   if (!defaultSort) {
     let dir = lang.asc
     if (direction == 'DESC') { dir = lang.desc }
-    trace.log(sortKey, extendedAttributes[sortKey])
     searchText += `
           ${lang.sortedBy} ${extendedAttributes[sortKey].friendlyName} - ${dir}.`
   }
@@ -353,6 +355,7 @@ async function listTable (
   if (parent && limit != -1 && count > limit) {
     searchText += ` <a href="${suds.mainPage}?table=${table}&mode=list&sortkey=${sortKey}&direction=${direction}&${parentSearch}">${lang.fullList}</a>`
   }
+
   if (extendedAttributes[sortKey].model) {
     searchText += `<br /><span style="color:red">(Note: Order is by ${extendedAttributes[sortKey].friendlyName} code not name)</span>`
   }

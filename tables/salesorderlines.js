@@ -3,8 +3,8 @@
  *
   */
 
- let suds = require('../config/suds');
- let db = require('../bin/suds/db');
+let suds = require('../config/suds');
+let db = require('../bin/suds/db');
 let stock = require('../bin/custom/stock');
 
 
@@ -55,10 +55,10 @@ module.exports = {
     },
 
   },
-  standardHeader: true,
-  attributes: {
-
-
+  properties: {
+    /* This inserts a standard header from fragments.js
+        The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+    $ref: '{{dbDriver}}Header',
     orderNo: {
       description: 'Order',
       model: 'salesorders',
