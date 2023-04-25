@@ -2,6 +2,8 @@
  * 
  * Student table - normalised moned
  * 
+ * Not used any more...
+ * 
  */
 let suds = require('../config/suds');
 let db = require('../bin/suds/db');
@@ -36,6 +38,10 @@ module.exports = {
             model: 'subjects',
             input: { type: 'select', },
         },
+
+    },
+
+    children: {
         results: {
             collection: 'results',
             via: 'exam',
@@ -48,7 +54,6 @@ module.exports = {
                 columns: ['paper', 'score'],
             },
 
-        },
-
+        }
     }
 }

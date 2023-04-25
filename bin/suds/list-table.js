@@ -261,14 +261,8 @@ async function listTable (
   let i = 0
   for (const key of columns) {
     if (!extendedAttributes[key]) {
-      console.log(`
-      Unrecognised field ${key} in column list
-      Listing table: ${table}
-      Parent: ${parent}
-      Report: ${reportData.friendlyName}`,
-        trace.line('s'))
-      process.exit()
-    }
+    throw new Error (`Unrecognised field ${key} in column list, Listing table: ${table}, Parent: ${parent}, Report: ${reportData.friendlyName}`)
+     }
     if (extendedAttributes[key].canView && !extendedAttributes[key].collection) {
       fieldList[i++] = key
     }
@@ -842,7 +836,7 @@ async function listTable (
   let sortable = true
   let clearReport = false
   if (parent) { sortable = false }
-  // if (reportData.view) { sortable = false }
+  if (reportData.view && !reportData.view.sortable) { sortable = false }
 
   if (reportData.view) { clearReport = true }
 

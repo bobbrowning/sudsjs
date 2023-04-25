@@ -315,10 +315,9 @@ module.exports = {
       type: 'string',
     },
 
-    //  ╔═╗╔═╗╔═╗╔═╗╔═╗╦╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
-    //  ╠═╣╚═╗╚═╗║ ║║  ║╠═╣ ║ ║║ ║║║║╚═╗
-    //  ╩ ╩╚═╝╚═╝╚═╝╚═╝╩╩ ╩ ╩ ╩╚═╝╝╚╝╚═╝
 
+  },
+  children: {
     webpages: {
       description: `Web pages authored by this user. Web pages will be listed for SQL systems. For technical reasons the NOSQL and SQL databases are configured differently for the web pages file.`,
       friendlyName: 'Web pages authored on SQL system',
@@ -401,7 +400,6 @@ module.exports = {
         columns: ['fullName', 'mobilePhone', 'lastContact'],
       }
     },
-
 
   }
 }

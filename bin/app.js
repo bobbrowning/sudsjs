@@ -7,7 +7,7 @@ const fs = require('fs')
 // const crypto = require('crypto')
 const suds = require('../config/suds')
 const fileUpload = require('express-fileupload')
-
+const favicon = require('serve-favicon')
 const indexRouter = require('../bin/routes')
 // const adminRouter = require('./routes/admin')
 // const bodyParser = require('body-parser')
@@ -48,6 +48,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(express.static(path.join(homeDir, 'public')))
 
+app.use(favicon(path.join(__dirname, '..','public', 'favicon.ico')))
 app.use('/', indexRouter)
 // app.use('/admin', adminRouter);
 

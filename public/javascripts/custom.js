@@ -34,7 +34,7 @@ function fillVariant(selected) {
 
 
 function fillSubVariant(variant_id, selected) {
-    let debug = true;
+    let debug = false;
     if (debug) console.log(arguments);
     let id = document.getElementById(`autoid_product`).value;
     if (debug) { console.log('id=', id) }

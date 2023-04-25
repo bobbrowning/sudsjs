@@ -29,12 +29,15 @@ module.exports = {
          type: 'string',
          input: { type: 'textarea' }
       },
+   },
+   children: {
       results: {                // Each subject has a number of papers (child records)
          collection: 'results', // stored in the 'papers' file
          via: 'paper',       // where the foreign key is 'subject'
          friendlyName: 'Exam results',
          collectionList: {
+            columns: ['studentId','subject','score']
          }
-      },
-   },
+      }
+   }
 }

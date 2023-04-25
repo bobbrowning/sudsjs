@@ -46,7 +46,7 @@ const addSubschemas = require('./subschemas')
 
 */
 module.exports = async function (permission, table, id, open, openGroup, subschemas) {
-  trace.log({ inputs: arguments, break: '#', level: 'min',  })
+  trace.log({ inputs: arguments, break: '#', level: 'min', })
   trace.log({ where: 'list-row start', level: 'mid' }) // timing
 
   /* ************************************************
@@ -59,14 +59,14 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
   if (!mainPage) { mainPage = '/' }
   const tableData = tableDataFunction(table, permission)
   if (!tableData.canView) {
-    throw new Error (`list-row.js::Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). Please log in and retry`)
+    throw new Error(`list-row.js::Sorry - you don't have permission to view ${tableData.friendlyName} (${table}). Please log in and retry`)
   }
   const message = ''
   let attributes = await mergeAttributes(table, permission, subschemas) // Merve field attributes in model with config.suds tables
   trace.log({ attributes, level: 'verbose' })
   const record = await db.getRow(table, id) // populate record from database
   if (record.err) {
-    throw new Error (`list-row.js::Unexpected error reading ${id} from ${table} Error:${record.err} ${record.msg}`)
+    throw new Error(`list-row.js::Unexpected error reading ${id} from ${table} Error:${record.err} ${record.msg}`)
   }
   if (tableData.subschema) {
     subschemas = record[tableData.subschema.key]
@@ -138,6 +138,7 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
   const children = {}
   for (const key of Object.keys(attributes)) {
     if (attributes[key].collection) {
+      trace.log(attributes[key].collection, key)
       const child = attributes[key].collection
       const via = attributes[key].via
       const childCount = await db.countRows(child, { searches: [[via, 'eq', id]] })
@@ -552,7 +553,9 @@ module.exports = async function (permission, table, id, open, openGroup, subsche
       for (const key of tableData.groups[group].columns) {
         trace.log(key)
         if (!attributes[key]) {
-          throw new Error (`list-row.js::column ${key} in group ${group} - table: ${table} does not exist.`)
+          // Can happen with subschema
+          // throw new Error (`list-row.js::column ${key} in group ${group} - table: ${table} does not exist.`)
+          continue
         };
         trace.log(group, key, attributes[key].canView, children[key])
         trace.log(attributes[key].canView)

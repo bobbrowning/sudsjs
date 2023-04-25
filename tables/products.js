@@ -261,6 +261,9 @@ module.exports = {
 
     },
 
+
+  },
+  children: {
     /**
      * 
      * These are not real fields in the database, but reflect the child records we list.
@@ -284,6 +287,6 @@ module.exports = {
         columns: ['updatedAt', '_id', 'customer', 'status', 'date'],
       },
     },
-  },
-};
+  }
+}
 

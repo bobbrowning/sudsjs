@@ -4,6 +4,7 @@
 
 let fcsCache = {};
 let starting = {};
+checking=false;
 
 /**
  * Populate a select list based on parent field (or fields)
@@ -18,8 +19,8 @@ let starting = {};
  * @param {*} fieldValue - value passed to the routine is used when the page is initially loaded.
  * @returns options set in fieldName
  */
-async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
-    let debug = 1;
+async function fillChildSelect (fieldName, apiName, parentName, fieldValue) {
+    let debug = 0;
     if (debug) console.log(`******************* start  ${fieldName} ************************`);
     if (debug) console.log(fieldName, apiName, parentName, fieldValue, starting);
 
@@ -86,7 +87,8 @@ async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
             labels = values = ['error']
         };
     }
-
+    document.mainform[fieldName].options[0].label = 'Please select....';
+ 
     /** Clear down the select list before rebuilding it */
     if (debug > 1) console.log(fieldName, document.mainform[fieldName].length)
     let L = document.mainform[fieldName].options.length - 1;
@@ -96,7 +98,7 @@ async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
         if (debug > 1) console.log('removed', i);
     }
     if (!Array.isArray(values)) {
-        console.log(`*********************** no values - ${fieldName}  *********************************** `)
+        if (debug > 1) console.log(`*********************** no values - ${fieldName}  *********************************** `)
         values = [];
     }
     if (debug > 1) console.log(fieldName, labels, values, document.mainform[fieldName].options);
@@ -132,7 +134,7 @@ async function fillChildSelect(fieldName, apiName, parentName, fieldValue) {
 * @param {string} fieldName 
 * @param {string} parentName 
 */
-function findParent(fieldName, parentName,) {
+function findParent (fieldName, parentName,) {
 
     let debug = 0;
     let route = fieldName.split('.');
@@ -148,26 +150,33 @@ function findParent(fieldName, parentName,) {
     if (debug) console.log(fieldName, parent, typeof document.mainform[parent]);
     if (typeof document.mainform[parent] == 'undefined') {
         console.log(`********************** field [${parent}] not present *********** `)
-        console.log(document.mainform)
+        if (debug) console.log(document.mainform)
     }
     return parent;
 }
 
 
 
-function clicked(fieldName, label, value, onchange) {
+function clicked (fieldName, label, value, onchange) {
+    let debug=false
     document.getElementById(`autoid_${fieldName}`).value = value;
     document.getElementById(`${fieldName}`).value = label;
     document.getElementById(`${fieldName}-autocomplete-list`).remove();
-    console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
+    if (debug) console.log(`Field ${document.getElementById(`autoid_${fieldName}`).name} set to ${document.getElementById(`autoid_${fieldName}`).value} `);
     if (onchange) {
         eval(onchange);
     }
 }
 
-function apiWait(qualifiedName) {
-    console.log(qualifiedName);
-    document.getElementById(`err_${qualifiedName} `).innerHTML = 'Will be validated when you leave this field';
+function apiWait (qualifiedName) {
+    const suds=require(['/javascripts/config/suds.js'])
+    let debug=true
+    if (debug) console.log(qualifiedName,suds.dbDriver)
+    checking=true
+    document.getElementById('submitbutton').type='button'
+    document.getElementById('submitbutton').title=`Please wait while we check ${qualifiedName}`
+       
+    document.getElementById(`err_${qualifiedName}`).innerHTML = 'Will be validated when you leave this field';
 }
 
 /**
@@ -176,8 +185,8 @@ function apiWait(qualifiedName) {
  * ignore csrf
  * 
  */
-function getFieldValues() {
-    let debug = true;
+function getFieldValues () {
+    let debug = false;
     let data = {};
     for (let key of Object.keys(document.mainform.elements)) {
         if (!isNaN(key)) { continue; }
@@ -192,17 +201,19 @@ function getFieldValues() {
 }
 
 
-function apiCheck(qualifiedName, route, table, id,) {
-    console.log(qualifiedName, document.getElementById(qualifiedName));
+function apiCheck (qualifiedName, route, table, id,) {
+    let debug = 'false'
+    if (debug) console.log(checking,qualifiedName, `err_${qualifiedName}`);
     let value = document.getElementById('mainform')[qualifiedName].value;
     if (!table) { table = '' }
     if (!id) { id = '' }
-    let url = `${route}?table = ${table}& id=${id}& field=${qualifiedName}& value=` + encodeURIComponent(value);
+    let url = `${route}?table=${table}&id=${id}&field=${qualifiedName}&value=` + encodeURIComponent(value);
     let result = [];
-    document.getElementById(`err_${qualifiedName} `).innerHTML = 'Checking';
+    document.getElementById(`err_${qualifiedName}`).innerHTML = 'Checking';
     console.log(url);
     fetch(url).then(function (response) {
         // The API call was successful!
+     
         return response.json();
     }).then(function (data) {
         // This is the JSON from our response
@@ -210,17 +221,23 @@ function apiCheck(qualifiedName, route, table, id,) {
         console.log(result);
         if (result[0] == 'validationError') {
             console.log(result[1]);
-            document.getElementById(`err_${qualifiedName} `).innerHTML = result[1];
+            document.getElementById(`err_${qualifiedName}`).innerHTML = result[1];
+            document.getElementById('submitbutton').title=`Please correct ${qualifiedName}`
         }
         else {
-            document.getElementById(`err_${qualifiedName} `).innerHTML = '';
-
+            document.getElementById(`err_${qualifiedName}`).innerHTML = '';
+            checking=false;
+            document.getElementById('submitbutton').type='submit'
+            document.getElementById('submitbutton').title=`Submit form`
+    
         }
     }).catch(function (err) {
         // There was an error
         console.warn('Something went wrong.', err);
     });
 }
+
+
 
 /*
 function nextArrayItem(nextItem, counter, button) {
@@ -263,7 +280,7 @@ function nextArrayItem(nextItem, counter, button) {
  * 
  * @param {string} item (xxxx in this example)
  */
-function nextArrayItem(item) {
+function nextArrayItem (item) {
     let debug = true;
     if (debug) console.log(item);
     if (debug) console.log(item + '.length');                                     // Field containing number of items in the array currently
@@ -293,7 +310,7 @@ function nextArrayItem(item) {
 
 }
 
-function auto(route, fieldName, linkedTable, display, limit, searchparm,sortparm, onchange) {
+function auto (route, fieldName, linkedTable, display, limit, searchparm, sortparm, onchange) {
     /*the autocomplete function takes two arguments,
     the text field element and an array of possible autocompleted values:*/
     let debug = false;
@@ -380,7 +397,7 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm,sortparm
         });
 
 
-        function addActive(x) {
+        function addActive (x) {
             /*a function to classify an item as "active":*/
             if (!x) return false;
             /*start by removing the "active" class on all items:*/
@@ -390,7 +407,7 @@ function auto(route, fieldName, linkedTable, display, limit, searchparm,sortparm
             /*add class "autocomplete-active":*/
             x[currentFocus].classList.add("autocomplete-active");
         }
-        function removeActive(x) {
+        function removeActive (x) {
             /*a function to remove the "active" class from all autocomplete items:*/
             for (var i = 0; i < x.length; i++) {
                 x[i].classList.remove("autocomplete-active");

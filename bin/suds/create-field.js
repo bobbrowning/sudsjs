@@ -40,6 +40,10 @@ async function createField(key, fieldValue, attributes, errorMsg, mode, record, 
   if (attributes.input.type == 'boolean') {
     fieldType = 'checkbox' // but defaults to checkbox if this is a boolean
   }
+  if (attributes.input.type == 'number') {
+    fieldType = 'number'
+  }
+
   if (attributes.input && attributes.input.type) {
     fieldType = attributes.input.type
   }
@@ -117,7 +121,7 @@ async function createField(key, fieldValue, attributes, errorMsg, mode, record, 
 
     if (inputFieldTypes.includes(fieldType)) {
       trace.log('Regular input field', fieldType)
-      formField = await generic(fieldType, passedName, passedValue, attributes, errorMsg)
+      formField = await generic(fieldType, passedName, passedValue, attributes, errorMsg,record,tableData)
     } else {
       if (helperName) {
         trace.log('calling helper', helperName)

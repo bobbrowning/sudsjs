@@ -44,6 +44,46 @@ function checkPage(pageData) {
 
 module.exports = async function (req, res) {
 
+     try {
+      await pageprocess(req, res)
+    } catch (err) {
+      let dateStamp = new Date().toLocaleString()
+      console.log(`
+      
+  ********************** Error ***************************
+  ${dateStamp}`)
+      console.log(err)
+      console.log(`
+  ********************************************************
+      
+      ` )
+      let msg = 'Error';
+      let prog = 'The console log may have more details.';
+      if (typeof err === 'string') {
+        if (err.includes(':')) {
+          [file, msg] = err.split(':')
+          prog = `In source file ${file}.`
+        }
+        else {
+          msg = err;
+        }
+      }
+      else {
+        msg = err.message
+        if (msg.includes('::')) {
+          [file, msg] = msg.split('::')
+          prog = `In source file ${file}. The console log may have more details.`
+        }
+      }
+      await sendView(res, 'admin', `
+      <H1>There has been a problem</h1>
+      <h2>${msg}</h2>
+      <p>${prog}</p>
+      <a href='/admin'>Admin page</a>`)
+    }
+  }
+
+  async function pageprocess(req, res) {
   /* table and Fields used  */
    let table=suds[suds.dbDriver].pageFile;
   let headerTags='';

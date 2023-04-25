@@ -14,7 +14,7 @@ module.exports = async function (req, res) {
   const aut = suds.authorisation[suds[suds.dbDriver].authtable]
 
   trace.log(allParms)
-  let next = ''
+  let next = '/admin'
   if (allParms.next) {
     next = allParms.next
     if (next == 'configreport' || next == 'admin') {
@@ -61,7 +61,7 @@ module.exports = async function (req, res) {
   } else {
     res.clearCookie('user')
   }
-  output += `<p>Log in complete - <a href="${suds.mainPage}">Admin page</a></p>
+  output += `<p>Please wait.  If delayed click here to go to the admin page <a href="${suds.mainPage}">Admin page</a></p>
     ${goto}`
   if (suds.audit.include &&
         (

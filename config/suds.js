@@ -42,6 +42,9 @@ module.exports = {
   port: 3000,                                  // Change temporarily by setting the PORT environment variable 
   mainPage: '/admin',                          // e.g. http://sudsjs.com/admin
   baseURL: 'http://www.sudsjs.com',
+  start: {precompileTables: false
+
+  }, 
   /**  
    * routes : module 
    * so for example, http://domain/admin runs the module in /bin/suds/admin.js
@@ -319,6 +322,9 @@ module.exports = {
     'examstaken',
   ],
 
+  jsonSchema: [
+//    'subjects'            //subjects.json is a json version
+  ],
 
   /** Subschema Groups */
   subschemaGroups: {
@@ -828,6 +834,7 @@ bottom bar.`,
 
   <!-- ------------------- suds styles and routines ------------ -->
   <link rel="stylesheet" href="/stylesheets/suds.css">
+  <script src="/javascripts/require.js"></script>
   <script src="/javascripts/suds.js"></script>
   <script src="/javascripts/custom.js"></script>
    <!-- -------------------------------------------------------- -->

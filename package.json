@@ -36,6 +36,7 @@
     "nodemailer": "^6.7.8",
     "pg": "^8.8.0",
     "sanitize-html": "^2.7.1",
+    "serve-favicon": "^2.5.0",
     "sqlite3": "^5.0.11",
     "syncwritestream": "^1.0.1",
     "track-n-trace": "^1.2.12"

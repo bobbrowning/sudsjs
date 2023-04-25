@@ -41,10 +41,26 @@ const fn = async function (fieldType, fieldName, fieldValue, attributes, errorMs
           id="${fieldName}" 
           rows="${rows}" 
           style="width: ${attributes.input.width};" 
-          cols="${cols}" 
-          ${apicall}
-          placeholder="${placeholder}">${fieldValue}</textarea>
-        <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
+          cols="${cols}"`
+  const ignore = ['type', 'name', 'validations', 'required', 'class', 'isInteger']
+  for (const inprop of Object.keys(attributes.input)) {
+    if (ignore.includes(inprop)) { continue } // skip the ones we have already done
+    results += `
+          ${inprop}="${attributes.input[inprop]}" `
+  }
+  if (suds.useHTML5Validation) {
+    if (input.required) {
+      result += `
+            required`
+    }
+  }
+  if (apicall) {
+    results += `
+          ${apicall}`
+  }
+  results += `
+          placeholder = "${placeholder}" >${fieldValue}</textarea >
+      <span id="err_${fieldName}" class="sudserror"> ${errorMsg}</span>
     `
   return (results)
 }

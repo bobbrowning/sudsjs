@@ -15,6 +15,11 @@ let tableData
 /**
  * Doesn't really merge things any more. It standardises the attributes to that they all have the
  * same structure.
+ * 
+ * This module 'compiles' the schema  by standarsifing the object and making sure that every 
+ * part of the schema object is there, even if empty.
+ * 
+ * The standardised schems is then cached.
  *
  * @param {string} table
  * @param {string} permission
@@ -30,7 +35,11 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
   }
   if (!additionalAttributes) { additionalAttributes = {} }
   trace.log({ table, permission, cached: Object.keys(cache) })
-  tableData = require('../../tables/' + table)
+  if (suds.jsonSchema.includes(table)) {
+    tableData = require('../../tables/' + table+'.json')    
+  } else {
+    tableData = require('../../tables/' + table)
+  }
   if (!tableData) {
     throw new Error(`merge-attributes.pl::Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`)
   }
@@ -67,17 +76,34 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
       standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
     }
     trace.log(standardHeader)
+
+    /** 
+     * The original schema format was based on the Sails framework schema. This section converts 
+     * the JSON schema standard to this format.  This is a kludge and long-term would
+     * like to convert the system to use the JSON schema internally.
+     * 
+     * The properties object is renamed attributes and the standard header is added 
+     *     (Standard header is nw redundant because we use  $ref i the test data)
+     * dereference carries out the substitution of $ref entries
+     * The children specifications are copied into the attributes secttion. 
+     *     For some reasin they were there in the Sails framework
+     * Then the schema is converted in a recursive function.
+     * 
+      */
     if (!tableData.attributes && tableData.properties) { tableData.attributes = tableData.properties }  // for compatibility with the JSON schema standard
-
-
     const rawAttributes = { ...standardHeader, ...tableData.attributes, ...additionalAttributes }
     trace.log(table, rawAttributes, { level: 's2' })
-
-    /** Convert JSON schema standard to the internal format.  This is a kludge and long-term would
-     * like to convert the system to use the JSON schema internally.
-      */
-    dereference (rawAttributes, tableData) 
-    jsonSchemaConvert(rawAttributes, tableData)
+    dereference(rawAttributes, tableData)
+    decomment(tableData)
+    decomment(rawAttributes)
+    trace.log(tableData)
+    if (tableData.children) {
+      for (const key of Object.keys(tableData.children)) {
+        rawAttributes[key] = tableData.children[key]
+      }
+    }
+    trace.log(tableData)
+    jsonSchemaConvert(rawAttributes, tableData, tableData)
 
     /** Make a deep copy of the attributes (properties) */
     const rawAttributesDeep = dcopy(rawAttributes)
@@ -115,10 +141,9 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
 }
 
 
-
 /**
  * 
- *   Dereference schema
+ *   Dereference schema ab=nd remove comments
  * 
  * @param {object} properties 
  * @param {object} tableData 
@@ -127,7 +152,7 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
 function dereference (properties, tableData) {
   trace.log(properties)
   for (const key of Object.keys(properties)) {
-    trace.log({ key: key , properties: properties[key]})
+    trace.log({ key: key, properties: properties[key] })
     if (key === '$ref') {
       let ref = properties[key]
       if (ref.includes('{{dbDriver}}')) { ref = ref.replace('{{dbDriver}}', suds.dbDriver) }
@@ -151,7 +176,7 @@ function dereference (properties, tableData) {
     } else {
       if (properties[key].type == 'object') {
         trace.log(properties[key].properties)
-//        if (properties[key].object) dereference(properties[key].object, tableData)
+        //        if (properties[key].object) dereference(properties[key].object, tableData)
         if (properties[key].properties) dereference(properties[key].properties, tableData)
       }
     }
@@ -159,23 +184,45 @@ function dereference (properties, tableData) {
   trace.log(properties)
 }
 
-
+/**
+ * 
+ * Decomment obj 
+ * 
+ * @param {object} obj 
+ */
+function decomment (obj) {
+  for (const key of Object.keys(obj)) {
+    trace.log(key)
+    if (key === '$comment') {
+      delete obj[key]
+      continue
+    }
+    if (key === 'properties') {
+      decomment(obj[key])
+    }
+    if (key === 'items') {
+      decomment(obj[key])
+    }
+    if (typeof obj[key] === 'object' && obj[key]['$comment']) {
+      delete obj[key]['$comment']
+    }
+  }
+  trace.log(obj)
+}
 
 /** ***********************************************************************
  *  Convert JSON  Schema format to internal format
  * 
  * Lonbg-term a better solution is needed.
  * 
- * @param {object} properties 
+ * @param {object} properties of the object being processed
+ * @param (object) tableData - the original top level object
+ * @param (object) parent - the object containg these properties
  */
 function jsonSchemaConvert (properties, tableData, parent) {
-  trace.log({properties:properties,  level: 's2' })
-  
+  trace.log({ properties: properties, level: 's2' })
 
-
-
-  /* Required list  */
-
+  trace.log(parent.required)
   if (parent && parent.required) {
     for (const key of parent.required) {
       if (!properties[key]) {
@@ -191,32 +238,62 @@ function jsonSchemaConvert (properties, tableData, parent) {
     trace.log({ key: key, type: properties[key].type, level: 's2' })
     if (properties[key].type === 'object') {
       if (!properties[key].object && properties[key].properties) { properties[key].object = properties[key].properties }
- //     delete properties[key].properties
-      trace.log('next level', key,properties[key].type)
+      //     delete properties[key].properties
+      trace.log('next level', key, properties[key].type)
       jsonSchemaConvert(properties[key].object, tableData, properties[key])
-    }
-    if (properties[key].type === 'array') {
-      trace.log({ key: key, properties: properties[key], level: 's1' })
-      properties[key].type = 'object'
+    } else {
+      if (properties[key].type === 'array') {
+        trace.log({ key: key, properties: properties[key], level: 's1' })
+        properties[key].type = 'object'
 
-      if (properties[key].input && properties[key].input.single) {
-        properties[key].array = { type: 'single' }
+        if (properties[key].input && properties[key].input.single) {
+          properties[key].array = { type: 'single' }
+        } else {
+          properties[key].array = { type: 'multiple' }
+        }
+
+        if (properties[key].items.type === 'object') {
+          properties[key].object = properties[key].items.properties
+          trace.log('next level', key,)
+          jsonSchemaConvert(properties[key].object, tableData, properties[key])
+        }
+        else {
+          for (const item of Object.keys(properties[key].items)) {
+            properties[key][item] = properties[key].items[item]
+          }
+        }
+        //     delete properties[key].items
+        trace.log({ key: key, type: properties[key], level: 's1' })
       } else {
-        properties[key].array = { type: 'multiple' }
-      }
-
-      if (properties[key].items.type === 'object') {
-        properties[key].object = properties[key].items.properties
-        trace.log('next level', key, )
-        jsonSchemaConvert(properties[key].object, tableData, properties[key])
-      }
-      else {
-        for (const item of Object.keys(properties[key].items)) {
-          properties[key][item] = properties[key].items[item]
+        /* a real field */
+        if (typeof properties[key].input === 'undefined') properties[key].input = {}
+         if (properties[key].type === 'integer'){
+          properties[key].type = 'number'
+          properties[key].input.isInteger=true
+          if (!properties[key].input.step) {properties[key].input.step=1}
+         }
+        trace.log(key)
+        for (const subkey of Object.keys(properties[key])) {
+          trace.log(subkey)
+          let translate = {
+            maximum: 'max',
+            minimum: 'min',
+            multipleOf: 'step',
+            maxLength: 'maxlength',
+            minLength: 'minlength',
+            pattern: 'pattern',
+            pattern: 'pattern',
+          }
+          if (subkey === 'enum') {
+            properties[key].values = properties[key].enum
+            delete properties[key].enum
+          }
+          if (translate[subkey]) {
+            properties[key].input[translate[subkey]] = properties[key][subkey]
+            delete properties[key][subkey]
+          }
         }
       }
- //     delete properties[key].items
-      trace.log({ key: key, type: properties[key], level: 's1' })
     }
   }
   trace.log(properties, { level: 's2' })

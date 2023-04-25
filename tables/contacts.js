@@ -236,6 +236,8 @@ module.exports = {
         placeholder: 'Please enter follow up required',
       },
     },
+  },
+  children: {
     followUp: {
       collection: 'contacts',
       via: 'isFollowUp',
@@ -243,9 +245,6 @@ module.exports = {
         addChildTip: 'Record the follow-up to this contact',
         columns: ['date', 'note', 'closed'],
       }
-
-    },
-
+    }
   },
-
 }

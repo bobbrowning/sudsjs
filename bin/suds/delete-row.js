@@ -23,7 +23,7 @@ module.exports = async function (permission, table, id) {
     return (`<h1>Unexpected error ${record.errmsg}/h1>`)
   }
   for (const key of Object.keys(record)) {
-    if (attributes[key].process && attributes[key].process.uploadFile && record[key]) {
+    if (attributes[key]  && attributes[key].process && attributes[key].process.uploadFile && record[key]) {
       let rootdir = __dirname
       rootdir = rootdir.replace('/bin/suds', '')
       try {

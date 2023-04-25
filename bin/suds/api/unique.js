@@ -13,12 +13,11 @@ module.exports = async function (req, res) {
   const tableData = tableDataFunction(table, '#superuser#')
   const fieldName = req.query.field
   const fieldValue = req.query.value
-  const id = req.query.id
   const count = await db.countRows(table, {
     andor: 'and',
     searches: [
       [fieldName, 'eq', fieldValue],
-      [tableData.primaryKey, 'ne', id]
+      ['id', 'ne', req.query.id]
     ]
   })
   trace.log(count)
@@ -27,7 +26,7 @@ module.exports = async function (req, res) {
   } else {
     return res.json([
       'validationError',
-      'Sorry that slug is not unique. '
+      'Sorry that is not unique. '
     ])
   }
   //  return array

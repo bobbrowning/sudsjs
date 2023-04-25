@@ -72,6 +72,9 @@ module.exports = {
         type: 'radio',
       }
     },
+ 
+  },
+  children: {
     purchaseorderlines: {
       collection: 'purchaseorderlines',
       via: 'purchaseorder',
@@ -81,12 +84,9 @@ module.exports = {
         order: '_id',                 // The order in which the are listed 
         direction: 'DESC',                  // ASC or DESC
         addRow: 'Add a new order line',
-        columns: ['_id', 'product', 'units', 'unitprice', 'total'],
-
-
+        columns: ['product', 'units', 'unitprice', 'total'],
       },
     },
-
-  },
+  }
 
 }

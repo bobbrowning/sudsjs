@@ -24,7 +24,6 @@ module.exports = {
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
 
-        /*** remove rev and xcollection for databases other than CouchDB  */
         _rev: {
             friendlyName: 'Document revision',
             type: 'string',
@@ -38,9 +37,9 @@ module.exports = {
                 default: '!table',
                 type: 'hidden',
             },
+            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
-        /***  ************************* */
-
+  
 
         createdAt: {
             friendlyName: 'Date created',
@@ -109,7 +108,6 @@ module.exports = {
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
 
-        /*** remove rev and xcollection for databases other than CouchDB  */
          createdAt: {
             friendlyName: 'Date created',
             type: 'number',
@@ -146,7 +144,6 @@ module.exports = {
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
 
-        /*** remove rev and xcollection for databases other than CouchDB  */
          createdAt: {
             friendlyName: 'Date created',
             type: 'number',
@@ -183,7 +180,6 @@ module.exports = {
             permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
         },
 
-        /*** remove rev and xcollection for databases other than CouchDB  */
          createdAt: {
             friendlyName: 'Date created',
             type: 'number',

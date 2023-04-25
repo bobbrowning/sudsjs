@@ -573,7 +573,7 @@ module.exports = async function (
         }
       }
 
-      if (record[key] != undefined && attributes[key].type == 'number') // Note mergeattributes makes type:number for link fields
+      if (record[key] != undefined && attributes[key].type == 'number') 
       {
         if (record[key]) {
           record[key] = Number(record[key])
@@ -1056,11 +1056,11 @@ module.exports = async function (
     })
     trace.log({ attributes, level: 'verbose' })
     if (fieldValue == null) { // can;'t pass null as a value
-      if (attributes.type == 'number') {
-        fieldValue = 0
-      } else {
+   //   if (attributes.type == 'number') {
+    //    fieldValue = 0
+   //   } else {
         fieldValue = ''
-      }
+   //   }
     }
     /**
      *
@@ -1168,7 +1168,7 @@ ${attributes.helpText}`
     form += `
     <script>
       function validateForm() {
-        let debug=true ;
+        let debug=false ;
         if (debug) {console.log(614, '*******validateForm******');}
         let errCount=0;
         let value='';
@@ -1582,7 +1582,7 @@ ${attributes.helpText}`
     ${lang.submit}
   </button>`
     } else {
-      form += `<button type="submit" class="btn btn-primary">
+      form += `<button type="submit" class="btn btn-primary" id="submitbutton">
             ${lang.submit}
           </button>`
     }

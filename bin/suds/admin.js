@@ -9,7 +9,9 @@ let suds = require('../../config/suds')
 const reports = require('../../config/reports')
 const trace = require('track-n-trace')
 const db = require('./db')
+const mergeAttributes = require('./merge-attributes')
 const lang = require('../../config/language').EN
+const tableDataFunction = require('./table-data')
 
 const validModes = [
   'list',
@@ -19,6 +21,7 @@ const validModes = [
   'update',
   'delete'
 ]
+let oldPermission='#guest#'
 
 const friendlyName = 'Central switching program.'
 /** **********************************************************************
@@ -189,6 +192,7 @@ The user is being treated as a guest.
   trace.log(permission)
   //   global.suds = { user: req.session.userId, permission: permission };
 
+ 
   trace.log(req.ip)
   if (suds.blockIp && suds.blockIp.includes(req.ip)) {
     const notes = `
@@ -206,6 +210,13 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
       console.log(notes)
       permission = '#guest#'
     }
+  }
+
+
+   /* If this is a new permission set - re-compile the attributes */
+   if (permission !== oldPermission) {
+    mergeAttributes('clear-cache')
+    oldPermission = permission
   }
 
   /** *********************************************
@@ -277,15 +288,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
   if (req.query.report) {
     report = req.query.report // If listing a table the report
     if (!reports[report]) {
-      console.error(`
-        ********************** Fatal Error **********************
-        ${Date()}
-        Report: ${report}
-        This report is not in the reports config file.
-         *******************************************************`)
-      sendOut('Fatal error - see console log')
-      return
-    }
+      throw new Error (`admin.js::Report: ${report} is not in the reports config file.`)
+     }
   }
 
   let subschemas = []
@@ -310,8 +314,8 @@ User ${user[aut.emailAddress]} is blocked and being treated as a guest.
     throw new Error(`admin.js::No table given. - may be an issue with report: ${report}`)
   }
 
-  const tableData = require('../../tables/' + table)
-  const attributes = tableData.attributes
+ const tableData=tableDataFunction(table)
+  const attributes = mergeAttributes(table,permission)
 
   let id = 0 // record key
   if (req.query.id) {

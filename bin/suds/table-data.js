@@ -6,17 +6,27 @@ const mergeAttributes = require('./merge-attributes')
 module.exports = function (table, permission) {
   // merge extra attributes with attributes
   trace.log({ inputs: arguments, level: 'verbose' })
-  let properties=mergeAttributes(table)
-  const merged = {}
-  const tableData = require('../../tables/' + table)
-  trace.log({ tabledata: tableData, level: 'verbose' })
   if (!suds.tables.includes(table)) { // Check that table exists in model.
-    console.log('Error in suds.js - table does not exist: ' + table)
-    return ({})
+    throw new error('Error in suds.js - table does not exist: ' + table)
   }
+  const merged = {}
+  let schema = `${table}.js`;
+  if (suds.jsonSchema.includes(table)) schema = `${table}.json`
+  let tableData
+  try {
+    tableData = require(`../../tables/${schema}`)
+  }
+  catch (err) {
+    throw new Error(`can't load ${schema}`)
+  }
+  trace.log({ tabledata: tableData, level: 'verbose' })
+  let properties = mergeAttributes(table)
 
   /** compatibility with legacy data */
   if (tableData.rowTitle) { tableData.stringify = tableData.rowTitle };
+
+  /* sometimes we just pass tabledata as a parameter */
+  merged.tableName = table
 
   for (const key of Object.keys(tableData)) {
     // merged is a merge of the attributes in the model with the extra attributes in the
@@ -33,7 +43,7 @@ module.exports = function (table, permission) {
   if (tableData.standardHeader) {
     standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
   }
-   /** default priomary key t the first field */
+  /** default priomary key t the first field */
   if (!merged.primaryKey) { merged.primaryKey = properties[Object.keys(properties)[0]] }
 
   /* add primary key as a top level value in the tableData object. */

@@ -1,52 +1,84 @@
 /**
  * Subjects collection
  * 
- * A schema could be a JSON Schema which has been copied into this Javascript file 
- * and modified. This would be a good approach if you have an existing file with data in JSON format.
- * You can create a schema from sample data using a tool such as 
- *   https://extendsclass.com/json-schema-validator.html
+ * Tte schema format is based ion the JSON Schema standard. There are additional keys to add 
+ * processing requirements. 
  * 
- * The $id and $schema lines would be been removed, althiough they would be ignored if included. 
- * The following are added:
- * * permission - who is allowed to view or update the file
- * * stringify - this provides a field or a function which creates a string that identifies the record.
- * * list identifies the fields to be included in a standard list of the file
- * * "$ref": "{{dbDriver}}Header", has been added. This is replaced by standard header fields like _id, _rev etc
- *    $ref: 'xxx'  looks for an object called xxx in a standard file called fragments.js in the tables directory.
- *    in this case the {{dbDriver}} string is replaced by the database driver name which allows me to use
- *    the same schema for different databases which have different requirements. The couchDB header is 'couchHeader'
- * * The papers section would be added also, as it does not refer to a real field, but indicates that 
- *   the papers records are child records and the foreign key in the papers records is called 'subject'.`
- * 
- *  Note that additions do not have to be strict JSON formar.
+ * If you have an existing file with data in JSON format, you couold create a schema from sample 
+ * data using a tool such as https://extendsclass.com/json-schema-validator.html and then modifiy it.
  * 
  */
 module.exports = {
    description: 'This file includes records for each subject. This is the normalized version in which results are in a separate file.',
    friendlyName: 'Subjects (normalised version)',
-   "permission": { "all": ["admin", "demo", "trainer", "demor"] },
-   "stringify": "name",
-   "list": {
-      "open": "papers",
-      "columns": ["name", "notes"]
+   permission: { "all": ["admin", "demo", "trainer", "demor"] },
+   /* Stringify provides a field or a function which creates a string that identifies the record.*/
+   stringify: "name",
+   /* List identifies the fields to be included in a standard list of the file */
+   list: {
+      open: "papers",
+      columns: ["name", "subjectCode", "notes"]
    },
-   "properties": {
-      "$ref": "{{dbDriver}}Header",
-      "name": {
-         "friendlyName": "Subject name",
-         "type": "string"
+
+   /** 
+    *       PROPERTIES
+    * 
+    * One entry per column in the table / field in the document. 
+    *   type is the type of field (string, number, boolean) 
+    *     integer is allowed but is treated as 'number' except validated to be an integer.
+    *   friendlyName is the name displayed for that column. If omitted the field name 
+    *     is 'humanised' (fooBar would become 'Foo Bar')
+    *   description is used in the tooltip for that field in the update form as well as 
+    *     being documentation.  If omitted the friendlyName is used.
+    *   $ref: {{dbDriver}}Header is replaced by the Header object in the fragments.js file. 
+    *      in this case it is the standard header fields (id, datestamp, etc)
+    *      The {{dbHeader}} is a kludge to allow me to use the same schema for different databases.
+    *      So for CouchDB the fragment subscitiuted is 'couchHeader'.
+    *   
+    */
+   properties: {
+      $ref: "{{dbDriver}}Header",
+      name: {
+         friendlyName: "Subject name",
+         type: "string",
       },
-      "notes": {
-         "type": "string",
-         "description": "Notes about the subject that may be useful",
-         "input": { "type": "textarea" }
+      subjectCode: {
+         type: 'string',
+         pattern: "[A-Z]{2,2}[0-9]{3,3}",
+         description: `Must be for the form AA999 and must be unique. 
+Uniqueness is checked when you leafe the field.  
+The format is chequed when you submit the form.`,
+         input: { api: { route: '/unique', } },
       },
-      "papers": {
-         "collection": "papers",
-         "via": "subject",
-         "friendlyName": "Exam papers",
-         "collectionList": {
-            "columns": ["name"]
+      notes: {
+         type: "string",
+         description: `Notes about the subject that may be useful. 
+Optional, but if included must be at least 50 characters.`,
+         input: { type: "textarea" },
+         display: { truncateForTableList: 50 },
+         minLength: 20,
+      },
+      pass: {
+         type: 'integer',
+         friendlyName: 'Pass score',
+         description: 'Must be an integer between 20 an 100',
+         maximum: 100,
+         minimum: 20,
+         multipleOf: 5,
+      }
+   },
+   required: ['name', 'subjectCode'],
+   /*  The children section indicates that the papers records are child records 
+       and the foreign key in the papers records is called 'subject'.`  It also specifies
+       which fields are listed in the subject detail listing. 
+   */
+   children: {
+      papers: {
+         collection: "papers",
+         via: "subject",
+         friendlyName: "Exam papers",
+         collectionList: {
+            columns: ["name"]
          }
       }
    }

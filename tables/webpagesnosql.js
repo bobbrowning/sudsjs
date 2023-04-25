@@ -32,12 +32,12 @@ module.exports = {
     /** 'normal' columns for a table listing.  The detailed listing of each row will have 
      *   every column the user is permitted to see. */
     list: {
-        columns: ['_id', 'title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
+        columns: ['title', 'slug', 'pagetype', 'status', 'parent', 'onMenu'],
     },
 
     /** This determines how each row is to be described in things like links. 
      *  In this case the title column. */
-    stringifyView : true,
+    stringifyView: true,
     stringify: 'title',
 
     /** The columns are split into groups for the row listing and the edit form */
@@ -80,22 +80,23 @@ module.exports = {
     },
 
     /** 
-     *       ATTRIBUTES
+     *       PROPERTIES
      * 
-     * One entry per column in the table.  
-     *   friendlyName is the name displayed for that column. If onmitted the field name 
+     * One entry per column in the table / field in the document.  
+     *   friendlyName is the name displayed for that column. If omitted the field name 
      *     is 'humanised' (fooBar would become 'Foo Bar')
      *   description is used in the tooltip for that field in the update form as well as 
      *     being documentation.  If omitted the friendlyName is used.
      */
-    standardHeader: true,
-    attributes: {
-
+    required: ['slug'],
+    properties: {
+        /* This inserts a standard header from fragments.js
+           The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
+        $ref: '{{dbDriver}}Header',
         title: {
             type: 'string',
             description: 'This is to identify the page. Note that this is used on the menu.',
         },
-
         pagetype: {
             friendlyName: 'Page type',
             description: 'Cannot be changed once set',
@@ -114,14 +115,8 @@ module.exports = {
         slug: {
             type: 'string',
             input: {
-                required: true,
                 type: 'text',
-                validations: {
-                    api: {                                         // Validation is by module in bin/suds/api/unique.js
-                        route: '/unique',
-                    }
-                }
-
+                api: { route: '/unique', }
             },
         },
         /** Dates can be type number or string. If it is a number it is the mumber of milliseconds since 1/1/70

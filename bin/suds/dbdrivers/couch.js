@@ -170,6 +170,7 @@ function getInstruction (table, spec) {
 
   for (let i = 0; i < searches.length; i++) {
     let item = {}
+    if (searches[i][0] == 'id') searches[i][0] = '_id'
     const searchField = searches[i][0]
     const compare = searches[i][1]
     let value = searches[i][2]
@@ -189,6 +190,7 @@ function getInstruction (table, spec) {
       trace.log(ta)
     } else {
       ta = attributes[searchField]
+      if (!ta) throw (`No attributes for ${searchField}`)
     }
     if (ta.model || searchField === '_id') {
       value = objectifyId(value)
@@ -605,8 +607,7 @@ async function getRow (table, val, col) {
   trace.log({ inputs: arguments })
   let record
   if (!val) {
-    console.log(`Attempt to read undefined record on ${table}`)
-    return { err: 1, msg: 'Record not found' }
+    throw new Error(`couch.js::Attempt to read undefined record on ${table}`)
   }
 
   const tableData = tableDataFunction(table)
@@ -620,8 +621,12 @@ async function getRow (table, val, col) {
   }
   trace.log(spec)
   const records = await getRows(table, spec)
-  trace.log({ table, value: val, records })
-  if (!records.length) { record = { err: 1, msg: 'Record not found' } } else { record = records[0] }
+  trace.log({ table:table, value: val, records:records })
+  if (!records.length) {
+     record={err:1,msg:'record not found'}
+  } else {
+    record = records[0]
+  }
   trace.log('fixed read', record)
   return (record)
 }

@@ -33,6 +33,8 @@ module.exports = {
         zip: {
             type: 'string'
         },
+    },
+    children: {
         results: {
             collection: 'results',
             via: 'studentId',
@@ -46,5 +48,6 @@ module.exports = {
 
             },
         },
+
     }
 }

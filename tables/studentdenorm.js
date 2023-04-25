@@ -123,8 +123,9 @@ module.exports = {
                                     },
                                 },
                                 score: {
-                                    type: 'number',
-                                    input: { type: 'number', max: 100 },
+                                    type: 'integer',
+                                    minimum: 0,
+                                    maximum: 100,
                                 }
                             }
                         }
