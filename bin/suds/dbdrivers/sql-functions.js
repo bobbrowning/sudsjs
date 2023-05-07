@@ -485,7 +485,7 @@ async function getRows (table, spec, offset, limit, sortKey, direction) {
   }
 
   trace.log(rows)
-  const attributes = rawAttributes(table)
+  const attributes = mergeAttributes(table)
   trace.log(attributes, { level: 'verbose' })
   for (let i = 0; i < rows.length; i++) {
     record = rows[i]

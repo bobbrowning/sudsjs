@@ -1,11 +1,8 @@
 /**
  * Subjects collection
  * 
- * Tte schema format is based ion the JSON Schema standard. There are additional keys to add 
+ * The schema format is inspired by the JSON Schema standard. There are additional keys to add 
  * processing requirements. 
- * 
- * If you have an existing file with data in JSON format, you couold create a schema from sample 
- * data using a tool such as https://extendsclass.com/json-schema-validator.html and then modifiy it.
  * 
  */
 module.exports = {
@@ -14,12 +11,15 @@ module.exports = {
    permission: { "all": ["admin", "demo", "trainer", "demor"] },
    /* Stringify provides a field or a function which creates a string that identifies the record.*/
    stringify: "name",
-   /* List identifies the fields to be included in a standard list of the file */
+   /** List identifies the fields to be included in a standard list of the file 
+    *  open specifies that when a subject is shown in detail there is a list of papers
+    *  automatically opened on that page.  These are child records and the children
+    *  object specifies how they are listed.
+   */
    list: {
       open: "papers",
       columns: ["name", "subjectCode", "notes"]
    },
-
    /** 
     *       PROPERTIES
     * 
@@ -33,7 +33,7 @@ module.exports = {
     *   $ref: {{dbDriver}}Header is replaced by the Header object in the fragments.js file. 
     *      in this case it is the standard header fields (id, datestamp, etc)
     *      The {{dbHeader}} is a kludge to allow me to use the same schema for different databases.
-    *      So for CouchDB the fragment subscitiuted is 'couchHeader'.
+    *      So for CouchDB the fragment substituted is 'couchHeader'.
     *   
     */
    properties: {
@@ -68,9 +68,9 @@ Optional, but if included must be at least 50 characters.`,
       }
    },
    required: ['name', 'subjectCode'],
-   /*  The children section indicates that the papers records are child records 
-       and the foreign key in the papers records is called 'subject'.`  It also specifies
-       which fields are listed in the subject detail listing. 
+   /** The children section indicates that the papers records are child records 
+    *  and the foreign key in the papers records is called 'subject'.`  It also specifies
+    *  which fields are listed in the subject detail listing. 
    */
    children: {
       papers: {

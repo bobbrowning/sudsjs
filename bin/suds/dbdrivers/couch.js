@@ -90,8 +90,7 @@ function connect () {
       if (list.includes(dbSpec.connection.database)) {
         console.log(`Database ${dbSpec.connection.database} alive and well`)
       } else {
-        console.log(`Couch system doesn't include ${dbSpec.connection.database}`, trace.line('s'))
-        process.exit(Number(trace.line()))
+        throw new Error (`Couch system doesn't include ${dbSpec.connection.database}`, trace.line('s'))
       }
     }
   )

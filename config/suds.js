@@ -113,7 +113,7 @@ module.exports = {
    * 
    *********************************************** */
 
-  databases: ['couch', 'couch1', 'mongo', 'sqlite', 'mysql', /*'postgresql'*/],
+  databases: ['couch',  'mongo', 'sqlite', 'mysql', /*'postgresql'*/],
   dbDriver: 'couch',
 
   /** **************** SQLite3 configuration ***************
@@ -168,25 +168,6 @@ module.exports = {
 
   },
 
-  /** ******************* Couch 1 ******************** 
-   * This is an exact copy of the mongoDB database. 
-   * So it doesn't have any views set up.  It is for performance testing.
-  */
-  couch1: {
-    pageFile: 'webpagesnosql',
-    driverFile: 'couch',
-    dbkey: 'string',
-    friendlyName: 'Couch: Mongo copy',
-    homepage: 'home',
-    authtable: 'nosql',    // see authorisation section below
-    standardHeader: 'couch',
-    countable: false,
-    connection: {
-      host: 'localhost:5984',
-      requestDefaults: {},
-    },
-
-  },
 
 
   /** **************** MongoDB configuration ***************
