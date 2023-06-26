@@ -1,51 +1,57 @@
-const trace = require('track-n-trace')
-const sendView = require('./send-view')
-const suds = require('../../config/suds')
-const lang = require('../../config/language').EN
-const Nano = require('nano')
-const auth = require('../../local/auth')
-let nano
-
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const trace = require('track-n-trace');
+const sendView = require('./send-view');
+const suds = require('../../config/suds');
+const lang = require('../../config/language').EN;
+const Nano = require('nano');
+const auth = require('../../local/auth');
+let nano;
 module.exports = async function (req, res) {
-  console.log(__dirname)
-  const dbSpec = suds[suds.dbDriver]
-  const authSpec = auth[suds.dbDriver]
-  try {
-    let authString = ''
-    if (authSpec) { authString = `${authSpec.user}:${authSpec.password}@` }
-    const url = `http://${authString}${dbSpec.connection.host}`
-    trace.log(url)
-    const opts = {
-      url,
-      requestDefaults: dbSpec.connection.requestDefaults
+    console.log(__dirname);
+    const dbSpec = suds[suds.dbDriver];
+    const authSpec = auth[suds.dbDriver];
+    try {
+        let authString = '';
+        if (authSpec) {
+            authString = `${authSpec.user}:${authSpec.password}@`;
+        }
+        const url = `http://${authString}${dbSpec.connection.host}`;
+        trace.log(url);
+        const opts = {
+            url,
+            requestDefaults: dbSpec.connection.requestDefaults
+        };
+        nano = Nano(opts);
+        db = nano.db.use(dbSpec.connection.database);
+        console.log(`Connected to ${suds.dbDriver} database (${dbSpec.friendlyName})`);
     }
-    nano = Nano(opts)
-
-    db = nano.db.use(dbSpec.connection.database)
-    console.log(`Connected to ${suds.dbDriver} database (${dbSpec.friendlyName})`)
-  } catch (err) {
-    console.log('Database connected failed', trace.line('s'), err)
-    process.exit()
-  }
-  let r = await db.list()
-  trace.log(r.rows)
-  trace.log(r.rows.length)
-  let n = 0;
-  for (let i = 0; i < r.rows.length; i++) {
-    trace.log('getting',r.rows[i].id)
-    row = await db.get(r.rows[i].id)
-    trace.log(row)
-   if (row.collection) {
-      row.$collection = row.collection
-      delete row.collection
+    catch (err) {
+        console.log('Database connected failed', trace.line('s'), err);
+        process.exit();
     }
-    trace.log(row)
-   const result = await db.insert(row)
- 
-  }
-
-  output = 'fixed'
-  await sendView(res, 'admin', output)
-
-}
+    let r = await db.list();
+    trace.log(r.rows);
+    trace.log(r.rows.length);
+    let n = 0;
+    for (let i = 0; i < r.rows.length; i++) {
+        if (Number.isInteger(i / 100))
+            console.log(i, ' fixed');
+        trace.log('getting', r.rows[i].id);
+        row = await db.get(r.rows[i].id);
+        trace.log(row);
+        if (row.$collection) {
+            row.collection = row.$collection;
+            delete row.$collection;
+        }
+        if (row['\\$collection']) {
+            row.collection = row['\\$collection'];
+            delete row['\\$collection'];
+        }
+        trace.log(row);
+        const result = await db.insert(row);
+    }
+    output = 'fixed';
+    await sendView(res, 'admin', output);
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZml4LmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2Jpbi9zdWRzL2ZpeC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUFBLE1BQU0sS0FBSyxHQUFHLE9BQU8sQ0FBQyxlQUFlLENBQUMsQ0FBQTtBQUN0QyxNQUFNLFFBQVEsR0FBRyxPQUFPLENBQUMsYUFBYSxDQUFDLENBQUE7QUFDdkMsTUFBTSxJQUFJLEdBQUcsT0FBTyxDQUFDLG1CQUFtQixDQUFDLENBQUE7QUFDekMsTUFBTSxJQUFJLEdBQUcsT0FBTyxDQUFDLHVCQUF1QixDQUFDLENBQUMsRUFBRSxDQUFBO0FBQ2hELE1BQU0sSUFBSSxHQUFHLE9BQU8sQ0FBQyxNQUFNLENBQUMsQ0FBQTtBQUM1QixNQUFNLElBQUksR0FBRyxPQUFPLENBQUMsa0JBQWtCLENBQUMsQ0FBQTtBQUN4QyxJQUFJLElBQUksQ0FBQTtBQUdSLE1BQU0sQ0FBQyxPQUFPLEdBQUcsS0FBSyxXQUFXLEdBQUcsRUFBRSxHQUFHO0lBQ3ZDLE9BQU8sQ0FBQyxHQUFHLENBQUMsU0FBUyxDQUFDLENBQUE7SUFDdEIsTUFBTSxNQUFNLEdBQUcsSUFBSSxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsQ0FBQTtJQUNsQyxNQUFNLFFBQVEsR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxDQUFBO0lBQ3BDLElBQUk7UUFDRixJQUFJLFVBQVUsR0FBRyxFQUFFLENBQUE7UUFDbkIsSUFBSSxRQUFRLEVBQUU7WUFBRSxVQUFVLEdBQUcsR0FBRyxRQUFRLENBQUMsSUFBSSxJQUFJLFFBQVEsQ0FBQyxRQUFRLEdBQUcsQ0FBQTtTQUFFO1FBQ3ZFLE1BQU0sR0FBRyxHQUFHLFVBQVUsVUFBVSxHQUFHLE1BQU0sQ0FBQyxVQUFVLENBQUMsSUFBSSxFQUFFLENBQUE7UUFDM0QsS0FBSyxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQTtRQUNkLE1BQU0sSUFBSSxHQUFHO1lBQ1gsR0FBRztZQUNILGVBQWUsRUFBRSxNQUFNLENBQUMsVUFBVSxDQUFDLGVBQWU7U0FDbkQsQ0FBQTtRQUNELElBQUksR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDLENBQUE7UUFFakIsRUFBRSxHQUFHLElBQUksQ0FBQyxFQUFFLENBQUMsR0FBRyxDQUFDLE1BQU0sQ0FBQyxVQUFVLENBQUMsUUFBUSxDQUFDLENBQUE7UUFDNUMsT0FBTyxDQUFDLEdBQUcsQ0FBQyxnQkFBZ0IsSUFBSSxDQUFDLFFBQVEsY0FBYyxNQUFNLENBQUMsWUFBWSxHQUFHLENBQUMsQ0FBQTtLQUMvRTtJQUFDLE9BQU8sR0FBRyxFQUFFO1FBQ1osT0FBTyxDQUFDLEdBQUcsQ0FBQywyQkFBMkIsRUFBRSxLQUFLLENBQUMsSUFBSSxDQUFDLEdBQUcsQ0FBQyxFQUFFLEdBQUcsQ0FBQyxDQUFBO1FBQzlELE9BQU8sQ0FBQyxJQUFJLEVBQUUsQ0FBQTtLQUNmO0lBQ0QsSUFBSSxDQUFDLEdBQUcsTUFBTSxFQUFFLENBQUMsSUFBSSxFQUFFLENBQUE7SUFDdkIsS0FBSyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsSUFBSSxDQUFDLENBQUE7SUFDakIsS0FBSyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsSUFBSSxDQUFDLE1BQU0sQ0FBQyxDQUFBO0lBQ3hCLElBQUksQ0FBQyxHQUFHLENBQUMsQ0FBQztJQUNWLEtBQUssSUFBSSxDQUFDLEdBQUcsQ0FBQyxFQUFFLENBQUMsR0FBRyxDQUFDLENBQUMsSUFBSSxDQUFDLE1BQU0sRUFBRSxDQUFDLEVBQUUsRUFBRTtRQUN0QyxJQUFJLE1BQU0sQ0FBQyxTQUFTLENBQUMsQ0FBQyxHQUFDLEdBQUcsQ0FBQztZQUFFLE9BQU8sQ0FBQyxHQUFHLENBQUMsQ0FBQyxFQUFFLFFBQVEsQ0FBQyxDQUFBO1FBQ3JELEtBQUssQ0FBQyxHQUFHLENBQUMsU0FBUyxFQUFDLENBQUMsQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUE7UUFDakMsR0FBRyxHQUFHLE1BQU0sRUFBRSxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsSUFBSSxDQUFDLENBQUMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFBO1FBQ2hDLEtBQUssQ0FBQyxHQUFHLENBQUMsR0FBRyxDQUFDLENBQUE7UUFDZixJQUFJLEdBQUcsQ0FBQyxXQUFXLEVBQUU7WUFDbEIsR0FBRyxDQUFDLFVBQVUsR0FBRyxHQUFHLENBQUMsV0FBVyxDQUFBO1lBQ2hDLE9BQU8sR0FBRyxDQUFDLFdBQVcsQ0FBQTtTQUN2QjtRQUNELElBQUksR0FBRyxDQUFDLGVBQWUsQ0FBQyxFQUFFO1lBQ3hCLEdBQUcsQ0FBQyxVQUFVLEdBQUcsR0FBRyxDQUFDLGVBQWUsQ0FBQyxDQUFBO1lBQ3JDLE9BQU8sR0FBRyxDQUFDLGVBQWUsQ0FBQyxDQUFBO1NBQzVCO1FBQ0QsS0FBSyxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQTtRQUNmLE1BQU0sTUFBTSxHQUFHLE1BQU0sRUFBRSxDQUFDLE1BQU0sQ0FBQyxHQUFHLENBQUMsQ0FBQTtLQUVuQztJQUVELE1BQU0sR0FBRyxPQUFPLENBQUE7SUFDaEIsTUFBTSxRQUFRLENBQUMsR0FBRyxFQUFFLE9BQU8sRUFBRSxNQUFNLENBQUMsQ0FBQTtBQUV0QyxDQUFDLENBQUEifQ==

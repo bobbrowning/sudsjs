@@ -1,51 +1,46 @@
+"use strict";
 /**
  * standard record header
- * 
- * If the following is added to the schemaa for a file the following fields are included 
- * at the start of every record. 
- * 
+ *
+ * If the following is added to the schemaa for a file the following fields are included
+ * at the start of every record.
+ *
  * standardheader: true,
- * 
+ *
  */
-
-module.exports = { 
-
+Object.defineProperty(exports, "__esModule", { value: true });
+module.exports = {
     /** Standard date  */
-
-
-   /**
-    * Standard headers for different databases
-    */
+    /**
+     * Standard headers for different databases
+     */
     couchHeader: {
         _id: {
             friendlyName: 'Document ID',
             primaryKey: true,
             type: 'string',
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-
         _rev: {
             friendlyName: 'Document revision',
             type: 'string',
             input: { type: 'hidden' },
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-        $collection: {
+        collection: {
             friendlyName: 'Collection',
             type: 'string',
             input: {
                 default: '!table',
                 type: 'hidden',
             },
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-  
-
         createdAt: {
             friendlyName: 'Date created',
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
-            input: { type: 'date' },            // input by the system not the user.
+            input: { type: 'date' },
             process: { type: 'createdAt' },
             permission: { view: ['none'] },
         },
@@ -71,14 +66,13 @@ module.exports = {
             friendlyName: 'Document ID',
             primaryKey: true,
             type: 'string',
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-
-         createdAt: {
+        createdAt: {
             friendlyName: 'Date created',
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
-            input: { type: 'date' },            // input by the system not the user.
+            input: { type: 'date' },
             process: { type: 'createdAt' },
             permission: { view: ['none'] },
         },
@@ -105,21 +99,20 @@ module.exports = {
             primaryKey: true,
             type: 'number',
             autoincrement: true,
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-
-         createdAt: {
+        createdAt: {
             friendlyName: 'Date created',
             type: 'number',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             display: { type: 'datetime', truncateForTableList: 16 },
-            input: { type: 'date' },            // input by the system not the user.
+            input: { type: 'date' },
             process: { type: 'createdAt' },
             permission: { view: ['none'] },
         },
         updatedAt: {
             friendlyName: 'Date last updated',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },
@@ -141,21 +134,20 @@ module.exports = {
             primaryKey: true,
             type: 'number',
             autoincrement: true,
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-
-         createdAt: {
+        createdAt: {
             friendlyName: 'Date created',
             type: 'number',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             display: { type: 'datetime', truncateForTableList: 16 },
-            input: { type: 'date' },            // input by the system not the user.
+            input: { type: 'date' },
             process: { type: 'createdAt' },
             permission: { view: ['none'] },
         },
         updatedAt: {
             friendlyName: 'Date last updated',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },
@@ -177,21 +169,20 @@ module.exports = {
             primaryKey: true,
             type: 'number',
             autoincrement: true,
-            permission: { view: ['admin'], edit: ['all'] },  // edited by the system, but as most users can't see it they can't edit it manually
+            permission: { view: ['admin'], edit: ['all'] }, // edited by the system, but as most users can't see it they can't edit it manually
         },
-
-         createdAt: {
+        createdAt: {
             friendlyName: 'Date created',
             type: 'number',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             display: { type: 'datetime', truncateForTableList: 16 },
-            input: { type: 'date' },            // input by the system not the user.
+            input: { type: 'date' },
             process: { type: 'createdAt' },
             permission: { view: ['none'] },
         },
         updatedAt: {
             friendlyName: 'Date last updated',
-            database: {type: 'bigint'},
+            database: { type: 'bigint' },
             type: 'number',
             display: { type: 'datetime', truncateForTableList: 16 },
             input: { type: 'date' },
@@ -207,4 +198,4 @@ module.exports = {
             permission: { view: ['none'] },
         },
     },
-}
+};

@@ -1,7 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 module.exports = {
     GB: 'United Kingdom',
     US: 'United States',
-     AF: 'Afghanistan',
+    AF: 'Afghanistan',
     AX: 'Aland Islands',
     AL: 'Albania',
     DZ: 'Algeria',
@@ -244,4 +246,4 @@ module.exports = {
     YE: 'Yemen',
     ZM: 'Zambia',
     ZW: 'Zimbabwe'
-}
+};

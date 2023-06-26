@@ -1,11 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 
+ *
  * Student table - normalised moned
- * 
+ *
  */
 module.exports = {
     description: 'Student - normalised model',
-
     friendlyName: 'Student',
     stringify: 'name',
     permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
@@ -13,11 +14,10 @@ module.exports = {
         columns: ['name', 'address1', 'address2', 'city', 'zip', 'results'],
         open: 'results',
     },
-
     properties: {
         /* This inserts a standard header from fragments.js
           The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
-        $ref: '{{dbDriver}}Header',
+        $ref: "fragments.js#/{{dbDriver}}Header",
         name: {
             type: 'string'
         },
@@ -38,16 +38,14 @@ module.exports = {
         results: {
             collection: 'results',
             via: 'studentId',
-            friendlyName: 'Results',          //Heading to the listing 
-            collectionList: {                                            // Contact notes are listed below the person's record
-                limit: 999,                           // number of child records listed in the detail page
-                order: '_id',                 // The order in which the are listed 
-                direction: 'DESC',                  // ASC or DESC
+            friendlyName: 'Results',
+            collectionList: {
+                limit: 999,
+                order: '_id',
+                direction: 'DESC',
                 addRow: 'Add a new result',
                 columns: ['subject', 'paper', 'score'],
-
             },
         },
-
     }
-}
+};

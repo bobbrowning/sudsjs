@@ -1,13 +1,16 @@
-const trace = require('track-n-trace')
-const sendView = require('./send-view')
-const suds = require('../../config/suds')
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const trace = require('track-n-trace');
+const sendView = require('./send-view');
+const suds = require('../../config/suds');
 module.exports = async function (req, res) {
-  console.log(__dirname)
-  trace.log('register form')
-  let csrf = ''
-  if (suds.csrf) { csrf = `<input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />` }
-  output = `
+    console.log(__dirname);
+    trace.log('register form');
+    let csrf = '';
+    if (suds.csrf) {
+        csrf = `<input type="hidden" name="_csrf" value="${req.csrfToken()}" id="csrf" />`;
+    }
+    output = `
     <h1>Register</h1>
     <form action="/register" method="post">
     ${csrf}
@@ -31,8 +34,8 @@ module.exports = async function (req, res) {
 
      <button type="submit" class="btn btn-primary">Submit</button>
 </form>
-`
-
-  const result = await sendView(res, 'admin', output)
-  trace.log(result)
-}
+`;
+    const result = await sendView(res, 'admin', output);
+    trace.log(result);
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVnaXN0ZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvYmluL3N1ZHMvcmVnaXN0ZXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFDLENBQUE7QUFDdEMsTUFBTSxRQUFRLEdBQUcsT0FBTyxDQUFDLGFBQWEsQ0FBQyxDQUFBO0FBQ3ZDLE1BQU0sSUFBSSxHQUFHLE9BQU8sQ0FBQyxtQkFBbUIsQ0FBQyxDQUFBO0FBRXpDLE1BQU0sQ0FBQyxPQUFPLEdBQUcsS0FBSyxXQUFXLEdBQUcsRUFBRSxHQUFHO0lBQ3ZDLE9BQU8sQ0FBQyxHQUFHLENBQUMsU0FBUyxDQUFDLENBQUE7SUFDdEIsS0FBSyxDQUFDLEdBQUcsQ0FBQyxlQUFlLENBQUMsQ0FBQTtJQUMxQixJQUFJLElBQUksR0FBRyxFQUFFLENBQUE7SUFDYixJQUFJLElBQUksQ0FBQyxJQUFJLEVBQUU7UUFBRSxJQUFJLEdBQUcsNENBQTRDLEdBQUcsQ0FBQyxTQUFTLEVBQUUsZ0JBQWdCLENBQUE7S0FBRTtJQUNyRyxNQUFNLEdBQUc7OztNQUdMLElBQUk7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztDQXFCVCxDQUFBO0lBRUMsTUFBTSxNQUFNLEdBQUcsTUFBTSxRQUFRLENBQUMsR0FBRyxFQUFFLE9BQU8sRUFBRSxNQUFNLENBQUMsQ0FBQTtJQUNuRCxLQUFLLENBQUMsR0FBRyxDQUFDLE1BQU0sQ0FBQyxDQUFBO0FBQ25CLENBQUMsQ0FBQSJ9

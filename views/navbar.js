@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /* ************************************************
 *
 * Create the navbar .
@@ -8,16 +10,8 @@ let classes = require('../../config/classes');
 let lang = require('../../config/language')['EN'];
 let db = require('./db');
 let sendView = require('./send-view');
-
-
 module.exports = async function () {
-
-   let result=``;
-
-
-
-  trace.log(result);
-  return;
-
-
-}
+    let result = ``;
+    trace.log(result);
+    return;
+};

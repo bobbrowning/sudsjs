@@ -1,13 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 
+ *
  * Results table - normalised moned
- * 
+ *
  */
 let suds = require('../config/suds');
 let db = require('../bin/suds/db');
 module.exports = {
     description: 'Exam results',
-
     friendlyName: 'Exam results',
     permission: { all: ['admin', 'demo', 'trainer', 'demor'] },
     list: {
@@ -18,7 +19,7 @@ module.exports = {
     properties: {
         /* This inserts a standard header from fragments.js
             The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
-        $ref: '{{dbDriver}}Header',
+        $ref: "fragments.js#/{{dbDriver}}Header",
         studentId: {
             model: 'studentnorm',
             friendlyName: 'Student',
@@ -39,17 +40,14 @@ module.exports = {
                 search: {
                     andor: 'and',
                     searches: [
-                        ['subject', 'equals', '$subject'],           // Refers top the global that we set in the preForm routine
+                        ['subject', 'equals', '$subject'], // Refers top the global that we set in the preForm routine
                     ],
                 },
             },
         },
-
-
         score: {
             type: 'number',
             input: { type: 'number', max: 100, },
         },
-
     }
-}
+};

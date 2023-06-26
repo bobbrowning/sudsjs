@@ -1,1 +1,2 @@
-/** test */  bash suds.sh
+/** test */ bash;
+suds.sh;

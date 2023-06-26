@@ -1,48 +1,47 @@
-
-const trace = require('track-n-trace')
-
-const suds = require('../../config/suds')
-
-let db
-function connect () {
-  trace.log(suds.dbDriver, suds[suds.dbDriver])
-  if (suds[suds.dbDriver].driverFile) {
-    db = require('./dbdrivers/' + suds[suds.dbDriver].driverFile)
-  } else {
-    db = require('./dbdrivers/' + suds.dbDriver)
-  }
-  return db.connect()
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const trace = require('track-n-trace');
+const suds = require('../../config/suds');
+let db;
+function connect() {
+    trace.log(suds.dbDriver, suds[suds.dbDriver]);
+    if (suds[suds.dbDriver].driverFile) {
+        db = require('./dbdrivers/' + suds[suds.dbDriver].driverFile);
+    }
+    else {
+        db = require('./dbdrivers/' + suds.dbDriver);
+    }
+    return db.connect();
 }
-
-function createTable () { return db.createTable(arguments[0], arguments[1]) }
-function getRow () { return db.getRow(arguments[0], arguments[1], arguments[2]) }
-function getRows () { return db.getRows(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]) }
-function countRows () { return db.countRows(arguments[0], arguments[1], arguments[2]) }
-function totalRows () { return db.totalRows(arguments[0], arguments[1], arguments[2]) }
-function createRow () { return db.createRow(arguments[0], arguments[1]) }
-function deleteRow () { return db.deleteRow(arguments[0], arguments[1], arguments[2]) }
-function deleteRows () { return db.deleteRows(arguments[0], arguments[1]) }
-function updateRow () { return db.updateRow(arguments[0], arguments[1], arguments[2], arguments[3]) }
-function standardiseId () { return db.standardiseId(arguments[0]) }
-function stringifyId () { return db.stringifyId(arguments[0]) }
-
-let getView = getViewItem= function () { }
+function createTable() { return db.createTable(arguments[0], arguments[1]); }
+function getRow() { return db.getRow(arguments[0], arguments[1], arguments[2]); }
+function getRows() { return db.getRows(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]); }
+function countRows() { return db.countRows(arguments[0], arguments[1], arguments[2]); }
+function totalRows() { return db.totalRows(arguments[0], arguments[1], arguments[2]); }
+function createRow() { return db.createRow(arguments[0], arguments[1]); }
+function deleteRow() { return db.deleteRow(arguments[0], arguments[1], arguments[2]); }
+function deleteRows() { return db.deleteRows(arguments[0], arguments[1]); }
+function updateRow() { return db.updateRow(arguments[0], arguments[1], arguments[2], arguments[3]); }
+function standardiseId() { return db.standardiseId(arguments[0]); }
+function stringifyId() { return db.stringifyId(arguments[0]); }
+let getView = function () { };
+let getViewItem = function () { };
 if (suds.dbDriver == 'couchdb') {
-  getView = function () { return db.getView(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]) }
-  getViewItem = function () { return db.getViewItem(arguments[0], arguments[1], arguments[2]) }
+    getView = function () { return db.getView(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]); };
+    getViewItem = function () { return db.getViewItem(arguments[0], arguments[1], arguments[2]); };
 }
-
-exports.connect = connect
-exports.createTable = createTable
-exports.getRow = getRow
-exports.getRows = getRows
-exports.countRows = countRows
-exports.totalRows = totalRows
-exports.createRow = createRow
-exports.deleteRow = deleteRow
-exports.deleteRows = deleteRows
-exports.updateRow = updateRow
-exports.standardiseId = standardiseId
-exports.stringifyId = stringifyId
-exports.getView = getView
-exports.getViewItem = getViewItem
+exports.connect = connect;
+exports.createTable = createTable;
+exports.getRow = getRow;
+exports.getRows = getRows;
+exports.countRows = countRows;
+exports.totalRows = totalRows;
+exports.createRow = createRow;
+exports.deleteRow = deleteRow;
+exports.deleteRows = deleteRows;
+exports.updateRow = updateRow;
+exports.standardiseId = standardiseId;
+exports.stringifyId = stringifyId;
+exports.getView = getView;
+exports.getViewItem = getViewItem;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZGIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvYmluL3N1ZHMvZGIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFDQSxNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFDLENBQUE7QUFFdEMsTUFBTSxJQUFJLEdBQUcsT0FBTyxDQUFDLG1CQUFtQixDQUFDLENBQUE7QUFFekMsSUFBSSxFQUFFLENBQUE7QUFDTixTQUFTLE9BQU87SUFDZCxLQUFLLENBQUMsR0FBRyxDQUFDLElBQUksQ0FBQyxRQUFRLEVBQUUsSUFBSSxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFBO0lBQzdDLElBQUksSUFBSSxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsQ0FBQyxVQUFVLEVBQUU7UUFDbEMsRUFBRSxHQUFHLE9BQU8sQ0FBQyxjQUFjLEdBQUcsSUFBSSxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsQ0FBQyxVQUFVLENBQUMsQ0FBQTtLQUM5RDtTQUFNO1FBQ0wsRUFBRSxHQUFHLE9BQU8sQ0FBQyxjQUFjLEdBQUcsSUFBSSxDQUFDLFFBQVEsQ0FBQyxDQUFBO0tBQzdDO0lBQ0QsT0FBTyxFQUFFLENBQUMsT0FBTyxFQUFFLENBQUE7QUFDckIsQ0FBQztBQUVELFNBQVMsV0FBVyxLQUFNLE9BQU8sRUFBRSxDQUFDLFdBQVcsQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQzdFLFNBQVMsTUFBTSxLQUFNLE9BQU8sRUFBRSxDQUFDLE1BQU0sQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUNqRixTQUFTLE9BQU8sS0FBTSxPQUFPLEVBQUUsQ0FBQyxPQUFPLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFDN0gsU0FBUyxTQUFTLEtBQU0sT0FBTyxFQUFFLENBQUMsU0FBUyxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQ3ZGLFNBQVMsU0FBUyxLQUFNLE9BQU8sRUFBRSxDQUFDLFNBQVMsQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUN2RixTQUFTLFNBQVMsS0FBTSxPQUFPLEVBQUUsQ0FBQyxTQUFTLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUN6RSxTQUFTLFNBQVMsS0FBTSxPQUFPLEVBQUUsQ0FBQyxTQUFTLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFDdkYsU0FBUyxVQUFVLEtBQU0sT0FBTyxFQUFFLENBQUMsVUFBVSxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFDM0UsU0FBUyxTQUFTLEtBQU0sT0FBTyxFQUFFLENBQUMsU0FBUyxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUNyRyxTQUFTLGFBQWEsS0FBTSxPQUFPLEVBQUUsQ0FBQyxhQUFhLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQ25FLFNBQVMsV0FBVyxLQUFNLE9BQU8sRUFBRSxDQUFDLFdBQVcsQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFFL0QsSUFBSSxPQUFPLEdBQUcsY0FBYyxDQUFDLENBQUE7QUFDN0IsSUFBSSxXQUFXLEdBQUUsY0FBYyxDQUFDLENBQUE7QUFDaEMsSUFBSSxJQUFJLENBQUMsUUFBUSxJQUFJLFNBQVMsRUFBRTtJQUM5QixPQUFPLEdBQUcsY0FBYyxPQUFPLEVBQUUsQ0FBQyxPQUFPLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUMsQ0FBQTtJQUMvSCxXQUFXLEdBQUcsY0FBYyxPQUFPLEVBQUUsQ0FBQyxXQUFXLENBQUMsU0FBUyxDQUFDLENBQUMsQ0FBQyxFQUFFLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUMsQ0FBQTtDQUM5RjtBQUVELE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFBO0FBQ3pCLE9BQU8sQ0FBQyxXQUFXLEdBQUcsV0FBVyxDQUFBO0FBQ2pDLE9BQU8sQ0FBQyxNQUFNLEdBQUcsTUFBTSxDQUFBO0FBQ3ZCLE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFBO0FBQ3pCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxVQUFVLEdBQUcsVUFBVSxDQUFBO0FBQy9CLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxhQUFhLEdBQUcsYUFBYSxDQUFBO0FBQ3JDLE9BQU8sQ0FBQyxXQUFXLEdBQUcsV0FBVyxDQUFBO0FBQ2pDLE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFBO0FBQ3pCLE9BQU8sQ0FBQyxXQUFXLEdBQUcsV0FBVyxDQUFBIn0=

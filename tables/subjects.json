@@ -19,7 +19,7 @@
       ]
    },
    "properties": {
-      "$ref": "{{dbDriver}}Header",
+      "$ref": "fragments.js#/{{dbDriver}}Header",
       "name": {
          "friendlyName": "Subject name",
          "type": "string"

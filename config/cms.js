@@ -1,18 +1,16 @@
-
-
+"use strict";
 /** **********************************************
- * 
+ *
  *           Content Management System
  *           -------------------------
- * 
+ *
  *   The CMS included here is a starter app so see how
  *   the software can be used.
- * 
+ *
  *********************************************** */
-
-
+Object.defineProperty(exports, "__esModule", { value: true });
 module.exports = {
-    homePage: 'index',     /* slug of the home page */
+    homePage: 'index',
     pageFile: {
         table: 'webpagesnosql;',
         /* Columns in the page File */
@@ -22,7 +20,6 @@ module.exports = {
         embargo: 'embargo',
         expires: 'expires',
         slug: 'slug',
-
     },
     headerTags: `
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -35,4 +32,4 @@ module.exports = {
       gtag('config', 'G-DPVYYSYJ9X');
     </script>
     `,
-}
+};

@@ -1,10 +1,10 @@
-
+"use strict";
 /** ************************************************
- * 
+ *
  *                Field types test schema
- * 
+ *
  * *********************************************** */
-
+Object.defineProperty(exports, "__esModule", { value: true });
 module.exports = {
     friendlyName: 'Field types test',
     description: `This database has one example of each input
@@ -14,10 +14,9 @@ module.exports = {
         columns: ['_id', 'text']
     },
     properties: {
-
         /* This inserts a standard header from fragments.js
            The dbDriver tag is a kludge to allow the same schema to be used for different databases. */
-        $ref: '{{dbDriver}}Header',
+        $ref: "fragments.js#/{{dbDriver}}Header",
         text: {
             friendlyName: 'Regular input field (hover here for tooltip).',
             type: 'string',
@@ -224,10 +223,5 @@ NOTE: You can't mix ckeditor4 and 5 on the same page so this area wil not work -
             input: { type: 'uploadFile' },
             display: { type: 'image', width: '100px' },
         },
-
     }
-
-
-
-
-}
+};

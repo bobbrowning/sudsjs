@@ -1,82 +1,78 @@
-const trace = require('track-n-trace')
-const suds = require('../../config/suds')
-const sendView = require('./send-view')
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const trace = require('track-n-trace');
+const suds = require('../../config/suds');
+const sendView = require('./send-view');
 // let getRow = require('./get-row');
 // let updateRow = require('./update-row');
-const db = require('./db')
-const crypto = require('crypto')
-
+const db = require('./db');
+const crypto = require('crypto');
 module.exports = async function (req, res) {
-  console.log(__dirname)
-  trace.log('register form')
-  const allParms = req.body
-  const aut = suds.authorisation
-  trace.log(aut)
-  trace.log(allParms)
-  output = `
+    console.log(__dirname);
+    trace.log('register form');
+    const allParms = req.body;
+    const aut = suds.authorisation;
+    trace.log(aut);
+    trace.log(allParms);
+    output = `
     <h1>Register</h1>
      
-`
-
-  const userRec = await db.getRow(aut.table, allParms.user)
-  trace.log(userRec)
-  if (userRec.err) {
-    output += '<p>I can\'t find your record</p>'
-    const result = await sendView(res, 'admin', output)
-    trace.log(result)
-    return
-  }
-
-  let OK = true
-  let err = ''
-  if (allParms.oldpassword) {
-    const oldpassword = crypto.pbkdf2Sync(allParms.oldpassword, userRec[aut.salt], 10000, 64, 'sha512').toString('hex')
-    trace.log(oldpassword, aut.passwordHash, userRec[aut.passwordHash])
-    if (oldpassword != userRec[aut.passwordHash]) {
-      err = 'Sorry that password/code is not correct'
-      OK = false
+`;
+    const userRec = await db.getRow(aut.table, allParms.user);
+    trace.log(userRec);
+    if (userRec.err) {
+        output += '<p>I can\'t find your record</p>';
+        const result = await sendView(res, 'admin', output);
+        trace.log(result);
+        return;
     }
-  } else {
-    const token = allParms.token.replace(' ', '')
-    trace.log(token, userRec[aut.forgottenPasswordToken])
-    if (token != userRec[aut.forgottenPasswordToken]) {
-      err = 'That code does not match the code we sent.'
-      OK = false
+    let OK = true;
+    let err = '';
+    if (allParms.oldpassword) {
+        const oldpassword = crypto.pbkdf2Sync(allParms.oldpassword, userRec[aut.salt], 10000, 64, 'sha512').toString('hex');
+        trace.log(oldpassword, aut.passwordHash, userRec[aut.passwordHash]);
+        if (oldpassword != userRec[aut.passwordHash]) {
+            err = 'Sorry that password/code is not correct';
+            OK = false;
+        }
     }
-    if (OK && Date.now > userRec[aut.forgottenPasswordExpire]) {
-      err = 'That code has expired.'
-      OK = false
+    else {
+        const token = allParms.token.replace(' ', '');
+        trace.log(token, userRec[aut.forgottenPasswordToken]);
+        if (token != userRec[aut.forgottenPasswordToken]) {
+            err = 'That code does not match the code we sent.';
+            OK = false;
+        }
+        if (OK && Date.now > userRec[aut.forgottenPasswordExpire]) {
+            err = 'That code has expired.';
+            OK = false;
+        }
     }
-  }
-
-  if (!OK) {
-    output += `<p>${err} - <a href="${suds.mainPage}">Admin page</a></p>`
-    const result = await sendView(res, 'admin', output)
-    trace.log(result)
-    return
-  }
-
-  const newData = {}
-  newData[aut.primaryKey] = allParms.user
-  newData[aut.salt] = crypto.randomBytes(32).toString('hex')
-  newData[aut.passwordHash] = crypto.pbkdf2Sync(allParms.password, newData.salt, 10000, 64, 'sha512').toString('hex')
-  trace.log(newData)
-  await db.updateRow(aut.table, newData)
-  output += `<p>Password changed - <a href="${suds.mainPage}">Admin page</a></p>`
-  if (suds.audit.include &&
-        (
-          !suds.audit.operations ||
-            suds.audit.operations.includes('changepw')
-        )) {
-    const record = {}
-    record.row = userRec[aut.primaryKey]
-    record.mode = 'changepw'
-    record.tableName = aut.table
-    record.updatedBy = userRec[aut.primaryKey]
-    record.notes = 'Change Password'
-    await db.createRow('audit', record)
-  }
-
-  const result = await sendView(res, 'admin', output)
-  trace.log(result)
-}
+    if (!OK) {
+        output += `<p>${err} - <a href="${suds.mainPage}">Admin page</a></p>`;
+        const result = await sendView(res, 'admin', output);
+        trace.log(result);
+        return;
+    }
+    const newData = {};
+    newData[aut.primaryKey] = allParms.user;
+    newData[aut.salt] = crypto.randomBytes(32).toString('hex');
+    newData[aut.passwordHash] = crypto.pbkdf2Sync(allParms.password, newData.salt, 10000, 64, 'sha512').toString('hex');
+    trace.log(newData);
+    await db.updateRow(aut.table, newData);
+    output += `<p>Password changed - <a href="${suds.mainPage}">Admin page</a></p>`;
+    if (suds.audit.include &&
+        (!suds.audit.operations ||
+            suds.audit.operations.includes('changepw'))) {
+        const record = {};
+        record.row = userRec[aut.primaryKey];
+        record.mode = 'changepw';
+        record.tableName = aut.table;
+        record.updatedBy = userRec[aut.primaryKey];
+        record.notes = 'Change Password';
+        await db.createRow('audit', record);
+    }
+    const result = await sendView(res, 'admin', output);
+    trace.log(result);
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY2hhbmdlLXBhc3N3b3JkLXByb2Nlc3MuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvYmluL3N1ZHMvY2hhbmdlLXBhc3N3b3JkLXByb2Nlc3MuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFBQSxNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFDLENBQUE7QUFDdEMsTUFBTSxJQUFJLEdBQUcsT0FBTyxDQUFDLG1CQUFtQixDQUFDLENBQUE7QUFDekMsTUFBTSxRQUFRLEdBQUcsT0FBTyxDQUFDLGFBQWEsQ0FBQyxDQUFBO0FBQ3ZDLHFDQUFxQztBQUNyQywyQ0FBMkM7QUFDM0MsTUFBTSxFQUFFLEdBQUcsT0FBTyxDQUFDLE1BQU0sQ0FBQyxDQUFBO0FBQzFCLE1BQU0sTUFBTSxHQUFHLE9BQU8sQ0FBQyxRQUFRLENBQUMsQ0FBQTtBQUVoQyxNQUFNLENBQUMsT0FBTyxHQUFHLEtBQUssV0FBVyxHQUFHLEVBQUUsR0FBRztJQUN2QyxPQUFPLENBQUMsR0FBRyxDQUFDLFNBQVMsQ0FBQyxDQUFBO0lBQ3RCLEtBQUssQ0FBQyxHQUFHLENBQUMsZUFBZSxDQUFDLENBQUE7SUFDMUIsTUFBTSxRQUFRLEdBQUcsR0FBRyxDQUFDLElBQUksQ0FBQTtJQUN6QixNQUFNLEdBQUcsR0FBRyxJQUFJLENBQUMsYUFBYSxDQUFBO0lBQzlCLEtBQUssQ0FBQyxHQUFHLENBQUMsR0FBRyxDQUFDLENBQUE7SUFDZCxLQUFLLENBQUMsR0FBRyxDQUFDLFFBQVEsQ0FBQyxDQUFBO0lBQ25CLE1BQU0sR0FBRzs7O0NBR1YsQ0FBQTtJQUVDLE1BQU0sT0FBTyxHQUFHLE1BQU0sRUFBRSxDQUFDLE1BQU0sQ0FBQyxHQUFHLENBQUMsS0FBSyxFQUFFLFFBQVEsQ0FBQyxJQUFJLENBQUMsQ0FBQTtJQUN6RCxLQUFLLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxDQUFBO0lBQ2xCLElBQUksT0FBTyxDQUFDLEdBQUcsRUFBRTtRQUNmLE1BQU0sSUFBSSxrQ0FBa0MsQ0FBQTtRQUM1QyxNQUFNLE1BQU0sR0FBRyxNQUFNLFFBQVEsQ0FBQyxHQUFHLEVBQUUsT0FBTyxFQUFFLE1BQU0sQ0FBQyxDQUFBO1FBQ25ELEtBQUssQ0FBQyxHQUFHLENBQUMsTUFBTSxDQUFDLENBQUE7UUFDakIsT0FBTTtLQUNQO0lBRUQsSUFBSSxFQUFFLEdBQUcsSUFBSSxDQUFBO0lBQ2IsSUFBSSxHQUFHLEdBQUcsRUFBRSxDQUFBO0lBQ1osSUFBSSxRQUFRLENBQUMsV0FBVyxFQUFFO1FBQ3hCLE1BQU0sV0FBVyxHQUFHLE1BQU0sQ0FBQyxVQUFVLENBQUMsUUFBUSxDQUFDLFdBQVcsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLElBQUksQ0FBQyxFQUFFLEtBQUssRUFBRSxFQUFFLEVBQUUsUUFBUSxDQUFDLENBQUMsUUFBUSxDQUFDLEtBQUssQ0FBQyxDQUFBO1FBQ25ILEtBQUssQ0FBQyxHQUFHLENBQUMsV0FBVyxFQUFFLEdBQUcsQ0FBQyxZQUFZLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsQ0FBQyxDQUFBO1FBQ25FLElBQUksV0FBVyxJQUFJLE9BQU8sQ0FBQyxHQUFHLENBQUMsWUFBWSxDQUFDLEVBQUU7WUFDNUMsR0FBRyxHQUFHLHlDQUF5QyxDQUFBO1lBQy9DLEVBQUUsR0FBRyxLQUFLLENBQUE7U0FDWDtLQUNGO1NBQU07UUFDTCxNQUFNLEtBQUssR0FBRyxRQUFRLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxHQUFHLEVBQUUsRUFBRSxDQUFDLENBQUE7UUFDN0MsS0FBSyxDQUFDLEdBQUcsQ0FBQyxLQUFLLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxzQkFBc0IsQ0FBQyxDQUFDLENBQUE7UUFDckQsSUFBSSxLQUFLLElBQUksT0FBTyxDQUFDLEdBQUcsQ0FBQyxzQkFBc0IsQ0FBQyxFQUFFO1lBQ2hELEdBQUcsR0FBRyw0Q0FBNEMsQ0FBQTtZQUNsRCxFQUFFLEdBQUcsS0FBSyxDQUFBO1NBQ1g7UUFDRCxJQUFJLEVBQUUsSUFBSSxJQUFJLENBQUMsR0FBRyxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsdUJBQXVCLENBQUMsRUFBRTtZQUN6RCxHQUFHLEdBQUcsd0JBQXdCLENBQUE7WUFDOUIsRUFBRSxHQUFHLEtBQUssQ0FBQTtTQUNYO0tBQ0Y7SUFFRCxJQUFJLENBQUMsRUFBRSxFQUFFO1FBQ1AsTUFBTSxJQUFJLE1BQU0sR0FBRyxlQUFlLElBQUksQ0FBQyxRQUFRLHNCQUFzQixDQUFBO1FBQ3JFLE1BQU0sTUFBTSxHQUFHLE1BQU0sUUFBUSxDQUFDLEdBQUcsRUFBRSxPQUFPLEVBQUUsTUFBTSxDQUFDLENBQUE7UUFDbkQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxNQUFNLENBQUMsQ0FBQTtRQUNqQixPQUFNO0tBQ1A7SUFFRCxNQUFNLE9BQU8sR0FBRyxFQUFFLENBQUE7SUFDbEIsT0FBTyxDQUFDLEdBQUcsQ0FBQyxVQUFVLENBQUMsR0FBRyxRQUFRLENBQUMsSUFBSSxDQUFBO0lBQ3ZDLE9BQU8sQ0FBQyxHQUFHLENBQUMsSUFBSSxDQUFDLEdBQUcsTUFBTSxDQUFDLFdBQVcsQ0FBQyxFQUFFLENBQUMsQ0FBQyxRQUFRLENBQUMsS0FBSyxDQUFDLENBQUE7SUFDMUQsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLENBQUMsR0FBRyxNQUFNLENBQUMsVUFBVSxDQUFDLFFBQVEsQ0FBQyxRQUFRLEVBQUUsT0FBTyxDQUFDLElBQUksRUFBRSxLQUFLLEVBQUUsRUFBRSxFQUFFLFFBQVEsQ0FBQyxDQUFDLFFBQVEsQ0FBQyxLQUFLLENBQUMsQ0FBQTtJQUNuSCxLQUFLLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxDQUFBO0lBQ2xCLE1BQU0sRUFBRSxDQUFDLFNBQVMsQ0FBQyxHQUFHLENBQUMsS0FBSyxFQUFFLE9BQU8sQ0FBQyxDQUFBO0lBQ3RDLE1BQU0sSUFBSSxrQ0FBa0MsSUFBSSxDQUFDLFFBQVEsc0JBQXNCLENBQUE7SUFDL0UsSUFBSSxJQUFJLENBQUMsS0FBSyxDQUFDLE9BQU87UUFDaEIsQ0FDRSxDQUFDLElBQUksQ0FBQyxLQUFLLENBQUMsVUFBVTtZQUNwQixJQUFJLENBQUMsS0FBSyxDQUFDLFVBQVUsQ0FBQyxRQUFRLENBQUMsVUFBVSxDQUFDLENBQzdDLEVBQUU7UUFDUCxNQUFNLE1BQU0sR0FBRyxFQUFFLENBQUE7UUFDakIsTUFBTSxDQUFDLEdBQUcsR0FBRyxPQUFPLENBQUMsR0FBRyxDQUFDLFVBQVUsQ0FBQyxDQUFBO1FBQ3BDLE1BQU0sQ0FBQyxJQUFJLEdBQUcsVUFBVSxDQUFBO1FBQ3hCLE1BQU0sQ0FBQyxTQUFTLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQTtRQUM1QixNQUFNLENBQUMsU0FBUyxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsVUFBVSxDQUFDLENBQUE7UUFDMUMsTUFBTSxDQUFDLEtBQUssR0FBRyxpQkFBaUIsQ0FBQTtRQUNoQyxNQUFNLEVBQUUsQ0FBQyxTQUFTLENBQUMsT0FBTyxFQUFFLE1BQU0sQ0FBQyxDQUFBO0tBQ3BDO0lBRUQsTUFBTSxNQUFNLEdBQUcsTUFBTSxRQUFRLENBQUMsR0FBRyxFQUFFLE9BQU8sRUFBRSxNQUFNLENBQUMsQ0FBQTtJQUNuRCxLQUFLLENBQUMsR0FBRyxDQUFDLE1BQU0sQ0FBQyxDQUFBO0FBQ25CLENBQUMsQ0FBQSJ9

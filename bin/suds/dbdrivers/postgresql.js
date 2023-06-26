@@ -1,65 +1,62 @@
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /** *********************************************
  * PostgreSQL database driver.
  * ********************************************** */
-const Database__Driver = 'Postgresql' // To make documentation.js work...
-
-const db = require('./sql-functions')
-const knexUtils = require('knex-utils')
-
-exports.connect = connect
-exports.createTable = createTable
-exports.getRow = getRow
-exports.getRows = getRows
-exports.countRows = countRows
-exports.totalRows = totalRows
-exports.createRow = createRow
-exports.deleteRow = deleteRow
-exports.deleteRows = deleteRows
-exports.updateRow = updateRow
-exports.standardiseId = standardiseId
-
-const auth = require('../../../local/auth')
-const trace = require('track-n-trace')
-const suds = require('../../../config/suds')
-
-function connect () {
-  const spec = suds[suds.dbDriver]
-  trace.log({ connect: spec })
-  try {
-    const connection = spec.connection
-    connection.user = auth.postgresql.user
-    connection.password = auth.postgresql.password
-    trace.log({ client: 'pg', connection })
-    globalThis.knex = require('knex')({
-      client: 'pg',
-      connection
-    })
-    console.log(`connected to ${spec.friendlyName} database`)
-  } catch {
-    console.log('Cant connect to ' + spec.friendlyName)
-    process.exit(62)
-  }
-
-  knexUtils.checkHeartbeat(knex).then(
-    function (heartbeat) {
-      if (heartbeat.isOk) {
-        console.log('Database alive and well')
-      } else {
-        console.log(heartbeat.error)
-        console.log('Terminating process')
-        process.exit(72)
-      }
+const Database__Driver = 'Postgresql'; // To make documentation.js work...
+const db = require('./sql-functions');
+const knexUtils = require('knex-utils');
+exports.connect = connect;
+exports.createTable = createTable;
+exports.getRow = getRow;
+exports.getRows = getRows;
+exports.countRows = countRows;
+exports.totalRows = totalRows;
+exports.createRow = createRow;
+exports.deleteRow = deleteRow;
+exports.deleteRows = deleteRows;
+exports.updateRow = updateRow;
+exports.standardiseId = standardiseId;
+const auth = require('../../../local/auth');
+const trace = require('track-n-trace');
+const suds = require('../../../config/suds');
+function connect() {
+    const spec = suds[suds.dbDriver];
+    trace.log({ connect: spec });
+    try {
+        const connection = spec.connection;
+        connection.user = auth.postgresql.user;
+        connection.password = auth.postgresql.password;
+        trace.log({ client: 'pg', connection });
+        globalThis.knex = require('knex')({
+            client: 'pg',
+            connection
+        });
+        console.log(`connected to ${spec.friendlyName} database`);
     }
-  )
+    catch {
+        console.log('Cant connect to ' + spec.friendlyName);
+        process.exit(62);
+    }
+    knexUtils.checkHeartbeat(knex).then(function (heartbeat) {
+        if (heartbeat.isOk) {
+            console.log('Database alive and well');
+        }
+        else {
+            console.log(heartbeat.error);
+            console.log('Terminating process');
+            process.exit(72);
+        }
+    });
 }
-function createTable (a, b) { return db.createTable(a, b) }
-function getRow (a, b, c) { return db.getRow(a, b, c) }
-function getRows (a, b, c, d, e, f) { return db.getRows(a, b, c, d, e, f) }
-function countRows (a, b) { return db.countRows(a, b) }
-function totalRows (a, b, c) { return db.totalRows(a, b, c) }
-function createRow (a, b) { return db.createRow(a, b) }
-function deleteRow (a, b, c) { return db.deleteRow(a, b, c) }
-function deleteRows (a, b, c) { return db.deleteRows(a, b, c) }
-function updateRow (a, b) { return db.updateRow(a, b) }
-function standardiseId (a) { return db.standardiseId(a) }
+function createTable(a, b) { return db.createTable(a, b); }
+function getRow(a, b, c) { return db.getRow(a, b, c); }
+function getRows(a, b, c, d, e, f) { return db.getRows(a, b, c, d, e, f); }
+function countRows(a, b) { return db.countRows(a, b); }
+function totalRows(a, b, c) { return db.totalRows(a, b, c); }
+function createRow(a, b) { return db.createRow(a, b); }
+function deleteRow(a, b, c) { return db.deleteRow(a, b, c); }
+function deleteRows(a, b, c) { return db.deleteRows(a, b, c); }
+function updateRow(a, b) { return db.updateRow(a, b); }
+function standardiseId(a) { return db.standardiseId(a); }
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicG9zdGdyZXNxbC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9iaW4vc3Vkcy9kYmRyaXZlcnMvcG9zdGdyZXNxbC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUNBOztvREFFb0Q7QUFDcEQsTUFBTSxnQkFBZ0IsR0FBRyxZQUFZLENBQUEsQ0FBQyxtQ0FBbUM7QUFFekUsTUFBTSxFQUFFLEdBQUcsT0FBTyxDQUFDLGlCQUFpQixDQUFDLENBQUE7QUFDckMsTUFBTSxTQUFTLEdBQUcsT0FBTyxDQUFDLFlBQVksQ0FBQyxDQUFBO0FBRXZDLE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFBO0FBQ3pCLE9BQU8sQ0FBQyxXQUFXLEdBQUcsV0FBVyxDQUFBO0FBQ2pDLE9BQU8sQ0FBQyxNQUFNLEdBQUcsTUFBTSxDQUFBO0FBQ3ZCLE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFBO0FBQ3pCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxVQUFVLEdBQUcsVUFBVSxDQUFBO0FBQy9CLE9BQU8sQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFBO0FBQzdCLE9BQU8sQ0FBQyxhQUFhLEdBQUcsYUFBYSxDQUFBO0FBRXJDLE1BQU0sSUFBSSxHQUFHLE9BQU8sQ0FBQyxxQkFBcUIsQ0FBQyxDQUFBO0FBQzNDLE1BQU0sS0FBSyxHQUFHLE9BQU8sQ0FBQyxlQUFlLENBQUMsQ0FBQTtBQUN0QyxNQUFNLElBQUksR0FBRyxPQUFPLENBQUMsc0JBQXNCLENBQUMsQ0FBQTtBQUU1QyxTQUFTLE9BQU87SUFDZCxNQUFNLElBQUksR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxDQUFBO0lBQ2hDLEtBQUssQ0FBQyxHQUFHLENBQUMsRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLENBQUMsQ0FBQTtJQUM1QixJQUFJO1FBQ0YsTUFBTSxVQUFVLEdBQUcsSUFBSSxDQUFDLFVBQVUsQ0FBQTtRQUNsQyxVQUFVLENBQUMsSUFBSSxHQUFHLElBQUksQ0FBQyxVQUFVLENBQUMsSUFBSSxDQUFBO1FBQ3RDLFVBQVUsQ0FBQyxRQUFRLEdBQUcsSUFBSSxDQUFDLFVBQVUsQ0FBQyxRQUFRLENBQUE7UUFDOUMsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLE1BQU0sRUFBRSxJQUFJLEVBQUUsVUFBVSxFQUFFLENBQUMsQ0FBQTtRQUN2QyxVQUFVLENBQUMsSUFBSSxHQUFHLE9BQU8sQ0FBQyxNQUFNLENBQUMsQ0FBQztZQUNoQyxNQUFNLEVBQUUsSUFBSTtZQUNaLFVBQVU7U0FDWCxDQUFDLENBQUE7UUFDRixPQUFPLENBQUMsR0FBRyxDQUFDLGdCQUFnQixJQUFJLENBQUMsWUFBWSxXQUFXLENBQUMsQ0FBQTtLQUMxRDtJQUFDLE1BQU07UUFDTixPQUFPLENBQUMsR0FBRyxDQUFDLGtCQUFrQixHQUFHLElBQUksQ0FBQyxZQUFZLENBQUMsQ0FBQTtRQUNuRCxPQUFPLENBQUMsSUFBSSxDQUFDLEVBQUUsQ0FBQyxDQUFBO0tBQ2pCO0lBRUQsU0FBUyxDQUFDLGNBQWMsQ0FBQyxJQUFJLENBQUMsQ0FBQyxJQUFJLENBQ2pDLFVBQVUsU0FBUztRQUNqQixJQUFJLFNBQVMsQ0FBQyxJQUFJLEVBQUU7WUFDbEIsT0FBTyxDQUFDLEdBQUcsQ0FBQyx5QkFBeUIsQ0FBQyxDQUFBO1NBQ3ZDO2FBQU07WUFDTCxPQUFPLENBQUMsR0FBRyxDQUFDLFNBQVMsQ0FBQyxLQUFLLENBQUMsQ0FBQTtZQUM1QixPQUFPLENBQUMsR0FBRyxDQUFDLHFCQUFxQixDQUFDLENBQUE7WUFDbEMsT0FBTyxDQUFDLElBQUksQ0FBQyxFQUFFLENBQUMsQ0FBQTtTQUNqQjtJQUNILENBQUMsQ0FDRixDQUFBO0FBQ0gsQ0FBQztBQUNELFNBQVMsV0FBVyxDQUFFLENBQUMsRUFBRSxDQUFDLElBQUksT0FBTyxFQUFFLENBQUMsV0FBVyxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFDM0QsU0FBUyxNQUFNLENBQUUsQ0FBQyxFQUFFLENBQUMsRUFBRSxDQUFDLElBQUksT0FBTyxFQUFFLENBQUMsTUFBTSxDQUFDLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQ3ZELFNBQVMsT0FBTyxDQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxJQUFJLE9BQU8sRUFBRSxDQUFDLE9BQU8sQ0FBQyxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUMzRSxTQUFTLFNBQVMsQ0FBRSxDQUFDLEVBQUUsQ0FBQyxJQUFJLE9BQU8sRUFBRSxDQUFDLFNBQVMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQ3ZELFNBQVMsU0FBUyxDQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxJQUFJLE9BQU8sRUFBRSxDQUFDLFNBQVMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUM3RCxTQUFTLFNBQVMsQ0FBRSxDQUFDLEVBQUUsQ0FBQyxJQUFJLE9BQU8sRUFBRSxDQUFDLFNBQVMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUEsQ0FBQyxDQUFDO0FBQ3ZELFNBQVMsU0FBUyxDQUFFLENBQUMsRUFBRSxDQUFDLEVBQUUsQ0FBQyxJQUFJLE9BQU8sRUFBRSxDQUFDLFNBQVMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUM3RCxTQUFTLFVBQVUsQ0FBRSxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsSUFBSSxPQUFPLEVBQUUsQ0FBQyxVQUFVLENBQUMsQ0FBQyxFQUFFLENBQUMsRUFBRSxDQUFDLENBQUMsQ0FBQSxDQUFDLENBQUM7QUFDL0QsU0FBUyxTQUFTLENBQUUsQ0FBQyxFQUFFLENBQUMsSUFBSSxPQUFPLEVBQUUsQ0FBQyxTQUFTLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQztBQUN2RCxTQUFTLGFBQWEsQ0FBRSxDQUFDLElBQUksT0FBTyxFQUFFLENBQUMsYUFBYSxDQUFDLENBQUMsQ0FBQyxDQUFBLENBQUMsQ0FBQyJ9

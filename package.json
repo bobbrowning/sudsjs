@@ -1,6 +1,6 @@
 {
   "name": "sudsjs",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -17,7 +17,7 @@
     "deep-copy": "^1.4.2",
     "dotenv": "^10.0.0",
     "ejs": "^3.1.8",
-    "express": "~4.16.1",
+    "express": "^4.18.2",
     "express-busboy": "^8.0.2",
     "express-fileupload": "^1.4.0",
     "express-session": "^1.17.3",
@@ -25,8 +25,10 @@
     "fs": "0.0.1-security",
     "hjs": "~0.0.6",
     "http-errors": "~1.6.3",
+    "json-schema-deref": "^0.5.0",
+    "json-schema-deref-sync": "^0.14.0",
     "json-schema-library": "^7.4.7",
-    "knex": "^0.95.15",
+    "knex": "^2.4.2",
     "knex-utils": "^5.5.1",
     "mongodb": "^4.9.1",
     "morgan": "~1.9.1",
@@ -37,6 +39,7 @@
     "pg": "^8.8.0",
     "sanitize-html": "^2.7.1",
     "serve-favicon": "^2.5.0",
+    "source-map-support": "^0.5.21",
     "sqlite3": "^5.0.11",
     "syncwritestream": "^1.0.1",
     "track-n-trace": "^1.2.12"
@@ -44,5 +47,11 @@
   "main": "./bin/www",
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "TypeScript version",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.43.0",
+    "typescript": "^5.1.3"
+  }
 }
