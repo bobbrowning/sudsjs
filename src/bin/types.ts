@@ -1,4 +1,12 @@
+/** Types
+ * 
+ * All of the types used in sudsjs are here except for the schema which is in types-schema,
+ */
+
+
 import {Properties} from "./types-schema";
+
+/** Imporsed with slightly different names so can be added to. */
 import { Request as request, Response as response, } from "express"
 
 export type Request=request & {

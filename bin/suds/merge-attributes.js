@@ -7,12 +7,12 @@ const invertGroups = require('./invert-groups');
 const suds = require('../../config/suds');
 const humaniseFieldname = require('./humanise-fieldname');
 let cache = {};
-let tableData;
+let schema;
 /**
  * Doesn't really merge things any more. It standardises the attributes to that they all have the
  * same structure.
  *
- * This module 'compiles' the schema  by standarsifing the object and making sure that every
+ * This module 'compiles' the schema  by standardising the object and making sure that every
  * part of the schema object is there, even if empty.
  *
  * The standardised schems is then cached.
@@ -25,7 +25,7 @@ let tableData;
  */
 module.exports = function (table, permission, subschemas, additionalAttributes) {
     trace.log({ inputs: arguments });
-    if (table == 'clear-cache') {
+    if (table === 'clear-cache') {
         cache = {};
         return;
     }
@@ -34,16 +34,16 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
     }
     trace.log({ table, permission, cached: Object.keys(cache) });
     if (suds.jsonSchema.includes(table)) {
-        tableData = require('../../tables/' + table + '.json');
+        schema = require('../../tables/' + table + '.json');
     }
     else {
-        tableData = require('../../tables/' + table);
+        schema = require('../../tables/' + table);
     }
-    if (!tableData) {
+    if (!schema) {
         throw new Error(`merge-attributes.pl::Table: ${table} - Can't find any config data for this table. Suggest running ${suds.baseURL}/validateconfig`);
     }
-    //   if (tableData.attributes_merged) {return attributes}   // only do this once
-    //   tableData.attributes_merged=true;
+    //   if (schema.attributes_merged) {return attributes}   // only do this once
+    //   schema.attributes_merged=true;
     let cachekey = '';
     if (permission) {
         cachekey = permission + 'Z';
@@ -71,12 +71,13 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
           * Then make a deep copy
           * This is passed to the standardise routine. Note that if the attributes describe a structured
           * record with sub-objects it is called recursively.
-          */
-        let standardHeader = {};
-        if (tableData.standardHeader) {
-            standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader];
+        
+        let standardHeader = {}
+        if (schema.standardHeader) {
+          standardHeader = require('../../config/standard-header')[suds[suds.dbDriver].standardHeader]
         }
-        trace.log(standardHeader);
+        trace.log(standardHeader)
+    */
         /**
          * The original schema format was based on the Sails framework schema. This section converts
          * the JSON schema standard to this format.  This is a kludge and long-term would
@@ -90,29 +91,34 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
          * Then the schema is converted in a recursive function.
          *
           */
-        if (!tableData.attributes && tableData.properties) {
-            tableData.attributes = tableData.properties;
+        let rawAttributes = {};
+        if (!schema.attributes && schema.properties) {
+            schema.attributes = schema.properties;
         } // for compatibility with the JSON schema standard
-        const rawAttributes = { ...standardHeader, ...tableData.attributes, ...additionalAttributes };
+        rawAttributes = { /*...standardHeader,*/ ...schema.attributes, ...additionalAttributes };
         trace.log(table, rawAttributes, { level: 's2' });
-        dereference(rawAttributes, tableData);
-        decomment(tableData);
+        dereference(rawAttributes, schema);
+        decomment(schema);
         decomment(rawAttributes);
-        trace.log(tableData);
-        if (tableData.children) {
-            for (const key of Object.keys(tableData.children)) {
-                rawAttributes[key] = tableData.children[key];
+        trace.log(schema);
+        /** Legacy: The children data used to be mixed in with Properties. This is because
+         * I was following the sailsjs.com standard.  It's just plain wrong but this kludge
+         * reverts back to this format.
+         */
+        if (schema.children) {
+            for (const key of Object.keys(schema.children)) {
+                rawAttributes[key] = schema.children[key];
             }
         }
-        trace.log(tableData);
-        jsonSchemaConvert(rawAttributes, tableData, tableData);
+        trace.log(schema);
+        jsonSchemaConvert(rawAttributes, schema, schema);
         /** Make a deep copy of the attributes (properties) */
         const rawAttributesDeep = dcopy(rawAttributes);
-        trace.log({ header: standardHeader, rawAttributes: rawAttributesDeep, level: 'verbose' });
+        trace.log({ rawAttributes: rawAttributesDeep, level: 'verbose' });
         /** Create lookup with the group for each attribute (top level attribute).
          * This is so that permissions can be propogated through the group.
          * */
-        const groupLookup = invertGroups(tableData, rawAttributesDeep);
+        const groupLookup = invertGroups(schema, rawAttributesDeep);
         trace.log(groupLookup, { level: 'verbose' });
         /** Standardise attributes */
         const standardisedAttributes = standardise(table, rawAttributesDeep, groupLookup, [], [], permission);
@@ -120,17 +126,15 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
         /** create friendlyName for each top level item in the subschema
         * This seems to have some unwarrentled assumptions - like the subschema is added at the top level.
         */
-        if (subschemas && tableData.list && tableData.list.subschemaName) {
+        if (subschemas && schema.list && schema.list.subschemaName) {
             for (const key of Object.keys(additionalAttributes)) {
-                cache[cachekey][key].friendlyName = `${suds.subschemaGroups[tableData.list.subschemaName]}: ${cache[cachekey][key].friendlyName}`;
+                cache[cachekey][key].friendlyName = `${suds.subschemaGroups[schema.list.subschemaName]}: ${cache[cachekey][key].friendlyName}`;
             }
         }
         /** If there is a record type column - set the recordtypefix boolean for that element */
-        if (tableData.recordTypeColumn && cache[cachekey][tableData.recordTypeColumn]) {
-            cache[cachekey][tableData.recordTypeColumn].recordType = true;
-            if (tableData.recordTypeFix) {
-                cache[cachekey][tableData.recordTypeColumn].recordTypeFix = true;
-            }
+        if (schema.recordTypeColumn && cache[cachekey][schema.recordTypeColumn]) {
+            cache[cachekey][schema.recordTypeColumn].recordType = true;
+            //      if (schema.recordTypeFix) { cache[cachekey][schema.recordTypeColumn].recordTypeFix = true }
         }
     }
     /** Retun result. */
@@ -142,11 +146,14 @@ module.exports = function (table, permission, subschemas, additionalAttributes) 
  *   Dereference schema ab=nd remove comments
  *
  * @param {object} properties
- * @param {object} tableData
+ *                 mainly type Properties - except a value can be a string ($ref) or type Property
+ *                 This is only in data passed to this function and string | Property doesn't seem to work?
+ *                 Once dereferenced the string values are all replaced, so the Properties type works everywhere else..
+ * @param {object} schema
  * @param {object} parent
  */
-function dereference(properties, tableData) {
-    trace.log(tableData.friendlyName);
+function dereference(properties, schema) {
+    trace.log(schema.friendlyName);
     /*   couldn't get this to work  *********
    const deref = require('json-schema-deref-sync');
    const schema=JSON.stringify(properties)
@@ -156,7 +163,7 @@ function dereference(properties, tableData) {
    process.exit()
    }
    catch (err) {
-     throw new Error (`problem with schema for ${tableData.friendlyName}
+     throw new Error (`problem with schema for ${schema.friendlyName}
      ${err}`)
    }
    */
@@ -185,15 +192,15 @@ function dereference(properties, tableData) {
             else {
                 if (ref.includes('$defs/')) {
                     ref = ref.replace('$defs/', '');
-                    if (!(tableData['$defs'])) {
+                    if (!(schema['$defs'])) {
                         throw new Error(`merge-attributes.js::No $defs object for ${ref}`);
                     }
-                    if (!(tableData['$defs'][ref])) {
+                    if (!(schema['$defs'][ref])) {
                         throw new Error(`merge-attributes.js::No $defs/${ref} object`);
                     }
-                    for (const jr of Object.keys(tableData['$defs'][ref])) {
-                        trace.log(jr, tableData['$defs'][ref][jr]);
-                        properties[jr] = tableData['$defs'][ref][jr];
+                    for (const jr of Object.keys(schema['$defs'][ref])) {
+                        trace.log(jr, schema['$defs'][ref][jr]);
+                        properties[jr] = schema['$defs'][ref][jr];
                     }
                 }
             }
@@ -202,9 +209,9 @@ function dereference(properties, tableData) {
         else {
             if (properties[key].type == 'object') {
                 trace.log(properties[key].properties);
-                //        if (properties[key].object) dereference(properties[key].object, tableData)
+                //        if (properties[key].object) dereference(properties[key].object, schema)
                 if (properties[key].properties)
-                    dereference(properties[key].properties, tableData);
+                    dereference(properties[key].properties, schema);
             }
         }
     }
@@ -241,10 +248,10 @@ function decomment(obj) {
  * Lonbg-term a better solution is needed.
  *
  * @param {object} properties of the object being processed
- * @param (object) tableData - the original top level object
+ * @param (object) schema - the original top level object
  * @param (object) parent - the object containg these properties
  */
-function jsonSchemaConvert(properties, tableData, parent) {
+function jsonSchemaConvert(properties, schema, parent) {
     trace.log({ properties: properties, level: 's2' });
     trace.log(parent.required);
     if (parent && parent.required) {
@@ -267,7 +274,7 @@ function jsonSchemaConvert(properties, tableData, parent) {
             }
             //     delete properties[key].properties
             trace.log('next level', key, properties[key].type);
-            jsonSchemaConvert(properties[key].object, tableData, properties[key]);
+            jsonSchemaConvert(properties[key].object, schema, properties[key]);
         }
         else {
             if (properties[key].type === 'array') {
@@ -282,7 +289,7 @@ function jsonSchemaConvert(properties, tableData, parent) {
                 if (properties[key].items.type === 'object') {
                     properties[key].object = properties[key].items.properties;
                     trace.log('next level', key);
-                    jsonSchemaConvert(properties[key].object, tableData, properties[key]);
+                    jsonSchemaConvert(properties[key].object, schema, properties[key]);
                 }
                 else {
                     for (const item of Object.keys(properties[key].items)) {
@@ -312,7 +319,6 @@ function jsonSchemaConvert(properties, tableData, parent) {
                         multipleOf: 'step',
                         maxLength: 'maxlength',
                         minLength: 'minlength',
-                        pattern: 'pattern',
                         pattern: 'pattern',
                     };
                     if (subkey === 'enum') {
@@ -352,111 +358,112 @@ function standardise(table, merged, groupLookup, parentQualifiedName, parentQual
     /** main loop throiugh fields  */
     for (const key of Object.keys(merged)) {
         // loop through fields (columns) in the table
-        trace.log({ next: key, attr: merged[key], level: 'verbose' });
-        if (!merged[key].type) {
-            merged[key].type = 'string';
+        const property = merged[key];
+        trace.log({ next: key, attr: property, level: 'verbose' });
+        if (!property.type) {
+            property.type = 'string';
         }
-        merged[key].key = key;
-        if (!merged[key].friendlyName) {
-            merged[key].friendlyName = humaniseFieldname(key);
+        property.key = key;
+        if (!property.friendlyName) {
+            property.friendlyName = humaniseFieldname(key);
         }
         if (parentQualifiedName.length == 0) {
-            merged[key].qualifiedName = [key];
-            merged[key].qualifiedFriendlyName = [merged[key].friendlyName];
+            property.qualifiedName = [key];
+            property.qualifiedFriendlyName = [property.friendlyName];
         }
         else {
-            merged[key].qualifiedName = [];
-            merged[key].qualifiedFriendlyName = [];
+            property.qualifiedName = [];
+            property.qualifiedFriendlyName = [];
             for (let i = 0; i < parentQualifiedName.length; i++) {
-                merged[key].qualifiedName[i] = parentQualifiedName[i];
-                merged[key].qualifiedFriendlyName[i] = parentQualifiedFriendlyName[i];
+                property.qualifiedName[i] = parentQualifiedName[i];
+                property.qualifiedFriendlyName[i] = parentQualifiedFriendlyName[i];
             }
-            trace.log({ key, qname: merged[key].qualifiedName, qfname: merged[key].qualifiedFriendlyName }, { level: 'norm' });
-            merged[key].qualifiedName.push(key);
-            merged[key].qualifiedFriendlyName.push(merged[key].friendlyName);
-            trace.log({ key, qname: merged[key].qualifiedName, qfname: merged[key].qualifiedFriendlyName }, { level: 'norm' });
+            trace.log({ key, qname: property.qualifiedName, qfname: property.qualifiedFriendlyName }, { level: 'norm' });
+            property.qualifiedName.push(key);
+            property.qualifiedFriendlyName.push(property.friendlyName);
+            trace.log({ key, qname: property.qualifiedName, qfname: property.qualifiedFriendlyName }, { level: 'norm' });
         }
-        if (merged[key].type === 'object') {
-            if (!merged[key].object && merged[key].properties) {
-                merged[key].object = merged[key].properties;
+        if (property.type === 'object') {
+            if (!property.object && property.properties) {
+                property.object = property.properties;
             }
-            trace.log(key, merged[key].object);
-            standardise(table, merged[key].object, {}, merged[key].qualifiedName, merged[key].qualifiedFriendlyName);
+            trace.log(key, property.object);
+            standardise(table, property.object, [], property.qualifiedName, property.qualifiedFriendlyName, permission);
         }
         /**
           *
           * Guarantee that certain sub-object/values are there with default values
           *
           * */
-        if (!merged[key].input) {
-            merged[key].input = {};
+        if (!property.input) {
+            property.input = {};
         }
-        if (!merged[key].database) {
-            merged[key].database = {};
+        if (!property.database) {
+            property.database = {};
         }
-        if (!merged[key].process) {
-            merged[key].process = {};
+        if (!property.process) {
+            property.process = {};
         }
-        if (!merged[key].display) {
-            merged[key].display = {};
+        if (!property.display) {
+            property.display = {};
         }
         /** field type */
-        if (merged[key].primaryKey && suds[suds.dbDriver].dbkey) {
-            merged[key].type = suds[suds.dbDriver].dbkey;
+        if (property.primaryKey && suds[suds.dbDriver].dbkey) {
+            property.type = suds[suds.dbDriver].dbkey;
         }
-        if (merged[key].model && suds[suds.dbDriver].dbkey) {
-            merged[key].type = suds[suds.dbDriver].dbkey;
+        if (property.model && suds[suds.dbDriver].dbkey) {
+            property.type = suds[suds.dbDriver].dbkey;
         }
-        if (merged[key].type != 'string' && merged[key].type != 'number' && merged[key].type != 'boolean' && merged[key].type != 'object') {
-            throw new Error(`merge-attributes.pl::Table: ${table}, Attribute: ${key} Type: ${merged[key].type} is invalid. Suggest running ${suds.baseURL}/validateconfig`);
+        if (property.type != 'string' && property.type != 'number' && property.type != 'boolean' && property.type != 'object') {
+            throw new Error(`merge-attributes.pl::Table: ${table}, Attribute: ${key} Type: ${property.type} is invalid. Suggest running ${suds.baseURL}/validateconfig`);
         }
         /** Input and input type */
-        if (merged[key].type == 'boolean' && !merged[key].input.type) {
-            merged[key].input.type = 'checkbox';
+        if (property.type == 'boolean' && !property.input.type) {
+            property.input.type = 'checkbox';
         }
-        if (merged[key].type == 'number' && !merged[key].input.type) {
-            merged[key].input.type = 'number';
+        if (property.type == 'number' && !property.input.type) {
+            property.input.type = 'number';
         }
         /** Anything else is text! */
-        if (!merged[key].input.type) {
-            merged[key].input.type = 'text';
+        if (!property.input.type) {
+            property.input.type = 'text';
         }
-        if (!merged[key].input.validations) {
-            merged[key].input.validations = {};
+        if (!property.input.validations) {
+            property.input.validations = {};
         } // guarantee that there is an validations object.
-        if (!merged[key].input.class) {
-            merged[key].input.class = suds.input.class;
+        if (!property.input.class) {
+            property.input.class = suds.input.class;
         } // Default class for input fields.
         /** display type */
-        if (!merged[key].display.type) {
-            merged[key].display.type = '';
+        if (!property.display.type) {
+            property.display.type = '';
         }
         /** Description  */
-        if (!merged[key].description) {
-            merged[key].description = merged[key].friendlyName;
+        if (!property.description) {
+            property.description = property.friendlyName;
         }
-        if (merged[key].description.includes('"')) {
-            merged[key].description = merged[key].description.replace(/"/g, '&quot;');
+        if (property.description.includes('"')) {
+            property.description = property.description.replace(/"/g, '&quot;');
         }
-        if (merged[key].description.includes('`')) {
-            merged[key].description = merged[key].description.replace(/`/g, '&quot;');
+        if (property.description.includes('`')) {
+            property.description = property.description.replace(/`/g, '&quot;');
         }
         /** Help text */
-        merged[key].helpText = '';
-        const intype = merged[key].input.type;
+        property.helpText = '';
+        const intype = property.input.type;
         if (suds.inputTypes[intype] && suds.inputTypes[intype].helpText) {
-            merged[key].helpText = suds.inputTypes[intype].helpText;
+            property.helpText = suds.inputTypes[intype].helpText;
         }
         /** Record type and record type column = e.g. Customer type or product type. Special functiopns for this
-        merged[key].recordTypeColumn = false;
-        merged[key].recordTypes = {};
-        if (key == tableData.recordTypeColumn) {
-          merged[key].recordTypeColumn = true;
-          merged[key].recordTypes = tableData.recordTypes;
+        property.recordTypeColumn = false;
+        property.recordTypes = {};
+        if (key == schema.recordTypeColumn) {
+          property.recordTypeColumn = true;
+          property.recordTypes = schema.recordTypes;
         }
     */
-        trace.log({ key, type: merged[key], level: 'norm' });
-        trace.log({ key, type: merged[key].input.type, level: 'norm' });
+        trace.log({ key, type: property, level: 'norm' });
+        trace.log({ key, type: property.input.type, level: 'norm' });
         /* ************************************************
         *
         *   Permission
@@ -465,64 +472,64 @@ function standardise(table, merged, groupLookup, parentQualifiedName, parentQual
         *
         ************************************************ */
         trace.log({ key, group: groupLookup[key], permission }, { level: 'norm' });
-        merged[key].canEdit = true; // assume all permissions OK
-        merged[key].canView = true;
+        property.canEdit = true; // assume all permissions OK
+        property.canView = true;
         if (permission == '#superuser#') {
             continue;
         }
-        trace.log(merged[key].qualifiedName);
+        trace.log(property.qualifiedName);
         //  If there is no  field-level permission object, default to the group permission
-        if (!merged[key].permission) {
+        if (!property.permission) {
             let groupkey = key;
-            if (merged[key].qualifiedName[0]) {
-                groupkey = merged[key].qualifiedName[0];
+            if (property.qualifiedName[0]) {
+                groupkey = property.qualifiedName[0];
             }
             ;
             trace.log(groupkey, groupLookup[groupkey]);
-            if (tableData.groups[groupLookup[groupkey]]) {
-                const groupPermission = tableData.groups[groupLookup[groupkey]].permission;
+            if (schema.groups[groupLookup[groupkey]]) {
+                const groupPermission = schema.groups[groupLookup[groupkey]].permission;
                 if (groupPermission) {
-                    merged[key].permission = groupPermission;
+                    property.permission = groupPermission;
                 }
             }
         }
-        trace.log(table, key, permission, merged[key].permission, { level: 'norm' });
-        trace.log(table, key, permission, merged[key].permission, { level: key });
+        trace.log(table, key, permission, property.permission, { level: 'norm' });
+        trace.log(table, key, permission, property.permission, { level: key });
         /* if this field has a permission set then the default no longer applies */
-        if (merged[key].permission) {
-            merged[key].canEdit = false;
-            merged[key].canView = false;
-            trace.log({ text: 'check permission', key, merged: merged[key], level: key });
+        if (property.permission) {
+            property.canEdit = false;
+            property.canView = false;
+            trace.log({ text: 'check permission', key, merged: property, level: key });
             /* if there is an  'all' permission set then this applies to edit and view */
-            if (merged[key].permission.all) { // If there is a specific view permission
-                if (merged[key].permission.all.includes(permission) || // and it doesn't include this user
-                    merged[key].permission.all.includes('all') // or all:['all']}
+            if (property.permission.all) { // If there is a specific view permission
+                if (property.permission.all.includes(permission) || // and it doesn't include this user
+                    property.permission.all.includes('all') // or all:['all']}
                 ) {
-                    merged[key].canEdit = true; // assume all permissions OK
-                    merged[key].canView = true;
+                    property.canEdit = true; // assume all permissions OK
+                    property.canView = true;
                 }
             }
             /* if there is a view permission this applies */
-            if (merged[key].permission.view) { // If there is a specific view permission
-                if (merged[key].permission.view.includes(permission) || // and it doesn't include this user
-                    merged[key].permission.view.includes('all') // or view:['all']}
+            if (property.permission.view) { // If there is a specific view permission
+                if (property.permission.view.includes(permission) || // and it doesn't include this user
+                    property.permission.view.includes('all') // or view:['all']}
                 ) {
-                    merged[key].canView = true; // then can't view
+                    property.canView = true; // then can't view
                 }
             }
             /* if there is a edit permission this applies */
-            if (merged[key].permission.edit) { // If there is a specific edit permission
-                if (merged[key].permission.edit.includes(permission) || // and it doesn't include this user
-                    merged[key].permission.edit.includes('all') // or all:['all']}
+            if (property.permission.edit) { // If there is a specific edit permission
+                if (property.permission.edit.includes(permission) || // and it doesn't include this user
+                    property.permission.edit.includes('all') // or all:['all']}
                 ) {
-                    merged[key].canEdit = true; // then can't edit
+                    property.canEdit = true; // then can't edit
                 }
             }
-            trace.log({ table, text: 'permission', key, merged: merged[key], permission: merged[key].permission, canedit: merged[key].canEdit, canview: merged[key].canView });
+            trace.log({ table, text: 'permission', key, merged: property, permission: property.permission, canedit: property.canEdit, canview: property.canView });
         }
-        trace.log({ text: 'end loop', key, merged: merged[key], level: 'norm' });
-        trace.log({ text: 'end loop', key, merged: merged[key], level: key });
+        trace.log({ text: 'end loop', key, merged: property, level: 'norm' });
+        trace.log({ text: 'end loop', key, merged: property, level: key });
     }
     return merged;
 }
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibWVyZ2UtYXR0cmlidXRlcy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9iaW4vc3Vkcy9tZXJnZS1hdHRyaWJ1dGVzLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxjQUFjLENBQUMsQ0FBQTtBQUMzQixNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFDLENBQUE7QUFDdEMsTUFBTSxLQUFLLEdBQUcsT0FBTyxDQUFDLFdBQVcsQ0FBQyxDQUFBO0FBQ2xDLE1BQU0sWUFBWSxHQUFHLE9BQU8sQ0FBQyxpQkFBaUIsQ0FBQyxDQUFBO0FBQy9DLE1BQU0sSUFBSSxHQUFHLE9BQU8sQ0FBQyxtQkFBbUIsQ0FBQyxDQUFBO0FBQ3pDLE1BQU0saUJBQWlCLEdBQUcsT0FBTyxDQUFDLHNCQUFzQixDQUFDLENBQUE7QUFJekQsSUFBSSxLQUFLLEdBQUcsRUFBRSxDQUFBO0FBQ2QsSUFBSSxTQUFTLENBQUE7QUFFYjs7Ozs7Ozs7Ozs7Ozs7R0FjRztBQUNILE1BQU0sQ0FBQyxPQUFPLEdBQUcsVUFBVSxLQUFLLEVBQUUsVUFBVSxFQUFFLFVBQVUsRUFBRSxvQkFBb0I7SUFDNUUsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLE1BQU0sRUFBRSxTQUFTLEVBQUUsQ0FBQyxDQUFBO0lBQ2hDLElBQUksS0FBSyxJQUFJLGFBQWEsRUFBRTtRQUMxQixLQUFLLEdBQUcsRUFBRSxDQUFBO1FBQ1YsT0FBTTtLQUNQO0lBQ0QsSUFBSSxDQUFDLG9CQUFvQixFQUFFO1FBQUUsb0JBQW9CLEdBQUcsRUFBRSxDQUFBO0tBQUU7SUFDeEQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLEtBQUssRUFBRSxVQUFVLEVBQUUsTUFBTSxFQUFFLE1BQU0sQ0FBQyxJQUFJLENBQUMsS0FBSyxDQUFDLEVBQUUsQ0FBQyxDQUFBO0lBQzVELElBQUksSUFBSSxDQUFDLFVBQVUsQ0FBQyxRQUFRLENBQUMsS0FBSyxD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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibWVyZ2UtYXR0cmlidXRlcy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9iaW4vc3Vkcy9tZXJnZS1hdHRyaWJ1dGVzLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQ0EsT0FBTyxDQUFDLEdBQUcsQ0FBQyxjQUFjLENBQUMsQ0FBQTtBQUMzQixNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsZUFBZSxDQUFDLENBQUE7QUFDdEMsTUFBTSxLQUFLLEdBQUcsT0FBTyxDQUFDLFdBQVcsQ0FBQyxDQUFBO0FBQ2xDLE1BQU0sWUFBWSxHQUFHLE9BQU8sQ0FBQyxpQkFBaUIsQ0FBQyxDQUFBO0FBQy9DLE1BQU0sSUFBSSxHQUFHLE9BQU8sQ0FBQyxtQkFBbUIsQ0FBQyxDQUFBO0FBQ3pDLE1BQU0saUJBQWlCLEdBQUcsT0FBTyxDQUFDLHNCQUFzQixDQUFDLENBQUE7QUFLekQsSUFBSSxLQUFLLEdBQVUsRUFBRSxDQUFDO0FBRXRCLElBQUksTUFBYyxDQUFDO0FBRW5COzs7Ozs7Ozs7Ozs7OztHQWNHO0FBQ0gsTUFBTSxDQUFDLE9BQU8sR0FBRyxVQUFVLEtBQWEsRUFBRSxVQUFrQixFQUFFLFVBQW9CLEVBQUUsb0JBQWdDO0lBQ2xILEtBQUssQ0FBQyxHQUFHLENBQUMsRUFBRSxNQUFNLEVBQUUsU0FBUyxFQUFFLENBQUMsQ0FBQTtJQUVoQyxJQUFJLEtBQUssS0FBSyxhQUFhLEVBQUU7UUFDM0IsS0FBSyxHQUFHLEVBQUUsQ0FBQTtRQUNWLE9BQU07S0FDUDtJQUNELElBQUksQ0FBQyxvQkFBb0IsRUFBRTtRQUFFLG9CQUFvQixHQUFHLEVBQUUsQ0FBQTtLQUFFO0lBQ3hELEtBQUssQ0FBQyxHQUFHLENBQUMsRUFBRSxLQUFLLEVBQUUsVUFBVSxFQUFFLE1BQU0sRUFBRSxNQUFNLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBQyxFQUFFLENBQUMsQ0FBQTtJQUM1RCxJQUFJLElBQUksQ0FBQyxVQUFVLENBQUMsUUFBUSxDQUFDLEtB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O1lBQUUsUUFBUSxDQUFDLFdBQVcsR0FBRyxRQUFRLENBQUMsV0FBVyxDQUFDLE9BQU8sQ0FBQyxJQUFJLEVBQUUsUUFBUSxDQUFDLENBQUE7U0FBRTtRQUMvRyxJQUFJLFFBQVEsQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLEdBQUcsQ0FBQyxFQUFFO1lBQUUsUUFBUSxDQUFDLFdBQVcsR0FBRyxRQUFRLENBQUMsV0FBVyxDQUFDLE9BQU8sQ0FBQyxJQUFJLEVBQUUsUUFBUSxDQUFDLENBQUE7U0FBRTtRQUUvRyxnQkFBZ0I7UUFDaEIsUUFBUSxDQUFDLFFBQVEsR0FBRyxFQUFFLENBQUE7UUFDdEIsTUFBTSxNQUFNLEdBQUcsUUFBUSxDQUFDLEtBQUssQ0FBQyxJQUFJLENBQUE7UUFDbEMsSUFBSSxJQUFJLENBQUMsVUFBVSxDQUFDLE1BQU0sQ0FBQyxJQUFJLElBQUksQ0FBQyxVQUFVLENBQUMsTUFBTSxDQUFDLENBQUMsUUFBUSxFQUFFO1lBQUUsUUFBUSxDQUFDLFFBQVEsR0FBRyxJQUFJLENBQUMsVUFBVSxDQUFDLE1BQU0sQ0FBQyxDQUFDLFFBQVEsQ0FBQTtTQUFFO1FBRXpIOzs7Ozs7O01BT0Y7UUFFRSxLQUFLLENBQUMsR0FBRyxDQUFDLEVBQUUsR0FBRyxFQUFFLElBQUksRUFBRSxRQUFRLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUE7UUFDakQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLEdBQUcsRUFBRSxJQUFJLEVBQUUsUUFBUSxDQUFDLEtBQUssQ0FBQyxJQUFJLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUE7UUFFNUQ7Ozs7OzsyREFNbUQ7UUFDbkQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLEdBQUcsRUFBRSxLQUFLLEVBQUUsV0FBVyxDQUFDLEdBQUcsQ0FBQyxFQUFFLFVBQVUsRUFBRSxFQUFFLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUE7UUFDMUUsUUFBUSxDQUFDLE9BQU8sR0FBRyxJQUFJLENBQUEsQ0FBQyw0QkFBNEI7UUFDcEQsUUFBUSxDQUFDLE9BQU8sR0FBRyxJQUFJLENBQUE7UUFDdkIsSUFBSSxVQUFVLElBQUksYUFBYSxFQUFFO1lBQUUsU0FBUTtTQUFFO1FBQzdDLEtBQUssQ0FBQyxHQUFHLENBQUMsUUFBUSxDQUFDLGFBQWEsQ0FBQyxDQUFBO1FBQ2pDLGtGQUFrRjtRQUNsRixJQUFJLENBQUMsUUFBUSxDQUFDLFVBQVUsRUFBRTtZQUN4QixJQUFJLFFBQVEsR0FBRyxHQUFHLENBQUE7WUFDbEIsSUFBSSxRQUFRLENBQUMsYUFBYSxDQUFDLENBQUMsQ0FBQyxFQUFFO2dCQUFFLFFBQVEsR0FBRyxRQUFRLENBQUMsYUFBYSxDQUFDLENBQUMsQ0FBQyxDQUFBO2FBQUU7WUFBQSxDQUFDO1lBQ3hFLEtBQUssQ0FBQyxHQUFHLENBQUMsUUFBUSxFQUFFLFdBQVcsQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFBO1lBQzFDLElBQUksTUFBTSxDQUFDLE1BQU0sQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLENBQUMsRUFBRTtnQkFDeEMsTUFBTSxlQUFlLEdBQUcsTUFBTSxDQUFDLE1BQU0sQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLENBQUMsQ0FBQyxVQUFVLENBQUE7Z0JBQ3ZFLElBQUksZUFBZSxFQUFFO29CQUNuQixRQUFRLENBQUMsVUFBVSxHQUFHLGVBQWUsQ0FBQTtpQkFDdEM7YUFDRjtTQUNGO1FBRUQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxLQUFLLEVBQUUsR0FBRyxFQUFFLFVBQVUsRUFBRSxRQUFRLENBQUMsVUFBVSxFQUFFLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUE7UUFDekUsS0FBSyxDQUFDLEdBQUcsQ0FBQyxLQUFLLEVBQUUsR0FBRyxFQUFFLFVBQVUsRUFBRSxRQUFRLENBQUMsVUFBVSxFQUFFLEVBQUUsS0FBSyxFQUFFLEdBQUcsRUFBRSxDQUFDLENBQUE7UUFFdEUsMkVBQTJFO1FBQzNFLElBQUksUUFBUSxDQUFDLFVBQVUsRUFBRTtZQUN2QixRQUFRLENBQUMsT0FBTyxHQUFHLEtBQUssQ0FBQTtZQUN4QixRQUFRLENBQUMsT0FBTyxHQUFHLEtBQUssQ0FBQTtZQUN4QixLQUFLLENBQUMsR0FBRyxDQUFDLEVBQUUsSUFBSSxFQUFFLGtCQUFrQixFQUFFLEdBQUcsRUFBRSxNQUFNLEVBQUUsUUFBUSxFQUFFLEtBQUssRUFBRSxHQUFHLEVBQUUsQ0FBQyxDQUFBO1lBRTFFLDZFQUE2RTtZQUM3RSxJQUFJLFFBQVEsQ0FBQyxVQUFVLENBQUMsR0FBRyxFQUFFLEVBQUUseUNBQXlDO2dCQUN0RSxJQUFJLFFBQVEsQ0FBQyxVQUFVLENBQUMsR0FBRyxDQUFDLFFBQVEsQ0FBQyxVQUFVLENBQUMsSUFBSSxtQ0FBbUM7b0JBQ3JGLFFBQVEsQ0FBQyxVQUFVLENBQUMsR0FBRyxDQUFDLFFBQVEsQ0FBQyxLQUFLLENBQUMsQ0FBQyxrQkFBa0I7a0JBQzFEO29CQUNBLFFBQVEsQ0FBQyxPQUFPLEdBQUcsSUFBSSxDQUFBLENBQUMsNEJBQTRCO29CQUNwRCxRQUFRLENBQUMsT0FBTyxHQUFHLElBQUksQ0FBQTtpQkFDeEI7YUFDRjtZQUVELGdEQUFnRDtZQUNoRCxJQUFJLFFBQVEsQ0FBQyxVQUFVLENBQUMsSUFBSSxFQUFFLEVBQUUseUNBQXlDO2dCQUN2RSxJQUFJLFFBQVEsQ0FBQyxVQUFVLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxVQUFVLENBQUMsSUFBSSxtQ0FBbUM7b0JBQ3RGLFFBQVEsQ0FBQyxVQUFVLENBQUMsSUFBSSxDQUFDLFFBQVEsQ0FBQyxLQUFLLENBQUMsQ0FBQyxtQkFBbUI7a0JBQzVEO29CQUNBLFFBQVEsQ0FBQyxPQUFPLEdBQUcsSUFBSSxDQUFBLENBQUMsa0JBQWtCO2lCQUMzQzthQUNGO1lBRUQsZ0RBQWdEO1lBQ2hELElBQUksUUFBUSxDQUFDLFVBQVUsQ0FBQyxJQUFJLEVBQUUsRUFBRSx5Q0FBeUM7Z0JBQ3ZFLElBQUksUUFBUSxDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsUUFBUSxDQUFDLFVBQVUsQ0FBQyxJQUFJLG1DQUFtQztvQkFDdEYsUUFBUSxDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsUUFBUSxDQUFDLEtBQUssQ0FBQyxDQUFDLGtCQUFrQjtrQkFDM0Q7b0JBQ0EsUUFBUSxDQUFDLE9BQU8sR0FBRyxJQUFJLENBQUEsQ0FBQyxrQkFBa0I7aUJBQzNDO2FBQ0Y7WUFDRCxLQUFLLENBQUMsR0FBRyxDQUFDLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxZQUFZLEVBQUUsR0FBRyxFQUFFLE1BQU0sRUFBRSxRQUFRLEVBQUUsVUFBVSxFQUFFLFFBQVEsQ0FBQyxVQUFVLEVBQUUsT0FBTyxFQUFFLFFBQVEsQ0FBQyxPQUFPLEVBQUUsT0FBTyxFQUFFLFFBQVEsQ0FBQyxPQUFPLEVBQUUsQ0FBQyxDQUFBO1NBQ3ZKO1FBRUQsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLElBQUksRUFBRSxVQUFVLEVBQUUsR0FBRyxFQUFFLE1BQU0sRUFBRSxRQUFRLEVBQUUsS0FBSyxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUE7UUFDckUsS0FBSyxDQUFDLEdBQUcsQ0FBQyxFQUFFLElBQUksRUFBRSxVQUFVLEVBQUUsR0FBRyxFQUFFLE1BQU0sRUFBRSxRQUFRLEVBQUUsS0FBSyxFQUFFLEdBQUcsRUFBRSxDQUFDLENBQUE7S0FDbkU7SUFDRCxPQUFPLE1BQU0sQ0FBQTtBQUNmLENBQUMifQ==
