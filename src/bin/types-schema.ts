@@ -1,6 +1,22 @@
 
 /** Schema Types
  * 
+ * The schema defines the structure and content of a database. 
+ *  
+ * For a sinple example of a schema using this see: 
+ * https://github.com/bobbrowning/sudsjs/blob/main/tables/results.js
+ * 
+ */
+
+/** The properties of each schema are processed as they are used to standardise them, then cached. 
+ *  The properties are reworked and re cached whenever the permissions of the user of the
+ *  thread are changed. 
+ */
+export type Cache = { [key: string]: Properties };
+
+
+/** This is the main Schema type
+ * 
  * The Schema type is split into three parts
  * # TableData: Basic information about the file/table/collection. 
  *              Called tabledata because this all started with SQL.
@@ -9,23 +25,13 @@
  * 
  * # Children: Information about files that link to this file as children. 
  * 
- * For a sinple example of a schema using this see: 
- * https://github.com/bobbrowning/sudsjs/blob/main/tables/results.js
- * 
- * 
+ * # Attributes is used internally and is a shallow copy of properties
  */
-
-
-export type Cache = { [key: string]: Properties };
-
 export type Schema = TableData & {
   properties?: Properties;                              /* Fields in documents in this collection (columns in this table) */
   children?: Children;                                  /* Details of collections that link to this one */
   attributes?: Properties;                               /* attributes used internally instead of properties always use properties */
 }
-/** The only case that a value in this object this is a string is a $ special key.  $ref is used to insert a standard header 
- * from fragments.js. e.g.   $ref: "fragments.js#/{{dbDriver}}Header"  The dbDriver tag is a kludge to allow the same schema 
- * to be used for different databases and would unusual in production. */
 
 export type TableData = {
   friendlyName?: string;                                /* Normal short name */
@@ -59,14 +65,20 @@ export type TableData = {
     };
   };
 
-}
+} 
 
-export type SubSchema = {                                             /* Describes the items in an array or object */
+export type SubSchema = {                             /* Describes the items in an array or object */
   type?: string;                                      /* Type of item */
   properties?: Properties;                            /* Properties of item */
   required: string[];
 
 }
+/** Properties are a key value object, with the key being the field name and the value being an object 
+ * that defines the field and how it is processed. 
+ * 
+ * The value can be a string but only when the key is a '$' special key.  $ref is used to insert stahdard
+ * data for example as per the JSON-Schema standard. This only comes one function where they are de-referenced. This
+ * option is not defined here.  */
 export type Properties = { [key: string]: Property };
 
 export type Property = {
@@ -77,13 +89,13 @@ export type Property = {
   primaryKey?: boolean;                                 /* Yes if this is the primary key */
   canView?: boolean;                                    /* Set in merge-attributes for the permission set of the current user. */
   canEdit?: boolean;                                    /* as above */
-  array?: { type: 'multiple' | 'single' };                /* Treated as a single field on input/display */
-  extendedDescription?: string;                        /* Very long description */
-  permission?: { [key: string]: string[]; };           /* Permission sets */
+  array?: { type: "multiple" | "single" };              /* Treated as a single field on input/display */
+  extendedDescription?: string;                         /* Very long description */
+  permission?: { [key: string]: string[]; };            /* Permission sets */
   noSchema?: boolean;                                   /* This field doesn't exist in the schema - would be in a view created by Couch */
-  properties: Properties;                              /* If there is a sub-document */
-  recordType: boolean;                               /* If there is a record type column - set the recordtypefix boolean for that element */                                  /* When a single document is listed, this group is open */
-  helpText: string;
+  properties: Properties;                               /* If there is a sub-document */
+  recordType: boolean;                                  /* If there is a record type column - set the recordtypefix boolean for that element */                                  /* When a single document is listed, this group is open */
+  helpText: string;  
   items?: SubSchema;
   input?: {                                            /* How the field is presented and processed on input */
     type?: string;                                      /* Type for input tag, or name of helper fnction  */
