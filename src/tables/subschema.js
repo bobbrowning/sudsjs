@@ -1,9 +1,9 @@
-"use strict";
+
 /**
  *Sub Schema
  *
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+
 module.exports = {
     description: `This table contains the definitions of different record types.`,
     permission: { all: ['admin', 'demo', 'demov', 'trainer'] },

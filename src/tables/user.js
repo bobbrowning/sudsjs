@@ -1,10 +1,10 @@
-"use strict";
+
 /* ***************************postgattribu*******************************************
 *
 *    User table schema
 *
 * ********************************************************************* */
-Object.defineProperty(exports, "__esModule", { value: true });
+
 module.exports = {
     friendlyName: 'User table',
     description: `This table includes a row for each person or organisation that 

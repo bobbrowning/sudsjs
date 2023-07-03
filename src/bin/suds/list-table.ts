@@ -351,7 +351,7 @@ module.exports = async function listTable(
    * there is no pagination, but limit wll be provided.
    * Limit of -1 = no limit
    * */
-  function getPageData(reportData, parent, page) {
+  function getPageData(reportData: ReportData, parent: string, page: number) {
     const pageLength = suds.pageLength
     let limit = -1 // default all data.
     let offset = 0 // starting at beginning
@@ -1110,7 +1110,7 @@ module.exports = async function listTable(
     return content;
   }
 
-  function lastLine(parent, sortKey, direction, parentSearch, limit, page, count) {
+  function lastLine(parent, sortKey, direction, parentSearch, limit, page: number, count) {
     let content = '';
     let prev = ''
     let next = ''

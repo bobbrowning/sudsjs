@@ -1,10 +1,10 @@
-"use strict";
+
 /**
  *
  * Student table - normalised moned
  *
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+
 let suds = require('../config/suds');
 let db = require('../bin/suds/db');
 let lookup = require('../bin/suds/lookup-value');

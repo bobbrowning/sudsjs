@@ -1,10 +1,10 @@
-"use strict";
+
 /** *****************************************************
  *
  * Web Pages table schema
  *
  * **************************************************** */
-Object.defineProperty(exports, "__esModule", { value: true });
+
 module.exports = {
     friendlyName: 'Web pages',
     description: `Web pages for the starter content management system. There is one row per page. 

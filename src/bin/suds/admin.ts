@@ -365,11 +365,11 @@ async function adminprocess(req: Request, res: Response) {
       if (Array.isArray(req.query.subschema)) { subschemas = req.query.subschema }
       else { subschemas = [req.query.subschema] }
     }
-
+ 
     /* page number */
     let page = 0 // page number in listing
     if (req.query.page) { page = Number(req.query.page) }
-
+    trace.log(page, typeof page)
     /* id */
     let id = 0 // record key
     if (req.query.id) {
@@ -396,10 +396,13 @@ async function adminprocess(req: Request, res: Response) {
       req.session.reportData = {}
     }
     let reportData: ReportData = req.session.reportData; // this will contain a copy of the report spec
-
+   
+    trace.log(page, typeof page)
+ 
     trace.log({
       query: req.query,
       path: req.path,
+      page,
       report,
       table,
       mode,
@@ -410,7 +413,7 @@ async function adminprocess(req: Request, res: Response) {
     return [table, mode, report, subschemas, page, id, open, openGroup, reportData]
   }
 
-
+ 
 
   /** *********************************************
     *  Audit trail
@@ -660,7 +663,7 @@ async function adminprocess(req: Request, res: Response) {
       permission,
       table,
       reportData,
-      req.query.page,
+      page,
       req.query.parent,
       req.query.limit
     )
