@@ -14,13 +14,14 @@ let cache: Cache = {};
 let schema: Schema;
 
 /**
- * Doesn't really merge things any more. It standardises the attributes to that they all have the
+ * Doesn't really merge things any more. It standardises the properties to that they all have the
  * same structure.
  * 
  * This module 'compiles' the schema  by standardising the object and making sure that every 
  * part of the schema object is there, even if empty.
  * 
- * The standardised schems is then cached.
+ * The standardised properties object is then cached.  Tge cache is re-evaluated if the permission of the
+ * user changed.
  *
  * @param {string} table
  * @param {string} permission
@@ -72,6 +73,7 @@ module.exports = function (table: string, permission: string, subschemas: string
       * Then make a deep copy
       * This is passed to the standardise routine. Note that if the attributes describe a structured
       * record with sub-objects it is called recursively.
+      * Connebted out becauce we now use $def to insert the standard header. See the JOSO-Schema standard.
     
     let standardHeader = {}
     if (schema.standardHeader) {

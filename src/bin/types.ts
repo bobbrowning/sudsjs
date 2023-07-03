@@ -9,11 +9,17 @@ import {Properties} from "./types-schema";
 /** Imporsed with slightly different names so can be added to. */
 import { Request as request, Response as response, } from "express"
 
+export type Id= number | string;
+export type Mode = "list" | "listrow" | "new" | "populate" | "update" | "delete" | "";
+
 export type Request=request & {
   files: any;
   csrfToken: Function;
   session: any;
 };
+
+
+export type Record =  {[key: string]: string| number | boolean | Record };
 
 export type Response = response;
 

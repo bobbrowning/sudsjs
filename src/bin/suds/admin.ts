@@ -13,7 +13,7 @@ const db = require('./db');
 const mergeAttributes = require('./merge-attributes');
 const lang = require('../../config/language').EN;
 const tableDataFunction = require('./table-data');
-import { ReportData, Audit, ViewData, Request, Response } from "../types";
+import { ReportData, Audit, ViewData, Request, Response, Mode } from "../types";
 import { Properties, TableData } from "../types-schema";
 
 
@@ -138,7 +138,7 @@ async function adminprocess(req: Request, res: Response) {
   })
 
   let table: string;
-  let mode: string;
+  let mode: Mode;
   let report: string;
   let subschemas: string[];
   let page: number;
@@ -311,7 +311,7 @@ async function adminprocess(req: Request, res: Response) {
     * @param {Object} req 
     * @returns {Array} table, mode, report, subschemas, page, id, open, openGroup
     */
-  function parseQuery(req): [string, string, string, string[], number, string | number, string, string, object] {
+  function parseQuery(req): [string, Mode, string, string[], number, string | number, string, string, object] {
 
     /* These processes are  handles by the program */
     const validModes = [
@@ -347,7 +347,7 @@ async function adminprocess(req: Request, res: Response) {
     }
 
     /* Mode */
-    let mode = ''
+    let mode: Mode = ''
     if (req.query.mode) {
       mode = req.query.mode
       if (!validModes.includes(mode)) {

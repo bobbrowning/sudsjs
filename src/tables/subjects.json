@@ -1,0 +1,73 @@
+{
+   "description": "This file includes records for each subject. This is the normalized version in which results are in a separate file.",
+   "friendlyName": "Subjects (normalised version - JSON schema)",
+   "permission": {
+      "all": [
+         "admin",
+         "demo",
+         "trainer",
+         "demor"
+      ]
+   },
+   "stringify": "name",
+   "list": {
+      "open": "papers",
+      "columns": [
+         "name",
+         "subjectCode",
+         "notes"
+      ]
+   },
+   "properties": {
+      "$ref": "fragments.js#/{{dbDriver}}Header",
+      "name": {
+         "friendlyName": "Subject name",
+         "type": "string"
+      },
+      "subjectCode": {
+         "type": "string",
+         "pattern": "[A-Z]{2,2}[0-9]{3,3}",
+         "description": "Must be for the form AA999 and must be unique. \nUniqueness is checked when you leafe the field. \nThe format is chequed when you submit the form.",
+         "input": {
+            "api": {
+               "route": "/unique"
+            }
+         }
+      },
+      "notes": {
+         "type": "string",
+         "description": "Notes about the subject that may be useful. \nOptional, but if included must be at least 50 characters.",
+         "input": {
+            "type": "textarea"
+         },
+         "display": {
+            "truncateForTableList": 50
+         },
+         "minLength": 20
+      },
+      "pass": {
+         "type": "integer",
+         "friendlyName": "Pass score",
+         "description": "Must be an integer between 20 an 100",
+         "maximum": 100,
+         "minimum": 20,
+         "multipleOf": 5
+      }
+   },
+   "required": [
+      "name",
+      "subjectCode"
+   ],
+   "children": {
+      "papers": {
+         "collection": "papers",
+         "via": "subject",
+         "friendlyName": "Exam papers",
+         "collectionList": {
+            "columns": [
+               "name"
+            ]
+         }
+      }
+   }
+}
