@@ -27,7 +27,7 @@ const createField = require('./create-field') // Creates an input field
 const displayField = require('./display-field') // displays a column value
 const addSubschemas = require('./subschemas')
 const fs = require('fs')
-import { Id, Mode, Record } from "../types"
+import { Id, Mode, Record, Dictionary } from "../types"
 import { Properties } from "../types-schema"
 
 /** Data Division */
@@ -66,7 +66,10 @@ module.exports = async function (
   let mainPage
   const operation = ''
   const message = ''
-  let record = {};
+  let record: Record = {
+    createdAt: 0,
+    updatedAt: 0,
+  };
 
   /** Procedure division */
   if (arguments[0] == 'documentation') { return ({ friendlyName, description }) }
@@ -249,12 +252,16 @@ module.exports = async function (
 
     const formList = fieldList(attributes, true)
     trace.log(formList)
-    record = {}
+    let record: Record = { createdAt: 0, updatedAt: 0 }
     for (const key of formList) {
       trace.log(key, attributes[key], entered[key])
 
       if (attributes[key].array) {
         record[key] = unpackArray(key, attributes[key])
+        if (attributes[key].process?.JSON) {
+          record[key]= JSON.stringify(record[key]);
+        }
+
         trace.log(key, record[key])
       } else {
         if (attributes[key].type == 'object') {
@@ -287,9 +294,9 @@ module.exports = async function (
    * @param {string} index -  The prefix to the field name
    * @param {string} attributes - the arttributes of this field only
    ****************************************************** */
-  function unpackArray(fieldName, attributes) {
+  function unpackArray(fieldName, attributes): string[] | number[] | object[] {
     trace.log(arguments)
-    const arry = []
+    let arry: string[] | number[] | object[] = [];
     let length = 0
     if (!entered[fieldName + '.length']) {
       length = 0
@@ -327,12 +334,7 @@ module.exports = async function (
     /** array type 'single' refers to checkboxes, where the array is treated as a single field
      * that has multiple values. There may be other types of input in the future.   
      * this is for relational databases where checkboxes are stored as a JSON field. */
-    if (attributes.process == 'JSON') {
-      trace.log('returning', JSON.stringify(arry))
-      return JSON.stringify(arry);
-    } else {
-      return arry
-    }
+    return arry
   }
 
   function unpackObject(fieldName, attributes) {
@@ -570,10 +572,16 @@ module.exports = async function (
       if (attributes[key].input.type == 'date' &&
         attributes[key].type == 'number'
       ) {
-        record[key] = Date.parse(record[key])
-        trace.log(record[key])
-        if (isNaN(record[key])) {
-          record[key] = 0
+
+        let date = record[key];
+        if (typeof date === 'string') {
+          let datenum = Date.parse(date)
+          if (Number.isNaN(datenum)) {
+            record[key] = 0
+          }
+          else {
+            record[key] = datenum;
+          }
         }
       }
 
@@ -727,7 +735,7 @@ module.exports = async function (
 
   function fieldList(attributes, includeId) {
     trace.log(attributes)
-    const formList = []
+    const formList: string[] = []
     trace.log(permission)
     for (const key of Object.keys(attributes)) {
       trace.log({ key, canedit: attributes[key].canEdit, permission })
@@ -769,7 +777,7 @@ module.exports = async function (
      * - if there is no columns array (unlikely) - create an empty one
      *
      */
-    let incl = []
+    let incl: string[] = []
     for (const group of Object.keys(tableData.groups)) {
       if (tableData.groups[group].recordTypes &&
         !tableData.groups[group].recordTypes.includes(record[tableData.recordTypeColumn])
@@ -792,7 +800,7 @@ module.exports = async function (
      * tableData.groups.other.columns = all.filter(item => !incl.includes(item));
      *
      * */
-    const all = []
+    const all: string[] = []
     for (let i = 0; i < formList.length; i++) { all[i] = formList[i] }
     if (!tableData.groups.other) { tableData.groups.other = {} }
     if (!tableData.groups.other.columns) { tableData.groups.other.columns = [] }
@@ -932,10 +940,10 @@ module.exports = async function (
         display = 'none'
       }
       if (attributes.type == 'object') {
- /*       if (i >= data.length) { datum = {} }*/
+        /*       if (i >= data.length) { datum = {} }*/
         [field, tag] = await createFieldObject(subqualname, attributes, subdata)
       } else {
- /*       if (i >= data.length) { datum = '' }*/
+        /*       if (i >= data.length) { datum = '' }*/
         [field, tag] = await createOneFieldHTML(subqualname, attributes, subdata)
       }
       /** if i is GT data.length then this is an empty field */
@@ -1110,7 +1118,7 @@ module.exports = async function (
 
     }
 */
-    let result = []
+    let result : string[]= []
     if (attributes.input.type == 'hidden') {
       formField += `
         <input type="hidden" name="${qualifiedName}" value="${fieldValue}">`
@@ -1206,8 +1214,8 @@ ${attributes.helpText}`
       }
     </script>
     `
-  } 
-  
+  }
+
 
 
   async function createArrayValidation(attributes, fieldName, data, topkey, columnGroup) {
@@ -1223,7 +1231,7 @@ ${attributes.helpText}`
         console.log('${fieldName}.length',document.getElementById('${fieldName}.length'))
      //   console.log(document.getElementById('${fieldName}.length').innerHTML,length);      
    `
-    for (let  i = 0; i < data.length + bite; i++) { // number of array alements generated
+    for (let i = 0; i < data.length + bite; i++) { // number of array alements generated
       trace.log(i)
       result += `
        if (${i}<length) {` // Number of array elements used

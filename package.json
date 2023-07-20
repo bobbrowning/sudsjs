@@ -42,6 +42,7 @@
     "source-map-support": "^0.5.21",
     "sqlite3": "^5.0.11",
     "syncwritestream": "^1.0.1",
+    "tiny-csrf": "^1.1.3",
     "track-n-trace": "^1.2.12"
   },
   "main": "./bin/www",

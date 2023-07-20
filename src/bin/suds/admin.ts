@@ -13,9 +13,9 @@ const db = require('./db');
 const mergeAttributes = require('./merge-attributes');
 const lang = require('../../config/language').EN;
 const tableDataFunction = require('./table-data');
-import { ReportData, Audit, ViewData, Request, Response, Mode } from "../types";
+import { ReportData, Audit, ViewData, Request, Response, Mode, Record } from "../types";
 import { Properties, TableData } from "../types-schema";
-
+const csrf=require('./csrf')
 
 
 /** The system caches the compiled schema. It is recompiled when the permission changes
@@ -127,16 +127,19 @@ async function adminprocess(req: Request, res: Response) {
 
   })
   startTime = new Date().getTime()
-  let csrfToken
-  if (suds.csrf) {
-    csrfToken = req.csrfToken()
-  }
+  /** CSRF
+   * Set session csrf.
+   */
+  trace.log(req.session.csrf)
+  csrf.setToken(req)
+  trace.log(req.session.csrf)
+
   trace.log({
     req,
     maxdepth: 3,
     level: 'verbose'
   })
-
+   
   let table: string;
   let mode: Mode;
   let report: string;
@@ -147,7 +150,7 @@ async function adminprocess(req: Request, res: Response) {
   let openGroup: string;
   let reportData: object;
   let auditId: string | number;
-  let output: string | ViewData;
+  let output: string | ViewData = '';
   let permission = await checkPermission(req, res);
   trace.log({ table: req.query.table })
   if (!req.query.table && !req.query.report) { return await mainMenu(req, res, permission) }
@@ -195,8 +198,8 @@ async function adminprocess(req: Request, res: Response) {
        *
        ************************************************************** */
 
-    let user: object  // some property names depend on config.
-    let permission = '#guest#'
+    let user: Record = { createdAt: 0, updatedAt: 0 }
+    let permission: any = '#guest#'
 
     if (req.cookies.user) {
       req.session.userId = req.cookies.user
@@ -360,12 +363,12 @@ async function adminprocess(req: Request, res: Response) {
     }
 
     /* subschemas*/
-    let subschemas = []
+    let subschemas: string[] = []
     if (req.query.subschema) {
       if (Array.isArray(req.query.subschema)) { subschemas = req.query.subschema }
       else { subschemas = [req.query.subschema] }
     }
- 
+
     /* page number */
     let page = 0 // page number in listing
     if (req.query.page) { page = Number(req.query.page) }
@@ -396,9 +399,9 @@ async function adminprocess(req: Request, res: Response) {
       req.session.reportData = {}
     }
     let reportData: ReportData = req.session.reportData; // this will contain a copy of the report spec
-   
+
     trace.log(page, typeof page)
- 
+
     trace.log({
       query: req.query,
       path: req.path,
@@ -413,7 +416,7 @@ async function adminprocess(req: Request, res: Response) {
     return [table, mode, report, subschemas, page, id, open, openGroup, reportData]
   }
 
- 
+
 
   /** *********************************************
     *  Audit trail
@@ -427,7 +430,7 @@ async function adminprocess(req: Request, res: Response) {
     * @returns {Any} id of audit record
   */
   async function auditTrail(req: Request, mode: string) {
-    let auditId: string | number;
+    let auditId: any;  // Not really any, but don't know how to tell typescript that I *know* the record key is a string or number
 
     /* Consolidate all parameters in one object. */
 
@@ -437,7 +440,7 @@ async function adminprocess(req: Request, res: Response) {
         !suds.audit.operations ||
         suds.audit.operations.includes(mode)
       )) {
-      const requestData: object={}     // Clones req - properties depend on config
+      const requestData: object = {}     // Clones req - properties depend on config
       for (const item of suds.audit.log) {
         requestData[item] = req[item]
       }
@@ -606,7 +609,7 @@ async function adminprocess(req: Request, res: Response) {
 
       /* If we don't have the columns already then clone them from the table data */
       /* if there are none there, then the program will list all fields */
-      if (!reportData['columns'] && tableData.list.columns) {
+      if (!reportData['columns'] && tableData.list?.columns) {
         reportData['columns'] = []
         for (let i = 0; i < tableData.list.columns.length; i++) {
           reportData['columns'][i] = tableData.list.columns[i]
@@ -635,7 +638,7 @@ async function adminprocess(req: Request, res: Response) {
           const searchField = req.query['searchfield_' + j] as string
           let compare = req.query['compare_' + j]
           let value = req.query['value_' + j]
-          if (attributes[searchField] && attributes[searchField].process && attributes[searchField].process.JSON) {
+          if (attributes[searchField] && attributes[searchField].process && attributes[searchField].process?.JSON) {
             compare = 'contains'
             value = `"${value}"`
           }
@@ -720,7 +723,7 @@ async function adminprocess(req: Request, res: Response) {
       permission,
       table,
       req.query,
-      csrfToken
+      req.session.csrf
     )
   }
 
@@ -767,7 +770,7 @@ async function adminprocess(req: Request, res: Response) {
       req.files,
       subschemas,
       auditId,
-      csrfToken
+      req.session.csrf
     )
   }
 
@@ -782,6 +785,9 @@ async function adminprocess(req: Request, res: Response) {
 
   async function updateMode() {
     trace.log('**** update ***')
+    csrf.checkToken(req);
+  
+
     return await updateForm(
       permission,
       table,
@@ -794,7 +800,7 @@ async function adminprocess(req: Request, res: Response) {
       req.files,
       subschemas,
       auditId,
-      csrfToken
+      req.session.csrf
     )
   }
 

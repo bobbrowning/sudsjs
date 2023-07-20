@@ -295,6 +295,7 @@ module.exports = {
             secret: 'head shoe',
             resave: 'false',
             saveUninitialized: true,
+            cookie: { expires: 60000 } /* Session expires after 10 min of inactivity.*/
         });
     },
     /* ****************************************************
@@ -304,7 +305,7 @@ module.exports = {
     *
     ***************************************************** */
     superuser: 'admin@admin.demo',
-    csrf: false,
+    csrf: true,
     authorisation: {
         nosql: {
             table: 'user',

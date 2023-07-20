@@ -25,7 +25,7 @@ module.exports = async function (res: Response , view: string, output: string | 
   }
   let dateStamp: string = new Date().toLocaleString()
   viewData.footnote += '&nbsp;' + dateStamp
-  viewData.footnote = viewData.footnote.replace('{{version}}', suds.versionHistory[suds.versionHistory.length - 1].version)
+  viewData.footnote = viewData.footnote?.replace('{{version}}', suds.versionHistory[suds.versionHistory.length - 1].version)
   if (!viewData.headerTags) { viewData.headerTags = '<!-- space for program generated header tags -->' }
   if (!viewData.pageHeaderTags) { viewData.pageHeaderTags = '<!-- space for program generated header tags -->' }
   res.render(view, viewData)

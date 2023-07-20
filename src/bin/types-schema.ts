@@ -104,7 +104,7 @@ export type Property = {
     route?: string;                                    /* used if there is an api */
     recordTypeFix?: boolean;                            /* used in create-field.js */
     /* Any additional key value pairs are added to the input tag or used by the helper program */
-    [key: string]: string | boolean | number | object;
+    [key: string]: string | boolean | number | object | undefined;
   };
   process?: {                                           /* Special propcessing requirements */
     uploadFile?: boolean;                               /* Upload file */

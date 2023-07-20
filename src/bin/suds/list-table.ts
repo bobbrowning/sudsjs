@@ -17,6 +17,7 @@ import { ReportData, Search, } from "../types";
 import { Properties, Property } from "../types-schema";
 const sanitizeHtml = require('sanitize-html')
 
+
 /** ********************************************************************
  *
  * list-table.js
@@ -73,7 +74,7 @@ module.exports = async function listTable(
   /** Extract the search specification */
   let searchSpec: Search = extractSeachSpec(reportData);
   let searches: string[][] = searchSpec.searches;
-  let andor: string = searchSpec.andor;
+  let andor = searchSpec.andor;
   /** Extract basic report information */
   let [heading, headingTip, parentSearch]: string[] = getReportData(reportData, tableData, andor,searches)
    let limit: number;
@@ -207,7 +208,7 @@ module.exports = async function listTable(
        ************************************************ */
   output+=linksRow(tableData, reportData, parent,)
 
-  trace.log(global.suds)
+
   trace.log('returning')
   trace.log({ output, level: 'verbose' })
   trace.log({ where: 'Finished', level: 'mid' }) // timing
@@ -406,7 +407,7 @@ module.exports = async function listTable(
       */
 
       displayCompare = lang[compare]
-      if (attribute.input.type === 'date') {
+      if (attribute.input && attribute.input.type === 'date') {
         if (compare == 'lt') { displayCompare = 'earlier than' }
         if (compare == 'gt') { displayCompare = 'later than' }
       }

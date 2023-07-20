@@ -18,8 +18,23 @@ export type Request=request & {
   session: any;
 };
 
+export type LabelsValues = [
+  string[],
+  string[]
+]
 
-export type Record =  {[key: string]: string| number | boolean | Record };
+
+export type Dictionary =  {
+   [key: string]: string | string[] | number | number[] | object | object[] | boolean | Dictionary 
+};
+
+
+export type Record =  {
+  createdAt: number;
+  updatedAt: number;
+  [key: string]: string | string[] | number | number[] | object | object[] | boolean | Dictionary 
+};
+
 
 export type Response = response;
 
